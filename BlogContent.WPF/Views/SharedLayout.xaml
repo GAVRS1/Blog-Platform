@@ -1,0 +1,209 @@
+﻿<UserControl x:Class="BlogContent.WPF.Views.SharedLayout"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:BlogContent.WPF.Views"
+             xmlns:converters="clr-namespace:BlogContent.WPF.Utilities.Converters" 
+             xmlns:viewmodel="clr-namespace:BlogContent.WPF.ViewModel" 
+             xmlns:base="clr-namespace:BlogContent.WPF.ViewModel.Base" 
+             d:DataContext="{d:DesignInstance Type=viewmodel:UserProfileViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:BooleanToHighlightConverter x:Key="BooleanToHighlightConverter"/>
+    </UserControl.Resources>
+
+    <Grid Background="#F0F2F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Верхняя панель навигации -->
+        <Border Grid.Row="0" Background="#4267B2" Height="60">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Логотип и название -->
+                <TextBlock Grid.Column="0" 
+                           Text="BlogContent" 
+                           FontSize="22" 
+                           FontWeight="Bold" 
+                           Foreground="White" 
+                           Margin="20,0,0,0"
+                           VerticalAlignment="Center"/>
+
+                <!-- Меню пользователя -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right" 
+                            Margin="0,0,20,0">
+
+                    <!-- Кнопка создания поста -->
+                    <Button Content="Создать пост" 
+                            Command="{Binding CreatePostCommand}" 
+                            Width="120" 
+                            Height="36" 
+                            Background="#42B72A" 
+                            Foreground="White" 
+                            Margin="0,0,15,0"/>
+
+                    <!-- Аватар пользователя (исправленный круглый) -->
+                    <Border Width="40" 
+                            Height="40" 
+                            CornerRadius="20" 
+                            Background="LightGray" 
+                            Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                         Command="{Binding ViewProfileCommand}"/>
+                        </Border.InputBindings>
+                        <Image Source="{Binding UserProfilePictureUrl, Converter={StaticResource MediaUrlToImageConverter}, ConverterParameter=avatar_small}" 
+                               Stretch="UniformToFill" 
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Clip>
+                                <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20"/>
+                            </Image.Clip>
+                        </Image>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Контент страницы -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Левая панель -->
+            <Border Grid.Column="0" 
+                    Background="White" 
+                    Margin="15,15,7.5,15" 
+                    CornerRadius="8"
+                    BorderBrush="#DDDDDD"
+                    BorderThickness="1"
+                    Effect="{StaticResource ShadowEffect}">
+                <StackPanel Margin="15">
+                    <!-- Мини-профиль -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <!-- Аватар пользователя -->
+                        <Border Width="40" 
+                                Height="40" 
+                                CornerRadius="20" 
+                                Background="LightGray">
+                            <Image Source="{Binding UserProfilePictureUrl, Converter={StaticResource MediaUrlToImageConverter}, ConverterParameter=avatar_small}" 
+                                   Stretch="UniformToFill">
+                                <Image.Clip>
+                                    <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20"/>
+                                </Image.Clip>
+                            </Image>
+                        </Border>
+                        <TextBlock Text="{Binding UserFullName}" 
+                                   Margin="10,0,0,0" 
+                                   VerticalAlignment="Center" 
+                                   FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <Separator Margin="0,0,0,15"/>
+
+                    <!-- Пункты меню -->
+                    <StackPanel>
+                        <Border Cursor="Hand"
+                                Background="{Binding IsHomePage, Converter={StaticResource BooleanToHighlightConverter}}"
+                                Margin="0,0,0,15"
+                                Padding="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🏠" FontSize="18"/>
+                                <TextBlock Text="Главная" 
+                                           Margin="10,0,0,0" 
+                                           FontSize="16"/>
+                            </StackPanel>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding NavigateToHomeCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+
+                        <Border Cursor="Hand"
+                                Background="{Binding IsProfilePage, Converter={StaticResource BooleanToHighlightConverter}}"
+                                Margin="0,0,0,15"
+                                Padding="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👤" FontSize="18"/>
+                                <TextBlock Text="Мой профиль" 
+                                           Margin="10,0,0,0" 
+                                           FontSize="16"/>
+                            </StackPanel>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding ViewProfileCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+
+                        <Border Cursor="Hand"
+                            Background="{Binding UserPostsPage, Converter={StaticResource BooleanToHighlightConverter}}"
+                            Margin="0,0,0,15"
+                            Padding="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📝" FontSize="18"/>
+                                <TextBlock Text="Мои публикации" 
+                                           Margin="10,0,0,0" 
+                                           FontSize="16"/>
+                            </StackPanel>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding NavigateToMyPostsCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+
+                        <Border Cursor="Hand"
+                            Background="{Binding UserLikesPage, Converter={StaticResource BooleanToHighlightConverter}}"
+                            Margin="0,0,0,15"
+                            Padding="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="❤️" FontSize="18"/>
+                                <TextBlock Text="Понравившиеся" 
+                                           Margin="10,0,0,0" 
+                                           FontSize="16"/>
+                            </StackPanel>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding NavigateToLikesCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+
+                        <Separator Margin="0,10,0,15"/>
+
+                        <Border Cursor="Hand"
+                                Margin="0,0,0,15"
+                                Padding="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🚪" FontSize="18"/>
+                                <TextBlock Text="Выход" 
+                                           Margin="10,0,0,0" 
+                                           FontSize="16"
+                                           Foreground="#808080"/>
+                            </StackPanel>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding LogoutCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Содержимое страницы -->
+            <ContentControl Grid.Column="1" 
+                    Content="{Binding RelativeSource={RelativeSource AncestorType=local:SharedLayout}, Path=PageContent}" 
+                    Margin="7.5,15,15,15"/>
+        </Grid>
+    </Grid>
+</UserControl>

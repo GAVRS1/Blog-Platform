@@ -1,0 +1,17 @@
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Data.deps.json
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Data.runtimeconfig.json
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Data.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Data.pdb
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Core.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\bin\Debug\net8.0\BlogContent.Core.pdb
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.csproj.AssemblyReference.cache
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.AssemblyInfoInputs.cache
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.AssemblyInfo.cs
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.csproj.CoreCompileInputs.cache
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogCont.C5E23381.Up2Date
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\refint\BlogContent.Data.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.pdb
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.genruntimeconfig.cache
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\ref\BlogContent.Data.dll
