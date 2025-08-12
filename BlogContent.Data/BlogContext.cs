@@ -4,6 +4,12 @@ namespace BlogContent.Data;
 
 public class BlogContext : DbContext
 {
+    public BlogContext()
+    {
+    }
+
+    public BlogContext(DbContextOptions<BlogContext> options) : base(options) { }
+
     public DbSet<User> Users { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Comment> Comments { get; set; }
@@ -13,7 +19,7 @@ public class BlogContext : DbContext
     public DbSet<CommentReply> CommentReplies { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=BlogContentDb;Username=timur;Password=1234"); // перед запуском поменять 
+        => optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=BlogContentDb;Username=timur;Password=1234"); 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -9,3 +9,4 @@ C:\Users\begin\source\repos\BlogPlatform\BlogContent.Core\obj\Debug\net8.0\BlogC
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Core\obj\Debug\net8.0\refint\BlogContent.Core.dll
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Core\obj\Debug\net8.0\BlogContent.Core.pdb
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Core\obj\Debug\net8.0\ref\BlogContent.Core.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Core\obj\Debug\net8.0\BlogContent.Core.sourcelink.json

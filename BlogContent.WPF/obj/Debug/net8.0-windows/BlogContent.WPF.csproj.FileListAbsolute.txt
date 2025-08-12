@@ -158,3 +158,4 @@ C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-window
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-windows\Views\MediaPlayerControl.g.cs
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-windows\Views\AudioPlayerControl.baml
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-windows\Views\MediaPlayerControl.baml
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-windows\BlogContent.WPF.sourcelink.json

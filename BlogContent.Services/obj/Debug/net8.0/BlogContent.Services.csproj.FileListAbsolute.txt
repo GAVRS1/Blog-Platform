@@ -15,3 +15,4 @@ C:\Users\begin\source\repos\BlogPlatform\BlogContent.Services\obj\Debug\net8.0\B
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Services\obj\Debug\net8.0\refint\BlogContent.Services.dll
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Services\obj\Debug\net8.0\BlogContent.Services.pdb
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Services\obj\Debug\net8.0\ref\BlogContent.Services.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Services\obj\Debug\net8.0\BlogContent.Services.sourcelink.json

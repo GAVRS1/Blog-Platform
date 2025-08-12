@@ -15,3 +15,4 @@ C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\refin
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.pdb
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.genruntimeconfig.cache
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\ref\BlogContent.Data.dll
+C:\Users\begin\source\repos\BlogPlatform\BlogContent.Data\obj\Debug\net8.0\BlogContent.Data.sourcelink.json

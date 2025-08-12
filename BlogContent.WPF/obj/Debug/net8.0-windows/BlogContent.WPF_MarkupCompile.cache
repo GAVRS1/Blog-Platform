@@ -8,12 +8,12 @@ C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\obj\Debug\net8.0-window
 BlogContent.WPF
 none
 false
-TRACE;DEBUG;NET;NET8_0;NETCOREAPP
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 C:\Users\begin\source\repos\BlogPlatform\BlogContent.WPF\App.xaml
 14-885637297
 
 441204592987
-217599850502
+217-428026091
 Assets\Styles\DefaultStyles.xaml;CreatePost.xaml;MainWindow.xaml;Views\AudioPlayerControl.xaml;Views\HomePage.xaml;Views\LoginPage.xaml;Views\MediaPlayerControl.xaml;Views\ProfileSetupPage.xaml;Views\RegisterPage.xaml;Views\SharedLayout.xaml;Views\StartPage.xaml;Views\UserLikesPage.xaml;Views\UserPostsPage.xaml;Views\UserProfilePage.xaml;
 
 False
