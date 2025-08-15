@@ -1,0 +1,135 @@
+﻿<Page x:Class="BlogContent.WPF.Views.RegisterPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:BlogContent.WPF.Views"
+          xmlns:utilities="clr-namespace:BlogContent.WPF.Utilities"
+
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="RegisterPage">
+
+    <Grid Background="#F0F2F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Шапка -->
+        <Border Grid.Row="0" Background="#4267B2" Height="80">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="BlogContent" 
+                           FontSize="32" 
+                           FontWeight="Bold" 
+                           Foreground="White"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Область регистрации -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                CornerRadius="8" 
+                Width="450" 
+                Padding="30" 
+                Margin="0,50,0,50" 
+                VerticalAlignment="Center"
+                BorderBrush="#DDDDDD"
+                BorderThickness="1"
+                Effect="{StaticResource ShadowEffect}">
+
+            <StackPanel>
+                <TextBlock Text="Регистрация" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Center" 
+                           Margin="0,0,0,30"/>
+
+                <TextBlock Text="Создайте учетную запись для доступа к платформе" 
+                           TextWrapping="Wrap" 
+                           HorizontalAlignment="Center" 
+                           Margin="0,0,0,20" 
+                           Foreground="#65676B"/>
+
+                <!-- Сообщение об ошибке -->
+                <TextBlock Text="{Binding ErrorMessage}" 
+                           Foreground="Red" 
+                           TextWrapping="Wrap" 
+                           Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                           Margin="0,0,0,15"/>
+
+                <!-- Email -->
+                <TextBlock Text="Email:" Margin="0,0,0,5" FontWeight="Medium"/>
+                <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" 
+                         Height="40" 
+                         Padding="10,0" 
+                         VerticalContentAlignment="Center" 
+                         Margin="0,0,0,15"
+                         BorderBrush="#DDDDDD"/>
+
+                <!-- Пароль -->
+                <TextBlock Text="Пароль:" Margin="0,0,0,5" FontWeight="Medium"/>
+                <PasswordBox Height="40" 
+                             Padding="10,0" 
+                             VerticalContentAlignment="Center" 
+                             Margin="0,0,0,15"
+                             BorderBrush="#DDDDDD"
+                             utilities:PasswordBoxHelper.BoundPassword="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <!-- Подтверждение пароля -->
+                <TextBlock Text="Подтверждение пароля:" Margin="0,0,0,5" FontWeight="Medium"/>
+                <PasswordBox Height="40" 
+                             Padding="10,0" 
+                             VerticalContentAlignment="Center" 
+                             Margin="0,0,0,25"
+                             BorderBrush="#DDDDDD"
+                             utilities:PasswordBoxHelper.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <!-- Кнопка перехода ко второму шагу -->
+                <Button Content="Продолжить" 
+                        Command="{Binding NextStepCommand}" 
+                        Height="45" 
+                        Background="#42B72A" 
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        FontSize="16" 
+                        Margin="0,0,0,20"/>
+
+                <!-- Ссылки -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="Уже есть аккаунт? " Foreground="#65676B"/>
+                    <TextBlock Text="Войти" 
+                              Foreground="#4267B2" 
+                              FontWeight="SemiBold"
+                              Cursor="Hand">
+                        <TextBlock.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                         Command="{Binding NavigateToLoginCommand}"/>
+                        </TextBlock.InputBindings>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                    <TextBlock Text="Вернуться на " Foreground="#65676B"/>
+                    <TextBlock Text="главную страницу" 
+                              Foreground="#4267B2" 
+                              FontWeight="SemiBold"
+                              Cursor="Hand">
+                        <TextBlock.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                         Command="{Binding NavigateToStartCommand}"/>
+                        </TextBlock.InputBindings>
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Футер -->
+        <TextBlock Grid.Row="2" 
+                   Text="© 2025 BlogContent. Делал Тимур Бегинов." 
+                   HorizontalAlignment="Center" 
+                   Margin="0,10,0,20" 
+                   Foreground="#65676B"/>
+    </Grid>
+</Page>
