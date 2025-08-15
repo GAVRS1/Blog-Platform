@@ -1,12 +1,8 @@
 [build]
-  # ветка, из которой Netlify будет собирать
+  base = "blogplatform-frontend"
+  command = "npm ci --legacy-peer-deps && npm run build"
+  publish = "blogplatform-frontend/dist"
   branch = "main"
-
-  # команда сборки
-  command = "npm run build"
-
-  # папка с результатом
-  publish = "dist"
 
 [[redirects]]
   from = "/*"
