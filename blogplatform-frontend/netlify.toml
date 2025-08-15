@@ -1,0 +1,14 @@
+[build]
+  # ветка, из которой Netlify будет собирать
+  branch = "main"
+
+  # команда сборки
+  command = "npm run build"
+
+  # папка с результатом
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
