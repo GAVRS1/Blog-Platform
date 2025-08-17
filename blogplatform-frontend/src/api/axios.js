@@ -1,4 +1,4 @@
-// src/api/axios.js
+// src/api/axios.js  - полный
 import axios from 'axios';
 
 const api = axios.create({
@@ -6,7 +6,25 @@ const api = axios.create({
   timeout: 5000,
 });
 
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) config.headers['Authorization'] = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// при старте
 const token = localStorage.getItem('token');
-if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+if (token) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+// экспортируем helper для установки
+export const setAuthToken = (token) => {
+  localStorage.setItem('token', token);
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+};
 
 export default api;
