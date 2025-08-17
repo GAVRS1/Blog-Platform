@@ -1,4 +1,3 @@
-// src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -13,8 +12,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const { token } = await api.post('/auth/login', { email, password });
-      setAuthToken(token);
+      const res = await api.post('/auth/login', { email, password });
+      const token = res.data?.token;
+      if (!token) throw new Error('Токен отсутствует');
+      localStorage.setItem('token', token); // Сохраняем токен в localStorage
+      // Нет необходимости устанавливать api.defaults.headers.common['Authorization'] здесь,
+      // так как интерцептор в axios.js позаботится об этом.
       navigate('/');
     } catch (err) {
       setError(err.response?.data || 'Ошибка авторизации');

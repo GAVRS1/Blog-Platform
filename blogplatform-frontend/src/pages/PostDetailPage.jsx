@@ -1,4 +1,3 @@
-// src/pages/PostDetailPage.jsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
@@ -10,11 +9,11 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
 
-  // добавляем токен перед каждым запросом
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }, []);
+  // Удаляем этот useEffect, так как интерцептор в axios.js уже обрабатывает токен
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  // }, []);
 
   const loadData = async () => {
     try {

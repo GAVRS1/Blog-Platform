@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import PostCard from '../components/PostCard';
@@ -8,13 +7,13 @@ export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
-  // --- добавлено: всегда читаем токен
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  }, []);
+  // Удаляем этот useEffect, так как интерцептор в axios.js уже обрабатывает токен
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  //   }
+  // }, []);
 
   const loadPosts = () => {
     api.get('/posts')
