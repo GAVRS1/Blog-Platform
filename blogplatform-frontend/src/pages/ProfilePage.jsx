@@ -9,11 +9,28 @@ export default function ProfilePage() {
   const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
+  // добавляем токен перед каждым запросом
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }, []);
+
   const loadData = async () => {
-    const userRes = await api.get('/users/me');
-    setUser(userRes.data);
-    const postsRes = await api.get(`/posts/user/${userRes.data.id}`);
-    setPosts(postsRes.data);
+    try {
+      const [userRes, postsRes] = await Promise.all([
+        api.get('/users/me'),
+        api.get('/posts/user/me')
+      ]);
+      setUser(userRes.data);
+      setPosts(postsRes.data);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else {
+        console.error(err);
+      }
+    }
   };
 
   useEffect(() => {

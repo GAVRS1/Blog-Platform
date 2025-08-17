@@ -1,3 +1,4 @@
+// src/pages/HomePage.jsx
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import PostCard from '../components/PostCard';
@@ -7,10 +8,25 @@ export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
+  // --- добавлено: всегда читаем токен
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, []);
+
   const loadPosts = () => {
     api.get('/posts')
       .then(res => setPosts(res.data))
-      .catch(console.error);
+      .catch(err => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        } else {
+          console.error(err);
+        }
+      });
   };
 
   useEffect(() => {
