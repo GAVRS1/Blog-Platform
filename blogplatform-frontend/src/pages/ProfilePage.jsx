@@ -1,66 +1,50 @@
-// src/pages/ProfilePage.jsx
-import { useEffect, useState } from 'react';
+// src/pages/LoginPage.jsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import PostCard from '../components/PostCard';
-import EditProfileModal from '../components/EditProfileModal';
 
-export default function ProfilePage() {
-  const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  // добавляем токен перед каждым запросом
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }, []);
-
-  const loadData = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
     try {
-      const [userRes, postsRes] = await Promise.all([
-        api.get('/users/me'),
-        api.get('/posts/user/me')
-      ]);
-      setUser(userRes.data);
-      setPosts(postsRes.data);
+      const res = await api.post('/auth/login', { email, password });
+      const token = res.data?.token;
+      if (!token) throw new Error('Токен отсутствует');
+      localStorage.setItem('token', token); // ✅ сохраняем
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      navigate('/');
     } catch (err) {
-      console.error(err);
-      
+      setError(err.response?.data || 'Ошибка авторизации');
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  if (!user) return <p>Загрузка...</p>;
-
   return (
-    <div className="profile-page">
-      <header className="profile-header">
-        <img
-          src={user.profilePictureUrl || '/avatar.png'}
-          alt="avatar"
-          className="profile-avatar"
+    <div className="login-page">
+      <h2>Вход</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
-        <div className="profile-info">
-          <h2>{user.username}</h2>
-          <p>{user.fullName}</p>
-          <p>📝 {posts.length} публикаций</p>
-          <p>💬 {user.commentsCount} комментариев</p>
-        </div>
-        <button className="btn-edit" onClick={() => setShowModal(true)}>
-          Редактировать
-        </button>
-      </header>
-
-      <main className="profile-posts">
-        {posts.map(post => <PostCard key={post.id} post={post} />)}
-      </main>
-
-      {showModal && (
-        <EditProfileModal onClose={() => setShowModal(false)} onSaved={loadData} />
-      )}
+        <input
+          type="password"
+          placeholder="Пароль"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Войти</button>
+      </form>
     </div>
   );
 }
