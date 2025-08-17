@@ -20,12 +20,8 @@ export default function HomePage() {
     api.get('/posts')
       .then(res => setPosts(res.data))
       .catch(err => {
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        } else {
-          console.error(err);
-        }
+        console.error(err);
+        
       });
   };
 

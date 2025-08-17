@@ -25,12 +25,8 @@ export default function PostDetailPage() {
       setPost(postRes.data);
       setComments(commentsRes.data);
     } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      } else {
-        console.error(err);
-      }
+      console.error(err);
+      
     }
   };
 
