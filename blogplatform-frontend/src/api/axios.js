@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://localhost:7141/api',
+  baseURL: import.meta.env.VITE_API_BASE || 'https://localhost:7141/api',
 });
 
-// Всегда добавляем токен из localStorage к каждому запросу
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -12,5 +11,17 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Автоматический logout при 401
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
 
 export default api;

@@ -1,11 +1,15 @@
-// src/components/ThemeToggle.jsx
-import { useTheme } from '../context/ThemeProvider';
+import { useTheme } from '@/context/ThemeProvider';
+import { motion } from 'framer-motion';
 
 export default function ThemeToggle() {
   const { dark, toggle } = useTheme();
   return (
-    <button className="theme-btn" onClick={toggle}>
+    <motion.button
+      className="btn btn-circle btn-ghost"
+      onClick={toggle}
+      whileTap={{ rotate: 180 }}
+    >
       {dark ? '☀️' : '🌙'}
-    </button>
+    </motion.button>
   );
 }
