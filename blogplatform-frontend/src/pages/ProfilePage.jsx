@@ -1,57 +1,83 @@
-import { useEffect, useState } from 'react';
-import api from '@/api/axios';
-import PostCard from '@/components/PostCard';
-import EditProfileModal from '@/components/EditProfileModal';
-import ProfileTabs from '@/components/ProfileTabs';
+// src/pages/ProfilePage.jsx
+import { useState } from 'react';
+import { useMyData } from '@/hooks/useMyData';
 import SkeletonPost from '@/components/SkeletonPost';
+import PostCard from '@/components/PostCard';
+import Comment from '@/components/Comment';
+import EditProfileModal from '@/components/EditProfileModal';
+
+const tabs = [
+  { key: 'posts',   label: 'Публикации', endpoint: 'posts/user/me' },
+  { key: 'likes',   label: 'Лайки',      endpoint: 'likes/me'      },
+  { key: 'comments',label: 'Комментарии',endpoint: 'comments/me'   },
+];
 
 export default function ProfilePage() {
-  const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [likes, setLikes] = useState([]);
-  const [comments, setComments] = useState([]);
+  const [tab, setTab] = useState('posts');
   const [showModal, setShowModal] = useState(false);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useMyData(tabs.find(t => t.key === tab).endpoint);
 
-  useEffect(() => {
-    (async () => {
-      const [u, p, l, c] = await Promise.all([
-        api.get('/users/me'),
-        api.get('/posts/user/me'),
-        api.get('/likes/me'),
-        api.get('/comments/me'),
-      ]);
-      setUser(u.data);
-      setPosts(p.data);
-      setLikes(l.data);
-      setComments(c.data);
-    })();
-  }, []);
+  const items = data?.pages.flat() ?? [];
 
-  if (!user) return <SkeletonPost />;
-
-  return (
-    <div className="profile-page">
-      <header className="profile-header">
-        <img src={user.profilePictureUrl || '/avatar.png'} alt="avatar" />
-        <div>
-          <h2>{user.username}</h2>
-          <p>{user.fullName}</p>
-        </div>
-        <button onClick={() => setShowModal(true)}>Редактировать</button>
-      </header>
-
-      <ProfileTabs
-        posts={posts.map((p) => <PostCard key={p.id} post={p} />)}
-        likes={likes.map((l) => (
-          <PostCard key={l.id} post={l.post} />
-        ))}
-        comments={comments.map((c) => (
-          <div key={c.id} className="comment-card">
-            <p>{c.content}</p>
+  const renderContent = () => {
+    switch (tab) {
+      case 'posts':
+        return items.map(p => <PostCard key={p.id} post={p} />);
+      case 'likes':
+        return items.map(l => <PostCard key={l.id} post={l.post} />);
+      case 'comments':
+        return items.map(c => (
+          <div key={c.id} className="card bg-base-100 shadow mb-4 p-4">
+            <p className="mb-2">{c.content}</p>
             <PostCard post={c.post} />
           </div>
+        ));
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <img
+          src="/avatar.png"
+          alt="avatar"
+          className="w-20 h-20 rounded-full ring ring-primary"
+        />
+        <div>
+          <h1 className="text-2xl font-bold">@username</h1>
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn btn-outline btn-primary btn-sm mt-2"
+          >
+            Редактировать
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="tabs tabs-boxed mb-4">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            className={`tab ${tab === t.key ? 'tab-active' : ''}`}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+          </button>
         ))}
-      />
+      </div>
+
+      {/* Content */}
+      <div className="space-y-6">
+        {renderContent()}
+        {isFetchingNextPage && [...Array(3)].map((_, i) => <SkeletonPost key={i} />)}
+        {!isFetchingNextPage && !hasNextPage && items.length === 0 && (
+          <p className="text-center text-base-content/60">Пока пусто 😴</p>
+        )}
+      </div>
 
       {showModal && (
         <EditProfileModal onClose={() => setShowModal(false)} onSaved={() => window.location.reload()} />

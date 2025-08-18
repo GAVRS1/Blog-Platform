@@ -19,8 +19,6 @@ export default function BottomNav() {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 h-16 flex">
       <NavItem to="/"        icon="🏠" />
       <NavItem to="/profile" icon="👤" />
-      <NavItem to="/likes"   icon="❤️" />
-      <NavItem to="/posts"   icon="📝" />
     </nav>
   );
 }
