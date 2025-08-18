@@ -10,18 +10,18 @@ import api from '@/api/axios';
 export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery(['posts'], ({ pageParam = 1 }) =>
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  refetch,
+} = useInfiniteQuery({
+  queryKey: ['posts'],
+  queryFn: ({ pageParam = 1 }) =>
     api.get(`/posts?page=${pageParam}&limit=5`).then((r) => r.data),
-    {
-      getNextPageParam: (last, pages) =>
-        last.length < 5 ? undefined : pages.length + 1,
-    }
-  );
+  getNextPageParam: (last, pages) =>
+    last.length < 5 ? undefined : pages.length + 1,
+});
 
   const { ref, inView } = useInView({ threshold: 0.5 });
   useEffect(() => {
