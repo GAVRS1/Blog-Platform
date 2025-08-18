@@ -4,8 +4,9 @@ import 'react-lazy-load-image-component/src/effects/blur.css';
 export default function MediaPlayer({ url, type, className = '' }) {
   if (!url) return null;
 
-  // если url уже начинается со слеша – не добавляем ещё один
-  const src = `${import.meta.env.VITE_API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
+  // если url уже начинается со слеша, не дублируем его
+  const normalized = url.startsWith('/') ? url.slice(1) : url;
+  const src = `${import.meta.env.VITE_API_BASE}/uploads/${normalized}`;
 
   switch (type) {
     case 'image':

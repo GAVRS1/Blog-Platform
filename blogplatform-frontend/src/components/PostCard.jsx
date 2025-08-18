@@ -6,10 +6,9 @@ import MediaPlayer from './MediaPlayer';
 export default function PostCard({ post }) {
   const navigate = useNavigate();
 
-  // абсолютный URL аватара
   const avatarUrl = post.userAvatar
-    ? `${import.meta.env.VITE_API_BASE}${post.userAvatar}`
-    : '/avatar.png';
+  ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
+  : '/avatar.png';
 
   return (
     <motion.div
