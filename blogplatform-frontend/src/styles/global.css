@@ -1,12 +1,7 @@
-/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Базовые стили */
-html {
-  scroll-behavior: smooth;
-}
 body {
-  @apply bg-base-100 text-base-content;
+  @apply bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5;
 }

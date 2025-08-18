@@ -15,7 +15,7 @@ const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 const ProtectedProfile = withAuth(ProfilePage);
 
 const Spinner = () => (
-  <div className="flex justify-center items-center h-64">
+  <div className="flex justify-center items-center h-screen">
     <span className="loading loading-spinner loading-lg text-primary"></span>
   </div>
 );
@@ -24,19 +24,21 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5">
+        <div className="min-h-screen">
+          {/* Navbar */}
           <nav className="navbar bg-primary text-primary-content shadow-lg">
             <div className="flex-1">
-              <a href="/" className="btn btn-ghost text-xl normal-case">BlogPlatform</a>
+              <a href="/" className="btn btn-ghost text-xl">BlogPlatform</a>
             </div>
             <div className="flex-none gap-2">
-              <a href="/" className="btn btn-ghost btn-sm rounded-btn">Главная</a>
-              <a href="/profile" className="btn btn-ghost btn-sm rounded-btn">Профиль</a>
-              <a href="/login" className="btn btn-ghost btn-sm rounded-btn">Войти</a>
+              <a href="/"        className="btn btn-ghost btn-sm">Главная</a>
+              <a href="/profile" className="btn btn-ghost btn-sm">Профиль</a>
+              <a href="/login"   className="btn btn-ghost btn-sm">Войти</a>
               <ThemeToggle />
             </div>
           </nav>
 
+          {/* Main */}
           <main className="container mx-auto px-4 py-8">
             <Suspense fallback={<Spinner />}>
               <Routes>
