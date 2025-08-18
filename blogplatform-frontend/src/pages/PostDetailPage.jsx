@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import api from '@/api/axios';
 import Comment from '@/components/Comment';
 import MediaPlayer from '@/components/MediaPlayer';
-import toast from 'react-hot-toast';
 import SkeletonPost from '@/components/SkeletonPost';
+import toast from 'react-hot-toast';
 
 export default function PostDetailPage() {
   const { id } = useParams();
@@ -42,33 +42,68 @@ export default function PostDetailPage() {
 
   if (!post) return <SkeletonPost />;
 
+  // аватар автора
+  const authorAvatar = post.userAvatar
+    ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
+    : '/avatar.png';
+
   return (
-    <motion.div className="post-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h1>{post.title}</h1>
-      <p className="post-meta">
-        @{post.user?.username} · {new Date(post.createdAt).toLocaleString()}
-      </p>
+    <motion.div
+      className="container mx-auto px-4 py-8 max-w-2xl"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* META */}
+      <div className="flex items-center gap-3 mb-4">
+        <img
+          src={authorAvatar}
+          alt="avatar"
+          className="w-12 h-12 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+        />
+        <div>
+          <p className="font-bold text-lg">{post.username}</p>
+          <p className="text-xs text-base-content/60">
+            {new Date(post.createdAt).toLocaleString()}
+          </p>
+        </div>
+      </div>
 
-      <p>{post.content}</p>
+      {/* CONTENT */}
+      <h1 className="text-3xl font-bold text-primary mb-2">{post.title}</h1>
+      <p className="text-base-content/80 mb-4 whitespace-pre-wrap">{post.content}</p>
 
+      {/* MEDIA */}
       <MediaPlayer url={post.imageUrl} type="image" />
       <MediaPlayer url={post.videoUrl} type="video" />
       <MediaPlayer url={post.audioUrl} type="audio" />
 
-      <section className="comments-section">
-        <h3>Комментарии ({comments.length})</h3>
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Напишите комментарий..."
-          rows={3}
-        />
-        <button onClick={handleComment}>Отправить</button>
+      {/* LIKES */}
+      <div className="flex justify-end mt-4">
+        <span className="text-sm text-base-content/60">
+          ❤️ {post.likeCount} &nbsp; 💬 {post.commentCount}
+        </span>
+      </div>
 
+      <hr className="my-6" />
+
+      {/* COMMENTS */}
+      <h2 className="text-xl font-bold mb-3">Комментарии ({comments.length})</h2>
+      <textarea
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        placeholder="Напишите комментарий..."
+        rows={3}
+        className="textarea textarea-bordered w-full mb-2"
+      />
+      <button onClick={handleComment} className="btn btn-primary mb-4">
+        Отправить
+      </button>
+
+      <div className="space-y-4">
         {comments.map((c) => (
           <Comment key={c.id} comment={c} onReply={load} />
         ))}
-      </section>
+      </div>
     </motion.div>
   );
 }
