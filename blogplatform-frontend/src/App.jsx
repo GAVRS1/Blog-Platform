@@ -42,6 +42,7 @@ function Layout() {
 
       {/* Mobile Bottom Nav */}
       <BottomNav />
+      <AddPostFAB />
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function Sidebar() {
   const { user } = useAuth();
 
   return (
-    <aside className="w-64 h-[calc(100vh-2rem)] m-4 bg-base-100 rounded-xl shadow-xl p-4 flex flex-col gap-4">
+    <aside className="hidden lg:flex w-64 h-[calc(100vh-2rem)] ml-auto mr-4 my-4 bg-base-100 rounded-xl shadow-xl p-4 flex-col gap-4">
       {/* Avatar */}
       <div className="flex items-center gap-3">
         <img
