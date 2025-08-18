@@ -16,7 +16,6 @@ const LoginPage      = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage   = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage    = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
-const CreatePostPage = lazy(() => import('@/pages/CreatePostPage')); // если нужна отдельная страница
 
 const ProtectedProfile = withAuth(ProfilePage);
 
@@ -64,7 +63,6 @@ export default function App() {
             <Route path="/register"    element={<RegisterPage />} />
             <Route path="/profile"     element={<ProtectedProfile />} />
             <Route path="/post/:id"    element={<PostDetailPage />} />
-            <Route path="/create-post" element={<CreatePostPage />} />
             <Route path="*"            element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
