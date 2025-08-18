@@ -1,6 +1,7 @@
-// src/components/EditProfileModal.jsx
 import { useState, useEffect } from 'react';
-import api from '../api/axios';
+import api from '@/api/axios';
+import AvatarUploader from './AvatarUploader';
+import toast from 'react-hot-toast';
 
 export default function EditProfileModal({ onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -8,47 +9,96 @@ export default function EditProfileModal({ onClose, onSaved }) {
     fullName: '',
     bio: '',
     birthDate: '',
-    file: null
   });
+  const [avatarBlob, setAvatarBlob] = useState(null);
 
   useEffect(() => {
-    api.get('/users/me').then(res => setForm(res.data));
+    api.get('/auth/me').then(res => {
+      const { username, profile } = res.data;
+      setForm({
+        username,
+        fullName: profile.fullName,
+        bio: profile.bio,
+        birthDate: profile.birthDate?.split('T')[0] || '',
+      });
+    });
   }, []);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleFile = e => setForm({ ...form, file: e.target.files[0] });
-
   const handleSave = async () => {
-    const data = new FormData();
-    Object.keys(form).forEach(k => data.append(k, form[k]));
-    await api.put('/users/me', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-    onSaved();
-    onClose();
+    try {
+      // 1. обновляем текстовые поля
+      await api.put('/users/profile', {
+        fullName: form.fullName,
+        bio: form.bio,
+        birthDate: form.birthDate,
+      });
+
+      // 2. если выбран новый аватар – грузим
+      if (avatarBlob) {
+        const fd = new FormData();
+        fd.append('file', avatarBlob);
+        fd.append('type', 'avatar');
+        const { data } = await api.post('/media/upload', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        await api.put('/users/profile/avatar', { avatarUrl: data.url });
+      }
+
+      toast.success('Профиль обновлён!');
+      onSaved();
+    } catch (e) {
+      toast.error('Ошибка при сохранении');
+    }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Редактировать профиль</h2>
+    <div className="modal modal-open">
+      <div className="modal-box w-11/12 max-w-md">
+        <h3 className="font-bold text-lg mb-4">Редактировать профиль</h3>
 
-        <label>Никнейм</label>
-        <input name="username" value={form.username} onChange={handleChange} />
+        <label className="form-control">
+          <span className="label-text">Никнейм</span>
+          <input
+            className="input input-bordered"
+            value={form.username}
+            disabled
+          />
+        </label>
 
-        <label>ФИО</label>
-        <input name="fullName" value={form.fullName} onChange={handleChange} />
+        <label className="form-control">
+          <span className="label-text">Имя и фамилия</span>
+          <input
+            className="input input-bordered"
+            value={form.fullName}
+            onChange={e => setForm({ ...form, fullName: e.target.value })}
+          />
+        </label>
 
-        <label>О себе</label>
-        <textarea name="bio" value={form.bio} onChange={handleChange} />
+        <label className="form-control">
+          <span className="label-text">О себе</span>
+          <textarea
+            className="textarea textarea-bordered"
+            rows={3}
+            value={form.bio}
+            onChange={e => setForm({ ...form, bio: e.target.value })}
+          />
+        </label>
 
-        <label>Дата рождения</label>
-        <input type="date" name="birthDate" value={form.birthDate} onChange={handleChange} />
+        <label className="form-control">
+          <span className="label-text">Дата рождения</span>
+          <input
+            type="date"
+            className="input input-bordered"
+            value={form.birthDate}
+            onChange={e => setForm({ ...form, birthDate: e.target.value })}
+          />
+        </label>
 
-        <label>Аватар</label>
-        <input type="file" accept="image/*" onChange={handleFile} />
+        <AvatarUploader onCropped={setAvatarBlob} />
 
-        <div className="modal-actions">
-          <button onClick={handleSave}>Сохранить</button>
-          <button onClick={onClose}>Отмена</button>
+        <div className="modal-action">
+          <button className="btn btn-primary" onClick={handleSave}>Сохранить</button>
+          <button className="btn" onClick={onClose}>Отмена</button>
         </div>
       </div>
     </div>

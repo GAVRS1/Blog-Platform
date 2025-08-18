@@ -2,9 +2,12 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LikeButton from './LikeButton';
 import MediaPlayer from './MediaPlayer';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function PostCard({ post }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isOwner = user?.id === post.userId;
 
   const avatarUrl = post.userAvatar
   ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
@@ -16,6 +19,7 @@ export default function PostCard({ post }) {
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300 }}
       onClick={() => navigate(`/post/${post.id}`)}
+      
     >
       <div className="card-body">
         {/* Аватар + имя */}
@@ -52,6 +56,20 @@ export default function PostCard({ post }) {
           <button className="btn btn-ghost btn-sm gap-1">
             💬 {post.commentCount}
           </button>
+          {isOwner && (
+  <button
+    className="btn btn-ghost btn-xs text-error"
+    onClick={async (e) => {
+      e.stopPropagation();
+      if (confirm('Удалить пост?')) {
+        await api.delete(`/posts/${post.id}`);
+        window.location.reload();
+      }
+    }}
+  >
+    🗑 Удалить
+  </button>
+)}
         </div>
       </div>
     </motion.div>
