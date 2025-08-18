@@ -12,8 +12,8 @@ import withAuth     from '@/hocs/withAuth';
 
 // Ленивые страницы
 const HomePage       = lazy(() => import('@/pages/HomePage'));
-const LoginPage      = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage   = lazy(() => import('@/pages/RegisterPage'));
+const LoginPage    = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage    = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 
