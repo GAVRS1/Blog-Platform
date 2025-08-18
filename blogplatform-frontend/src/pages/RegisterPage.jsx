@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.jsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth';
@@ -21,11 +20,24 @@ export default function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      // Валидация полей
+      if (!form.email || !form.password || !form.username) {
+        toast.error('Заполните все обязательные поля');
+        return;
+      }
+
+      if (form.password.length < 6) {
+        toast.error('Пароль должен содержать не менее 6 символов');
+        return;
+      }
+
+      // Регистрация пользователя
       await authService.register(form);
       toast.success('Регистрация успешна!');
-      navigate('/');
+      navigate('/login');
     } catch (err) {
-      toast.error(err.response?.data || 'Ошибка регистрации');
+      const msg = err.response?.data?.message || err.response?.data || 'Ошибка регистрации';
+      toast.error(msg);
     }
   };
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
@@ -9,25 +8,27 @@ import api from '@/api/axios';
 export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const {
-  data,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-  refetch,
-} = useInfiniteQuery({
-  queryKey: ['posts'],
-  queryFn: ({ pageParam = 1 }) =>
-    api.get(`/posts?page=${pageParam}&limit=5`).then((r) => r.data),
-  getNextPageParam: (last, pages) =>
-    last.length < 5 ? undefined : pages.length + 1,
-});
-
-  const { ref, inView } = useInView({ threshold: 0.5 });
-  useEffect(() => {
-    if (inView && hasNextPage) fetchNextPage();
-  }, [inView]);
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ['posts'],
+    queryFn: ({ pageParam = 1 }) =>
+      api.get(`/posts?page=${pageParam}&limit=5`).then((r) => r.data),
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < 5 ? undefined : allPages.length + 1,
+  });
 
   const posts = data?.pages.flat() ?? [];
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Ошибка загрузки постов');
+    }
+  }, [error]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,7 +48,6 @@ export default function HomePage() {
         {!isFetchingNextPage && !hasNextPage && posts.length === 0 && (
           <p className="text-center text-base-content/60">Пока ничего нет 😴</p>
         )}
-        <div ref={ref} className="h-1" />
       </div>
 
       {showModal && (
