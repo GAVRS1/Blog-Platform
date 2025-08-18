@@ -3,22 +3,18 @@ import 'react-lazy-load-image-component/src/effects/blur.css';
 
 export default function MediaPlayer({ url, type, className = '' }) {
   if (!url) return null;
-  const src = `${import.meta.env.VITE_API_BASE}/uploads/${url}`;
-  const webp = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+
+  // если url уже начинается со слеша – не добавляем ещё один
+  const src = `${import.meta.env.VITE_API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 
   switch (type) {
     case 'image':
       return (
         <LazyLoadImage
-          src={webp}
-          srcSet={`${webp} 1x, ${src} 2x`}
-          placeholderSrc={src}
+          src={src}
           alt="content"
           effect="blur"
           className={`w-full rounded-xl ${className}`}
-          onError={(e) => {
-            e.target.src = '/placeholder.jpg'; // Placeholder image
-          }}
         />
       );
     case 'video':
@@ -27,9 +23,6 @@ export default function MediaPlayer({ url, type, className = '' }) {
           src={src}
           controls
           className={`w-full rounded-xl ${className}`}
-          onError={(e) => {
-            e.target.src = '/placeholder.mp4'; // Placeholder video
-          }}
         />
       );
     case 'audio':
@@ -38,9 +31,6 @@ export default function MediaPlayer({ url, type, className = '' }) {
           src={src}
           controls
           className={`w-full rounded-xl ${className}`}
-          onError={(e) => {
-            e.target.src = '/placeholder.mp3'; // Placeholder audio
-          }}
         />
       );
     default:

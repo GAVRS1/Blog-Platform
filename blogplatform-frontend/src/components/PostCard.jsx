@@ -6,6 +6,11 @@ import MediaPlayer from './MediaPlayer';
 export default function PostCard({ post }) {
   const navigate = useNavigate();
 
+  // абсолютный URL аватара
+  const avatarUrl = post.userAvatar
+    ? `${import.meta.env.VITE_API_BASE}${post.userAvatar}`
+    : '/avatar.png';
+
   return (
     <motion.div
       className="card bg-base-100 shadow-xl mb-6 cursor-pointer"
@@ -14,39 +19,36 @@ export default function PostCard({ post }) {
       onClick={() => navigate(`/post/${post.id}`)}
     >
       <div className="card-body">
+        {/* Аватар + имя */}
         <div className="flex items-center gap-3">
           <img
-            src={post.user?.profilePictureUrl || '/avatar.png'}
+            src={avatarUrl}
             alt="avatar"
             className="w-12 h-12 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
           />
           <div>
-            <h3 className="font-bold">{post.user?.username}</h3>
+            <h3 className="font-bold">{post.username}</h3>
             <span className="text-xs text-base-content/60">
               {new Date(post.createdAt).toLocaleString()}
             </span>
           </div>
         </div>
 
+        {/* Заголовок и текст */}
         <h2 className="card-title text-primary">{post.title}</h2>
         <p className="text-sm text-base-content/80">{post.content}</p>
 
-        {/* Media content */}
-        {post.imageUrl && (
-          <MediaPlayer url={post.imageUrl} type="image" className="mb-4" />
-        )}
-        {post.videoUrl && (
-          <MediaPlayer url={post.videoUrl} type="video" className="mb-4" />
-        )}
-        {post.audioUrl && (
-          <MediaPlayer url={post.audioUrl} type="audio" className="mb-4" />
-        )}
+        {/* Медиа-контент */}
+        <MediaPlayer url={post.imageUrl} type="image" />
+        <MediaPlayer url={post.videoUrl} type="video" />
+        <MediaPlayer url={post.audioUrl} type="audio" />
 
+        {/* Лайки и комменты */}
         <div className="card-actions justify-end">
           <LikeButton
             postId={post.id}
             initialLiked={post.isLikedByCurrentUser}
-            initialCount={post.likeCount}
+            initialCount={post.likesCount}
           />
           <button className="btn btn-ghost btn-sm gap-1">
             💬 {post.commentCount}

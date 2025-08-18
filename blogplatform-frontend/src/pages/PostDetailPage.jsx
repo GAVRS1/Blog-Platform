@@ -5,6 +5,7 @@ import api from '@/api/axios';
 import Comment from '@/components/Comment';
 import MediaPlayer from '@/components/MediaPlayer';
 import toast from 'react-hot-toast';
+import SkeletonPost from '@/components/SkeletonPost';
 
 export default function PostDetailPage() {
   const { id } = useParams();
