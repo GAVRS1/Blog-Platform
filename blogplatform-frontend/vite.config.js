@@ -5,13 +5,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  server: { https: { rejectUnauthorized: false } },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
-  },
-  build: {
-    outDir: 'dist',
-  },
+  resolve: { alias: { '@': resolve(__dirname, 'src') } },
+  build: { cssCodeSplit: false, outDir: 'dist' },
+  base: '/',   // ← критично для Netlify
 });
