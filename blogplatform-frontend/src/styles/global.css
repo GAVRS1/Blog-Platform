@@ -3,9 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
   body {
     @apply bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 !important;
   }

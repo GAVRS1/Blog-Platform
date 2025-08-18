@@ -1,11 +1,17 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { '@': resolve(__dirname, 'src') } },
-  build: { cssCodeSplit: false, outDir: 'dist' },
-  base: '/',   // ← критично для Netlify
+  resolve: {
+    alias: { '@': resolve(__dirname, 'src') },
+  },
+  css: { postcss: './postcss.config.js' },
+  build: {
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: { manualChunks: undefined },
+    },
+  },
 });
