@@ -31,18 +31,25 @@ export default function PostCard({ post }) {
         <h2 className="card-title text-primary">{post.title}</h2>
         <p className="text-sm text-base-content/80">{post.content}</p>
 
-        <MediaPlayer url={post.imageUrl} type="image" />
-        <MediaPlayer url={post.videoUrl} type="video" />
-        <MediaPlayer url={post.audioUrl} type="audio" />
+        {/* Media content */}
+        {post.imageUrl && (
+          <MediaPlayer url={post.imageUrl} type="image" className="mb-4" />
+        )}
+        {post.videoUrl && (
+          <MediaPlayer url={post.videoUrl} type="video" className="mb-4" />
+        )}
+        {post.audioUrl && (
+          <MediaPlayer url={post.audioUrl} type="audio" className="mb-4" />
+        )}
 
         <div className="card-actions justify-end">
           <LikeButton
             postId={post.id}
             initialLiked={post.isLikedByCurrentUser}
-            initialCount={post.likesCount}
+            initialCount={post.likeCount}
           />
           <button className="btn btn-ghost btn-sm gap-1">
-            💬 {post.commentsCount}
+            💬 {post.commentCount}
           </button>
         </div>
       </div>

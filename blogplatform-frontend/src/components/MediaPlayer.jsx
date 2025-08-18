@@ -16,12 +16,33 @@ export default function MediaPlayer({ url, type, className = '' }) {
           alt="content"
           effect="blur"
           className={`w-full rounded-xl ${className}`}
+          onError={(e) => {
+            e.target.src = '/placeholder.jpg'; // Placeholder image
+          }}
         />
       );
     case 'video':
-      return <video src={src} controls className={`w-full rounded-xl ${className}`} />;
+      return (
+        <video
+          src={src}
+          controls
+          className={`w-full rounded-xl ${className}`}
+          onError={(e) => {
+            e.target.src = '/placeholder.mp4'; // Placeholder video
+          }}
+        />
+      );
     case 'audio':
-      return <audio src={src} controls className={`w-full rounded-xl ${className}`} />;
+      return (
+        <audio
+          src={src}
+          controls
+          className={`w-full rounded-xl ${className}`}
+          onError={(e) => {
+            e.target.src = '/placeholder.mp3'; // Placeholder audio
+          }}
+        />
+      );
     default:
       return null;
   }

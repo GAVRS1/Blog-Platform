@@ -4,11 +4,11 @@ import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
 export default function CreatePostModal({ onClose, onCreated }) {
-  const [title, setTitle]   = useState('');
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [type, setType]     = useState('Article');
-  const [file, setFile]     = useState(null);
-  const [drag, setDrag]     = useState(false);
+  const [type, setType] = useState('Article');
+  const [file, setFile] = useState(null);
+  const [drag, setDrag] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,7 +55,6 @@ export default function CreatePostModal({ onClose, onCreated }) {
         <form onSubmit={handleSubmit} className="card-body gap-4">
           <h3 className="card-title text-primary">Создать пост</h3>
 
-          {/* Заголовок */}
           <label className="form-control">
             <span className="label-text font-semibold">Заголовок</span>
             <input
@@ -67,7 +66,6 @@ export default function CreatePostModal({ onClose, onCreated }) {
             />
           </label>
 
-          {/* Тип контента */}
           <label className="form-control">
             <span className="label-text font-semibold">Тип контента</span>
             <select
@@ -82,7 +80,6 @@ export default function CreatePostModal({ onClose, onCreated }) {
             </select>
           </label>
 
-          {/* Файл / Drag-n-Drop */}
           {type !== 'Article' && (
             <label className="form-control">
               <span className="label-text font-semibold">Файл</span>
@@ -105,7 +102,6 @@ export default function CreatePostModal({ onClose, onCreated }) {
             </label>
           )}
 
-          {/* Текст */}
           <label className="form-control">
             <span className="label-text font-semibold">Текст</span>
             <textarea
@@ -117,7 +113,6 @@ export default function CreatePostModal({ onClose, onCreated }) {
             />
           </label>
 
-          {/* Кнопки */}
           <div className="card-actions justify-end mt-2">
             <button type="button" className="btn btn-ghost" onClick={onClose}>
               Отмена
