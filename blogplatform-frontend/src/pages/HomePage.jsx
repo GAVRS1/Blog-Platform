@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
