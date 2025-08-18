@@ -4,12 +4,19 @@ import api from '@/api/axios';
 
 export function useAuth() {
   const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     api.get('/users/me')
-      .then(res => setUser(res.data))
-      .catch(() => setUser(null));
+      .then(res => {
+        setUser(res.data);
+        setIsLoggedIn(true);
+      })
+      .catch(() => {
+        setUser(null);
+        setIsLoggedIn(false);
+      });
   }, []);
 
-  return { user };
+  return { user, isLoggedIn };
 }

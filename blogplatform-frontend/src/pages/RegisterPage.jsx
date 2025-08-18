@@ -1,5 +1,6 @@
+// src/pages/RegisterPage.jsx
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import toast from 'react-hot-toast';
 
@@ -29,20 +30,90 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="form-page">
-      <h2>Регистрация</h2>
-      <form onSubmit={handleRegister}>
-        <input name="username" placeholder="Никнейм" required onChange={handleChange} />
-        <input name="fullName" placeholder="Имя и фамилия" required onChange={handleChange} />
-        <input name="email" type="email" placeholder="Email" required onChange={handleChange} />
-        <input name="password" type="password" placeholder="Пароль" required onChange={handleChange} />
-        <input name="birthDate" type="date" required onChange={handleChange} />
-        <textarea name="bio" placeholder="О себе" rows={3} onChange={handleChange} />
-        <button type="submit">Создать аккаунт</button>
-      </form>
-      <p>
-        Уже есть аккаунт? <Link to="/login">Войти</Link>
-      </p>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title text-primary justify-center">Регистрация</h2>
+
+          <form onSubmit={handleRegister} className="space-y-4">
+            <label className="form-control">
+              <span className="label-text">Никнейм</span>
+              <input
+                type="text"
+                name="username"
+                required
+                onChange={handleChange}
+                className="input input-bordered input-primary"
+              />
+            </label>
+
+            <label className="form-control">
+              <span className="label-text">Имя и фамилия</span>
+              <input
+                type="text"
+                name="fullName"
+                required
+                onChange={handleChange}
+                className="input input-bordered input-primary"
+              />
+            </label>
+
+            <label className="form-control">
+              <span className="label-text">Email</span>
+              <input
+                type="email"
+                name="email"
+                required
+                onChange={handleChange}
+                className="input input-bordered input-primary"
+              />
+            </label>
+
+            <label className="form-control">
+              <span className="label-text">Пароль</span>
+              <input
+                type="password"
+                name="password"
+                required
+                onChange={handleChange}
+                className="input input-bordered input-primary"
+              />
+            </label>
+
+            <label className="form-control">
+              <span className="label-text">Дата рождения</span>
+              <input
+                type="date"
+                name="birthDate"
+                required
+                onChange={handleChange}
+                className="input input-bordered input-primary"
+              />
+            </label>
+
+            <label className="form-control">
+              <span className="label-text">О себе</span>
+              <textarea
+                name="bio"
+                rows={3}
+                onChange={handleChange}
+                className="textarea textarea-bordered textarea-primary"
+              />
+            </label>
+
+            <button type="submit" className="btn btn-primary w-full">
+              Зарегистрироваться
+            </button>
+          </form>
+
+          <p className="text-center text-sm mt-4">
+            Уже есть аккаунт?{' '}
+            <Link to="/login" className="link link-primary">
+              Войти
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
