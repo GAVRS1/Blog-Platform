@@ -3,9 +3,12 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
-import Sidebar from '@/components/Sidebar';
-import BottomNav from '@/components/BottomNav';
-import withAuth from '@/hocs/withAuth';
+
+// Компоненты
+import Sidebar      from '@/components/Sidebar';
+import BottomNav    from '@/components/BottomNav';
+import AddPostFAB   from '@/components/AddPostFAB';
+import withAuth     from '@/hocs/withAuth';
 
 // Ленивые страницы
 const HomePage       = lazy(() => import('@/pages/HomePage'));
@@ -13,11 +16,11 @@ const LoginPage      = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage   = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage    = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
+const CreatePostPage = lazy(() => import('@/pages/CreatePostPage')); // если нужна отдельная страница
 
-// Просто обёртка для защищённых маршрутов
 const ProtectedProfile = withAuth(ProfilePage);
 
-// Спиннер загрузки
+// Спиннер
 const Spinner = () => (
   <div className="flex justify-center items-center h-screen">
     <span className="loading loading-spinner loading-lg text-primary" />
@@ -28,8 +31,8 @@ const Spinner = () => (
 function Layout() {
   return (
     <div className="min-h-screen flex bg-base-200">
-      {/* Desktop Sidebar */}
-      <Sidebar className="hidden lg:block" />
+      {/* Боковая панель: ближе к центру, скрыта на мобилке */}
+      <Sidebar />
 
       {/* Центральная лента */}
       <main className="flex-1 flex justify-center">
@@ -40,8 +43,10 @@ function Layout() {
         </div>
       </main>
 
-      {/* Mobile Bottom Nav */}
+      {/* Нижняя панель-окно на мобилке */}
       <BottomNav />
+
+      {/* Плавающая кнопка «+» */}
       <AddPostFAB />
     </div>
   );
@@ -53,14 +58,14 @@ export default function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          {/* Корневой layout */}
           <Route element={<Layout />}>
-            <Route path="/"          element={<HomePage />} />
-            <Route path="/login"     element={<LoginPage />} />
-            <Route path="/register"  element={<RegisterPage />} />
-            <Route path="/profile"   element={<ProtectedProfile />} />
-            <Route path="/post/:id"  element={<PostDetailPage />} />
-            <Route path="*"          element={<Navigate to="/" replace />} />
+            <Route path="/"            element={<HomePage />} />
+            <Route path="/login"       element={<LoginPage />} />
+            <Route path="/register"    element={<RegisterPage />} />
+            <Route path="/profile"     element={<ProtectedProfile />} />
+            <Route path="/post/:id"    element={<PostDetailPage />} />
+            <Route path="/create-post" element={<CreatePostPage />} />
+            <Route path="*"            element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
         <Toaster position="top-center" />
