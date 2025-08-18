@@ -7,6 +7,12 @@ export function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
+    }
+
     api.get('/users/me')
       .then(res => {
         setUser(res.data);
