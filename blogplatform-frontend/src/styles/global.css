@@ -6,11 +6,48 @@
   html {
     scroll-behavior: smooth;
   }
+  
   body {
     @apply bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 !important;
   }
-  aside {
+  
+  /* Кастомный скроллбар */
+  .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--fallback-bc, oklch(var(--bc)/0.4)) transparent;
+    scrollbar-color: oklch(var(--p) / 0.3) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: oklch(var(--p) / 0.3);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--p) / 0.5);
+  }
+}
+
+@layer components {
+  /* Анимации для карточек */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  }
+  
+  /* Градиентные кнопки */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary text-white border-none hover:shadow-lg hover:scale-105 transition-all duration-200;
+  }
+  
+  /* Стеклянный эффект */
+  .glass-effect {
+    @apply bg-base-100/80 backdrop-blur-md border border-base-300/50;
   }
 }
