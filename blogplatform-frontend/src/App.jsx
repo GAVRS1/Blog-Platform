@@ -12,11 +12,12 @@ import withAuth     from '@/hocs/withAuth';
 
 // Ленивые страницы
 const HomePage       = lazy(() => import('@/pages/HomePage'));
-const LoginPage    = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const LoginPage      = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage   = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage    = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 
+// Защищённые обёртки
 const ProtectedProfile = withAuth(ProfilePage);
 
 // Спиннер
@@ -26,14 +27,11 @@ const Spinner = () => (
   </div>
 );
 
-// Главный layout
-function Layout() {
+// Layout только для авторизованных страниц
+function ProtectedLayout() {
   return (
     <div className="min-h-screen flex bg-base-200">
-      {/* Боковая панель: ближе к центру, скрыта на мобилке */}
       <Sidebar />
-
-      {/* Центральная лента */}
       <main className="flex-1 flex justify-center">
         <div className="w-full max-w-2xl">
           <Suspense fallback={<Spinner />}>
@@ -41,11 +39,7 @@ function Layout() {
           </Suspense>
         </div>
       </main>
-
-      {/* Нижняя панель-окно на мобилке */}
       <BottomNav />
-
-      {/* Плавающая кнопка «+» */}
       <AddPostFAB />
     </div>
   );
@@ -57,14 +51,19 @@ export default function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          <Route element={<Layout />}>
-            <Route path="/"            element={<HomePage />} />
-            <Route path="/login"       element={<LoginPage />} />
-            <Route path="/register"    element={<RegisterPage />} />
-            <Route path="/profile"     element={<ProtectedProfile />} />
-            <Route path="/post/:id"    element={<PostDetailPage />} />
-            <Route path="*"            element={<Navigate to="/" replace />} />
+          {/* Публичные маршруты */}
+          <Route path="/login"    element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          {/* Защищённые маршруты */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/"         element={<HomePage />} />
+            <Route path="/post/:id" element={<PostDetailPage />} />
+            <Route path="/profile"  element={<ProtectedProfile />} />
           </Route>
+
+          {/* Перенаправление остального */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster position="top-center" />
       </BrowserRouter>
