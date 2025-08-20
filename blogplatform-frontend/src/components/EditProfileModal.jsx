@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
 import AvatarUploader from './AvatarUploader';
 import { checkUniqueUsername } from '@/utils/uniqueCheck';
-import debounce from 'lodash/debounce';
+import debounce from 'lodash.debounce';
 import toast from 'react-hot-toast';
 
 export default function EditProfileModal({ onClose, onSaved }) {

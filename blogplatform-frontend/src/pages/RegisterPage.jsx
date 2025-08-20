@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import { checkUniqueUsername, checkUniqueEmail } from '@/utils/uniqueCheck';
 import toast from 'react-hot-toast';
-import debounce from 'lodash/debounce';
+import debounce from 'lodash.debounce';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
