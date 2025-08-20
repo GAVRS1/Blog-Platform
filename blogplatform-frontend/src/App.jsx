@@ -16,6 +16,7 @@ const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
+const MyItemsPage = lazy(() => import('@/pages/MyItemsPage'));
 // Защищённые обёртки
 const ProtectedProfile = withAuth(ProfilePage);
 
