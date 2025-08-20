@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
 import AvatarUploader from './AvatarUploader';
+import { checkUniqueUsername } from '@/utils/uniqueCheck';
+import debounce from 'lodash/debounce';
 import toast from 'react-hot-toast';
 
 export default function EditProfileModal({ onClose, onSaved }) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     username: '',
     fullName: '',
@@ -11,39 +15,53 @@ export default function EditProfileModal({ onClose, onSaved }) {
     birthDate: '',
   });
   const [avatarBlob, setAvatarBlob] = useState(null);
+  const [usernameError, setUsernameError] = useState('');
+
+  const debouncedCheck = debounce(async (value) => {
+    if (!value || value === form.originalUsername) return;
+    const ok = await checkUniqueUsername(value);
+    setUsernameError(ok ? '' : 'Никнейм занят');
+  }, 500);
 
   useEffect(() => {
-    api.get('/auth/me').then(res => {
-      const { username, profile } = res.data;
+    api.get('/auth/me').then(({ data }) => {
       setForm({
-        username,
-        fullName: profile.fullName,
-        bio: profile.bio,
-        birthDate: profile.birthDate?.split('T')[0] || '',
+        username: data.username,
+        originalUsername: data.username,
+        fullName: data.profile?.fullName || '',
+        bio: data.profile?.bio || '',
+        birthDate: data.profile?.birthDate?.split('T')[0] || '',
       });
     });
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    if (name === 'username') debouncedCheck(value);
+  };
+
   const handleSave = async () => {
+    if (usernameError) return;
     try {
-      // 1. обновляем текстовые поля
       await api.put('/users/profile', {
+        username: form.username,
         fullName: form.fullName,
         bio: form.bio,
         birthDate: form.birthDate,
       });
 
-      // 2. если выбран новый аватар – грузим
       if (avatarBlob) {
         const fd = new FormData();
         fd.append('file', avatarBlob);
         fd.append('type', 'avatar');
-        const { data } = await api.post('/media/upload', fd, {
+        const { data: media } = await api.post('/media/upload', fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        await api.put('/users/profile/avatar', { avatarUrl: data.url });
+        await api.put('/users/profile/avatar', { avatarUrl: media.url });
       }
 
+      await queryClient.invalidateQueries(['me']);
       toast.success('Профиль обновлён!');
       onSaved();
     } catch (e) {
@@ -59,28 +77,23 @@ export default function EditProfileModal({ onClose, onSaved }) {
         <label className="form-control">
           <span className="label-text">Никнейм</span>
           <input
-            className="input input-bordered"
+            type="text"
+            name="username"
             value={form.username}
-            disabled
+            onChange={handleChange}
+            className="input input-bordered"
           />
+          {usernameError && <span className="text-error text-xs">{usernameError}</span>}
         </label>
 
         <label className="form-control">
           <span className="label-text">Имя и фамилия</span>
           <input
-            className="input input-bordered"
+            type="text"
+            name="fullName"
             value={form.fullName}
-            onChange={e => setForm({ ...form, fullName: e.target.value })}
-          />
-        </label>
-
-        <label className="form-control">
-          <span className="label-text">О себе</span>
-          <textarea
-            className="textarea textarea-bordered"
-            rows={3}
-            value={form.bio}
-            onChange={e => setForm({ ...form, bio: e.target.value })}
+            onChange={handleChange}
+            className="input input-bordered"
           />
         </label>
 
@@ -88,17 +101,33 @@ export default function EditProfileModal({ onClose, onSaved }) {
           <span className="label-text">Дата рождения</span>
           <input
             type="date"
-            className="input input-bordered"
+            name="birthDate"
             value={form.birthDate}
-            onChange={e => setForm({ ...form, birthDate: e.target.value })}
+            onChange={handleChange}
+            className="input input-bordered"
+          />
+        </label>
+
+        <label className="form-control">
+          <span className="label-text">О себе</span>
+          <textarea
+            name="bio"
+            value={form.bio}
+            onChange={handleChange}
+            rows={3}
+            className="textarea textarea-bordered"
           />
         </label>
 
         <AvatarUploader onCropped={setAvatarBlob} />
 
         <div className="modal-action">
-          <button className="btn btn-primary" onClick={handleSave}>Сохранить</button>
-          <button className="btn" onClick={onClose}>Отмена</button>
+          <button className="btn btn-primary" onClick={handleSave}>
+            Сохранить
+          </button>
+          <button className="btn" onClick={onClose}>
+            Отмена
+          </button>
         </div>
       </div>
     </div>

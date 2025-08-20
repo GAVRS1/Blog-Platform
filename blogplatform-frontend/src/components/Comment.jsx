@@ -1,97 +1,100 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { getAvatarUrl } from '@/utils/avatar';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
-export default function Comment({ comment, depth = 0, onReply }) {
+export default function Comment({ comment, onDelete }) {
+  const [showReplies, setShowReplies] = useState(false);
+  const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState('');
-  const [showReply, setShowReply] = useState(false);
-  const [replies, setReplies] = useState(comment.replies || []);
+  const queryClient = useQueryClient();
+  const currentUserId = localStorage.getItem('uid');
 
-  const avatarUrl = comment.userAvatar
-    ? `${import.meta.env.VITE_API_BASE}/uploads/${comment.userAvatar.replace(/\\/g, '/')}`
-    : '/avatar.png';
+  const isOwner = comment.userId === currentUserId;
 
-  const handleReply = async () => {
-    if (!replyText.trim()) return;
-    try {
-      const { data } = await api.post(`/comments/${comment.id}/reply`, {
-        content: replyText,
-      });
-      setReplies((prev) => [data, ...prev]);
-      onReply?.(data);
-      setReplyText('');
-      setShowReply(false);
-    } catch {
-      toast.error('Ошибка при отправке ответа');
+  const toggleReplies = () => {
+    if (!showReplies) {
+      api.get(`/comments/${comment.id}/replies`)
+        .then(({ data }) => setReplies(data))
+        .catch(() => toast.error('Не удалось загрузить ответы'));
     }
+    setShowReplies(!showReplies);
+  };
+
+  const deleteComment = () => {
+    api.delete(`/comments/${comment.id}`)
+      .then(() => {
+        toast.success('Комментарий удалён');
+        onDelete(comment.id);
+      })
+      .catch(() => toast.error('Ошибка при удалении'));
+  };
+
+  const sendReply = () => {
+    if (!replyText.trim()) return;
+    api.post(`/comments/${comment.id}/reply`, { content: replyText })
+      .then(({ data }) => {
+        setReplies([data, ...replies]);
+        setReplyText('');
+        queryClient.invalidateQueries(['post', comment.postId]);
+      })
+      .catch(() => toast.error('Не удалось отправить ответ'));
   };
 
   return (
-    <motion.div
-      style={{ marginLeft: depth * 24 }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="mb-4"
-    >
-      <div className="flex items-start gap-3">
-        <img
-          src={avatarUrl}
-          alt="avatar"
-          className="w-8 h-8 rounded-full ring ring-primary ring-offset-1"
-        />
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <strong className="text-sm">{comment.username}</strong>
-            <span className="text-xs text-base-content/60">
-              {new Date(comment.createdAt).toLocaleString()}
-            </span>
-          </div>
-          <p className="text-base-content/90">{comment.content}</p>
+    <div className="flex gap-3 mb-4">
+      <img
+        src={getAvatarUrl(comment.userAvatar)}
+        alt={comment.username}
+        className="w-8 h-8 rounded-full mt-1"
+      />
+      <div className="flex-1">
+        <div className="bg-base-200 rounded-lg p-2">
+          <p className="text-sm font-bold">@{comment.username}</p>
+          <p className="text-sm">{comment.content}</p>
+        </div>
 
-          <button
-            className="text-xs link link-primary mr-2"
-            onClick={() => setShowReply(!showReply)}
-          >
-            Ответить
+        <div className="flex items-center gap-3 text-xs text-base-content/60 mt-1">
+          <button onClick={toggleReplies}>
+            {comment.repliesCount || 0} ответа
           </button>
-
-          {/* Кнопка удалить (свой коммент) */}
-          {comment.userId === Number(localStorage.getItem('uid')) && (
-            <button
-              className="text-xs link link-error"
-              onClick={async () => {
-                await api.delete(`/comments/${comment.id}`);
-                onReply?.();
-              }}
-            >
+          {isOwner && (
+            <button onClick={deleteComment} className="text-error">
               Удалить
             </button>
           )}
         </div>
+
+        {showReplies && (
+          <div className="mt-2 pl-4 border-l-2">
+            {replies.map((r) => (
+              <div key={r.id} className="flex gap-2 mb-2">
+                <img
+                  src={getAvatarUrl(r.userAvatar)}
+                  alt={r.username}
+                  className="w-6 h-6 rounded-full"
+                />
+                <div className="bg-base-200 rounded px-2 py-1 text-sm">
+                  <b>@{r.username}</b> {r.content}
+                </div>
+              </div>
+            ))}
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Ответить..."
+                className="input input-xs input-bordered w-full"
+              />
+              <button onClick={sendReply} className="btn btn-xs btn-primary">
+                Отправить
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {showReply && (
-        <div className="mt-2 ml-11">
-          <textarea
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            rows={2}
-            className="textarea textarea-bordered textarea-sm w-full"
-            placeholder="Напишите ответ..."
-          />
-          <button
-            className="btn btn-xs btn-primary mt-1"
-            onClick={handleReply}
-          >
-            Отправить
-          </button>
-        </div>
-      )}
-
-      {replies.map((r) => (
-        <Comment key={r.id} comment={r} depth={depth + 1} onReply={onReply} />
-      ))}
-    </motion.div>
+    </div>
   );
 }

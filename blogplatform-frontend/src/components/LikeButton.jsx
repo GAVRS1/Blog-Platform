@@ -1,37 +1,30 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
 export default function LikeButton({ postId, initialLiked, initialCount }) {
+  const queryClient = useQueryClient();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
 
-  const toggleLike = async () => {
-    const prevLiked = liked;
-    const prevCount = count;
-    setLiked(!liked);
-    setCount((c) => (liked ? c - 1 : c + 1));
-
-    try {
-      const { data } = await api.post(`/likes/post/${postId}`);
-      setLiked(data.liked);
-      setCount(data.count);
-    } catch {
-      toast.error('Не удалось поставить лайк');
-      setLiked(prevLiked);
-      setCount(prevCount);
-    }
-  };
+  const likeMutation = useMutation({
+    mutationFn: () => api.post(`/likes/post/${postId}`),
+    onSuccess: (res) => {
+      setLiked(res.data.liked);
+      setCount(res.data.liked ? count + 1 : count - 1);
+      // инвалидируем всё, где используются посты
+      queryClient.invalidateQueries(['posts']);
+      queryClient.invalidateQueries(['post', postId]);
+    },
+  });
 
   return (
-    <motion.button
-      className={`like-btn ${liked ? 'liked' : ''}`}
-      onClick={toggleLike}
-      whileTap={{ scale: 1.2 }}
-      transition={{ type: 'spring', stiffness: 300 }}
+    <button
+      className={`btn btn-ghost btn-sm gap-1 ${liked ? 'text-red-500' : ''}`}
+      onClick={() => likeMutation.mutate()}
+      disabled={likeMutation.isPending}
     >
-      <span>{liked ? '❤️' : '🤍'}</span> {count}
-    </motion.button>
+      {liked ? '❤️' : '🤍'} {count}
+    </button>
   );
 }

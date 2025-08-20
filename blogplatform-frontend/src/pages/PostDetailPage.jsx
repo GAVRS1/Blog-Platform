@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api from '@/api/axios';
-import Comment from '@/components/Comment';
+import { getAvatarUrl } from '@/utils/avatar';
 import MediaPlayer from '@/components/MediaPlayer';
+import Comment from '@/components/Comment';
 import SkeletonPost from '@/components/SkeletonPost';
+import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
 export default function PostDetailPage() {
@@ -13,39 +14,34 @@ export default function PostDetailPage() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
 
-  const load = async () => {
-    const [p, c] = await Promise.all([
+  useEffect(() => {
+    Promise.all([
       api.get(`/posts/${id}`),
       api.get(`/comments/post/${id}`),
-    ]);
-    setPost(p.data);
-    setComments(c.data);
-  };
-
-  useEffect(() => {
-    load();
+    ])
+      .then(([p, c]) => {
+        setPost(p.data);
+        setComments(c.data);
+      })
+      .catch(() => toast.error('Не удалось загрузить пост'));
   }, [id]);
 
-  const handleComment = async () => {
+  const handleComment = () => {
     if (!newComment.trim()) return;
-    try {
-      const { data } = await api.post('/comments', {
-        postId: id,
-        content: newComment,
-      });
-      setComments([data, ...comments]);
-      setNewComment('');
-    } catch {
-      toast.error('Не удалось отправить комментарий');
-    }
+    api
+      .post('/comments', { postId: id, content: newComment })
+      .then(({ data }) => {
+        setComments([data, ...comments]);
+        setNewComment('');
+      })
+      .catch(() => toast.error('Ошибка при отправке'));
+  };
+
+  const removeComment = (commentId) => {
+    setComments(comments.filter((c) => c.id !== commentId));
   };
 
   if (!post) return <SkeletonPost />;
-
-  // аватар автора
-  const authorAvatar = post.userAvatar
-    ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
-    : '/avatar.png';
 
   return (
     <motion.div
@@ -53,40 +49,37 @@ export default function PostDetailPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      {/* META */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-4 mb-4">
         <img
-          src={authorAvatar}
+          src={getAvatarUrl(post.userAvatar)}
           alt="avatar"
-          className="w-12 h-12 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+          className="w-12 h-12 rounded-full ring ring-primary"
         />
         <div>
-          <p className="font-bold text-lg">{post.username}</p>
+          <p className="font-bold text-lg">@{post.username}</p>
           <p className="text-xs text-base-content/60">
             {new Date(post.createdAt).toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* CONTENT */}
       <h1 className="text-3xl font-bold text-primary mb-2">{post.title}</h1>
-      <p className="text-base-content/80 mb-4 whitespace-pre-wrap">{post.content}</p>
+      <p className="text-base-content/90 whitespace-pre-wrap mb-4">{post.content}</p>
 
-      {/* MEDIA */}
       <MediaPlayer url={post.imageUrl} type="image" />
       <MediaPlayer url={post.videoUrl} type="video" />
       <MediaPlayer url={post.audioUrl} type="audio" />
 
-      {/* LIKES */}
-      <div className="flex justify-end mt-4">
-        <span className="text-sm text-base-content/60">
-          ❤️ {post.likeCount} &nbsp; 💬 {post.commentCount}
+      <hr className="my-8" />
+
+      {/* лайк выводится, но не кликабелен */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className={`text-lg ${post.isLikedByCurrentUser ? 'text-red-500' : ''}`}>
+          {post.isLikedByCurrentUser ? '❤️' : '🤍'} {post.likesCount}
         </span>
+        <span className="text-base-content/60">лайков</span>
       </div>
 
-      <hr className="my-6" />
-
-      {/* COMMENTS */}
       <h2 className="text-xl font-bold mb-3">Комментарии ({comments.length})</h2>
       <textarea
         value={newComment}
@@ -95,13 +88,13 @@ export default function PostDetailPage() {
         rows={3}
         className="textarea textarea-bordered w-full mb-2"
       />
-      <button onClick={handleComment} className="btn btn-primary mb-4">
+      <button onClick={handleComment} className="btn btn-primary mb-6">
         Отправить
       </button>
 
       <div className="space-y-4">
         {comments.map((c) => (
-          <Comment key={c.id} comment={c} onReply={load} />
+          <Comment key={c.id} comment={c} onDelete={removeComment} />
         ))}
       </div>
     </motion.div>

@@ -1,12 +1,12 @@
-// src/components/BottomNav.jsx  (полностью)
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const NavItem = ({ to, icon }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex-1 flex justify-center items-center py-2 transition-colors rounded-lg ` +
+      `flex-1 flex justify-center items-center py-2 rounded-lg ` +
       (isActive ? 'text-primary bg-primary/10' : 'text-base-content/60')
     }
   >
@@ -24,10 +24,11 @@ export default function BottomNav() {
   return (
     <>
       <nav className="lg:hidden fixed bottom-4 left-4 right-4 bg-base-100 rounded-2xl shadow-2xl border border-base-300 h-16 flex items-center px-2 z-40">
-        <NavItem to="/"        icon="🏠" />
+        <NavItem to="/" icon="🏠" />
+        <ThemeToggle mobile />
         <NavItem to="/profile" icon="👤" />
       </nav>
-      <div className="lg:hidden h-24" /> {/* отступ под панель */}
+      <div className="lg:hidden h-24" />
     </>
   );
 }

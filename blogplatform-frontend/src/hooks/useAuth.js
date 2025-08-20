@@ -1,24 +1,24 @@
-// src/hooks/useAuth.js
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
 
 export function useAuth() {
-  const [user, setUser] = useState(undefined); // undefined = ещё не знаем
+  const queryClient = useQueryClient();
+  const [user, setUser] = useState(undefined);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setUser(null);          // явно «не залогинен»
+      setUser(null);
       return;
     }
-
     api.get('/auth/me')
       .then(res => setUser(res.data))
       .catch(() => {
         localStorage.removeItem('token');
         setUser(null);
       });
-  }, []);
+  }, [queryClient]); // при инвалидации ['me'] будет перезапрос
 
-  return { user };   // undefined | null | User
+  return { user };
 }

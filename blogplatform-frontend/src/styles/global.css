@@ -9,4 +9,8 @@
   body {
     @apply bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 !important;
   }
+  aside {
+    scrollbar-width: thin;
+    scrollbar-color: var(--fallback-bc, oklch(var(--bc)/0.4)) transparent;
+  }
 }
