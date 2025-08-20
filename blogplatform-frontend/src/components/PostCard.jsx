@@ -14,106 +14,99 @@ export default function PostCard({ post }) {
       transition={{ duration: 0.3 }}
     >
       <div className="card-body p-6">
-        {/* Заголовок поста */}
+        /* Заголовок поста с кликабельным профилем */
         <motion.div
           className="flex items-center gap-4 mb-4"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <motion.img
-            src={getAvatarUrl(post.userAvatar)}
-            alt={post.username}
-            className="w-12 h-12 rounded-full border-2 border-primary/20 shadow-md"
-            whileHover={{ scale: 1.1, borderColor: 'var(--primary)' }}
-          />
-          <div className="flex-1">
-            <Link 
-              to={`/user/${post.userId}`} 
-              className="font-bold text-base-content hover:text-primary transition-colors duration-200"
-            >
-              @{post.username}
-            </Link>
-            <p className="text-xs text-base-content/60">
-              {new Date(post.createdAt).toLocaleString('ru-RU')}
-            </p>
-          </div>
-          <div className="badge badge-primary badge-outline">
-            {post.contentType}
-          </div>
+          <Link to={`/profile/${post.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <motion.img
+              src={getAvatarUrl(post.userAvatar)}
+              alt={post.userFullName}
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 400 }}
+            />
+            <div>
+              <h3 className="font-semibold text-base-content hover:text-primary transition-colors">
+                {post.userFullName}
+              </h3>
+              <p className="text-sm text-base-content/60">
+                @{post.username} • {new Date(post.createdAt).toLocaleDateString('ru-RU')}
+              </p>
+            </div>
+          </Link>
         </motion.div>
 
-        {/* Заголовок */}
-        {post.title && (
-          <motion.h2 
-            className="card-title text-xl font-bold text-base-content mb-3"
+        /* Заголовок и контент поста */
+        <Link to={`/posts/${post.id}`}>
+          <motion.h2
+            className="text-xl font-bold text-base-content mb-3 hover:text-primary transition-colors cursor-pointer"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <Link 
-              to={`/post/${post.id}`}
-              className="hover:text-primary transition-colors duration-200"
-            >
-              {post.title}
-            </Link>
+            {post.title}
           </motion.h2>
-        )}
+        </Link>
 
-        {/* Контент */}
-        {post.content && (
-          <motion.p 
-            className="text-base-content/80 mb-4 leading-relaxed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {post.content.length > 200 
-              ? `${post.content.substring(0, 200)}...` 
-              : post.content
-            }
-          </motion.p>
-        )}
+        <motion.p
+          className="text-base-content/80 mb-4 leading-relaxed"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {post.content}
+        </motion.p>
 
-        {/* Медиа */}
-        {post.fileUrl && (
+        /* Медиа контент */
+        {(post.imageUrl || post.videoUrl || post.audioUrl) && (
           <motion.div
             className="mb-4"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <MediaPlayer
-              url={post.fileUrl}
-              type={post.fileType}
-              className="shadow-lg hover:shadow-xl transition-shadow duration-300"
+            <MediaPlayer 
+              url={post.imageUrl || post.videoUrl || post.audioUrl}
+              type={post.contentType === 'Photo' ? 'image' : 
+                    post.contentType === 'Video' ? 'video' : 
+                    post.contentType === 'Audio' ? 'audio' : 'image'}
+              className="max-h-96 object-cover"
             />
           </motion.div>
         )}
 
-        {/* Действия */}
+        /* Действия: лайки и комментарии */
         <motion.div
-          className="flex items-center justify-between pt-4 border-t border-base-300/50"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between pt-4 border-t border-base-300"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <LikeButton
-            postId={post.id}
-            initialLiked={post.isLiked}
-            initialCount={post.likesCount || 0}
-          />
-          
-          <Link
-            to={`/post/${post.id}`}
-            className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary"
-          >
-            💬 {post.commentsCount || 0}
-          </Link>
-          
-          <button className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary">
-            📤 Поделиться
-          </button>
+          <div className="flex items-center gap-4">
+            <LikeButton 
+              postId={post.id} 
+              initialLiked={post.isLiked || false}
+              initialCount={post.likesCount || 0}
+            />
+            
+            <Link 
+              to={`/posts/${post.id}#comments`}
+              className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
+            >
+              <i className="far fa-comment text-lg"></i>
+              <span className="text-sm font-medium">{post.commentsCount || 0}</span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="badge badge-primary badge-outline">
+              {post.contentType}
+            </span>
+          </div>
         </motion.div>
       </div>
     </motion.div>

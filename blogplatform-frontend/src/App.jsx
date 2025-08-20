@@ -15,7 +15,7 @@ const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
-
+const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
 // Защищённые обёртки
 const ProtectedProfile = withAuth(ProfilePage);
 
@@ -82,6 +82,25 @@ export default function App() {
                 </MainLayout>
               }
             />
+            <Route path="/profile/:userId" element={<UserProfilePage />} />
+<Route path="/my-posts" element={
+  <MyItemsPage 
+    title="Мои посты" 
+    endpoint="posts/user/me" 
+  />
+} />
+<Route path="/my-likes" element={
+  <MyItemsPage 
+    title="Мои лайки" 
+    endpoint="likes/me" 
+  />
+} />
+<Route path="/my-comments" element={
+  <MyItemsPage 
+    title="Мои комментарии" 
+    endpoint="comments/me" 
+  />
+} />
             <Route
               path="/post/:id"
               element={

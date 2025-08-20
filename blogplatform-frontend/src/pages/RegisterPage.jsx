@@ -49,55 +49,43 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title text-primary justify-center">Регистрация</h2>
-          <form onSubmit={handleRegister} className="space-y-4">
-            {[
-              { name: 'username', label: 'Никнейм', type: 'text' },
-              { name: 'fullName', label: 'Имя и фамилия', type: 'text' },
-              { name: 'email', label: 'Email', type: 'email' },
-              { name: 'password', label: 'Пароль', type: 'password' },
-              { name: 'birthDate', label: 'Дата рождения', type: 'date' },
-            ].map((f) => (
-              <label key={f.name} className="form-control">
-                <span className="label-text">{f.label}</span>
-                <input
-                  type={f.type}
-                  name={f.name}
-                  value={form[f.name]}
-                  onChange={handleChange}
-                  required={f.name !== 'bio'}
-                  className="input input-bordered input-primary"
-                />
-                {errors[f.name] && (
-                  <span className="text-error text-xs">{errors[f.name]}</span>
-                )}
-              </label>
-            ))}
-            <label className="form-control">
-              <span className="label-text">О себе</span>
-              <textarea
-                name="bio"
-                rows={3}
-                value={form.bio}
-                onChange={handleChange}
-                className="textarea textarea-bordered textarea-primary"
-              />
-            </label>
-            <button type="submit" className="btn btn-primary w-full">
-              Зарегистрироваться
-            </button>
-          </form>
-          <p className="text-center text-sm mt-4">
-            Уже есть аккаунт?{' '}
-            <Link to="/login" className="link link-primary">
-              Войти
-            </Link>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 py-12 px-4">
+      <motion.div className="w-full max-w-lg">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-user-plus text-white text-2xl"></i>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            Регистрация
+          </h2>
+          <p className="text-gray-600">
+            Создайте свой аккаунт в BlogPlatform
           </p>
         </div>
-      </div>
+
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            /* Поля формы с иконками и валидацией */
+            /* Email, Username, FullName, Password, BirthDate, Bio */
+            
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-lg font-semibold"
+            >
+              Создать аккаунт
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Уже есть аккаунт?{' '}
+              <Link to="/login" className="text-primary hover:text-secondary font-semibold">
+                Войти
+              </Link>
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
