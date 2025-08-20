@@ -14,7 +14,7 @@ export default function PostCard({ post }) {
       transition={{ duration: 0.3 }}
     >
       <div className="card-body p-6">
-        /* Заголовок поста с кликабельным профилем */
+        {/* Заголовок поста с кликабельным профилем */}
         <motion.div
           className="flex items-center gap-4 mb-4"
           initial={{ opacity: 0, x: -20 }}
@@ -40,8 +40,8 @@ export default function PostCard({ post }) {
           </Link>
         </motion.div>
 
-        /* Заголовок и контент поста */
-        <Link to={`/posts/${post.id}`}>
+        {/* Заголовок и контент поста */}
+        <Link to={`/post/${post.id}`}>
           <motion.h2
             className="text-xl font-bold text-base-content mb-3 hover:text-primary transition-colors cursor-pointer"
             initial={{ opacity: 0 }}
@@ -61,7 +61,7 @@ export default function PostCard({ post }) {
           {post.content}
         </motion.p>
 
-        /* Медиа контент */
+        {/* Медиа контент */}
         {(post.imageUrl || post.videoUrl || post.audioUrl) && (
           <motion.div
             className="mb-4"
@@ -71,15 +71,15 @@ export default function PostCard({ post }) {
           >
             <MediaPlayer 
               url={post.imageUrl || post.videoUrl || post.audioUrl}
-              type={post.contentType === 'Photo' ? 'image' : 
-                    post.contentType === 'Video' ? 'video' : 
-                    post.contentType === 'Audio' ? 'audio' : 'image'}
+              type={post.imageUrl ? 'image' : 
+                    post.videoUrl ? 'video' : 
+                    post.audioUrl ? 'audio' : 'image'}
               className="max-h-96 object-cover"
             />
           </motion.div>
         )}
 
-        /* Действия: лайки и комментарии */
+        {/* Действия: лайки и комментарии */}
         <motion.div
           className="flex items-center justify-between pt-4 border-t border-base-300"
           initial={{ opacity: 0 }}
@@ -94,7 +94,7 @@ export default function PostCard({ post }) {
             />
             
             <Link 
-              to={`/posts/${post.id}#comments`}
+              to={`/post/${post.id}#comments`}
               className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
             >
               <i className="far fa-comment text-lg"></i>

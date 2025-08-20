@@ -10,16 +10,14 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
   const [count, setCount] = useState(initialCount);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Синхронизация с пропсами при изменении
   useEffect(() => {
     setLiked(initialLiked);
     setCount(initialCount);
   }, [initialLiked, initialCount]);
 
   const likeMutation = useMutation({
-    mutationFn: () => api.post(`/likes/post/${postId}`),
+    mutationFn: () => api.post(`/api/Likes/post/${postId}`),
     onMutate: () => {
-      // Optimistic update
       const prevLiked = liked;
       const prevCount = count;
       
@@ -29,19 +27,20 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
       
       return { prevLiked, prevCount };
     },
-    onSuccess: (res) => {
-      // Синхронизация с сервером
-      setLiked(res.data.liked);
-      setCount(res.data.count || count);
+    onSuccess: (response) => {
+      // API возвращает { liked: boolean }
+      const newLiked = response.data.liked;
+      setLiked(newLiked);
       
-      // Инвалидация кеша
+      // Обновляем счетчик на основе изменения состояния
+      setCount(prev => newLiked ? prev + (liked ? 0 : 1) : prev - (liked ? 1 : 0));
+      
       queryClient.invalidateQueries(['posts']);
       queryClient.invalidateQueries(['post', postId]);
       
       setTimeout(() => setIsAnimating(false), 300);
     },
     onError: (error, variables, context) => {
-      // Откат изменений при ошибке
       if (context) {
         setLiked(context.prevLiked);
         setCount(context.prevCount);
@@ -89,14 +88,6 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
       >
         {count}
       </motion.span>
-      
-      {likeMutation.isPending && (
-        <motion.div
-          className="loading loading-spinner loading-xs"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        />
-      )}
     </motion.button>
   );
 }
