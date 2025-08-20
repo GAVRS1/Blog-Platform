@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
+import { useState } from 'react';
 
 export default function LikeButton({ postId, initialLiked, initialCount }) {
   const queryClient = useQueryClient();
