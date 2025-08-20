@@ -3,15 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import LikeButton from './LikeButton';
 import MediaPlayer from './MediaPlayer';
 import { useAuth } from '@/hooks/useAuth';
+import api from '@/api/axios';
 
 export default function PostCard({ post }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isOwner = user?.id === post.userId;
 
-  const avatarUrl = post.userAvatar
-  ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
-  : '/avatar.png';
+  // аватар автора
+  const authorAvatar = post.userAvatar
+    ? `${import.meta.env.VITE_API_BASE}/uploads/${post.userAvatar.replace(/\\/g, '/')}`
+    : '/avatar.png';
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (!confirm('Удалить пост?')) return;
+    try {
+      await api.delete(`/posts/${post.id}`);
+      window.location.reload();
+    } catch {
+      alert('Ошибка при удалении');
+    }
+  };
 
   return (
     <motion.div
@@ -19,13 +32,12 @@ export default function PostCard({ post }) {
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300 }}
       onClick={() => navigate(`/post/${post.id}`)}
-      
     >
       <div className="card-body">
-        {/* Аватар + имя */}
+        {/* HEADER */}
         <div className="flex items-center gap-3">
           <img
-            src={avatarUrl}
+            src={authorAvatar}
             alt="avatar"
             className="w-12 h-12 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
           />
@@ -37,16 +49,16 @@ export default function PostCard({ post }) {
           </div>
         </div>
 
-        {/* Заголовок и текст */}
+        {/* CONTENT */}
         <h2 className="card-title text-primary">{post.title}</h2>
         <p className="text-sm text-base-content/80">{post.content}</p>
 
-        {/* Медиа-контент */}
+        {/* MEDIA */}
         <MediaPlayer url={post.imageUrl} type="image" />
         <MediaPlayer url={post.videoUrl} type="video" />
         <MediaPlayer url={post.audioUrl} type="audio" />
 
-        {/* Лайки и комменты */}
+        {/* ACTIONS */}
         <div className="card-actions justify-end">
           <LikeButton
             postId={post.id}
@@ -56,20 +68,15 @@ export default function PostCard({ post }) {
           <button className="btn btn-ghost btn-sm gap-1">
             💬 {post.commentCount}
           </button>
+
           {isOwner && (
-  <button
-    className="btn btn-ghost btn-xs text-error"
-    onClick={async (e) => {
-      e.stopPropagation();
-      if (confirm('Удалить пост?')) {
-        await api.delete(`/posts/${post.id}`);
-        window.location.reload();
-      }
-    }}
-  >
-    🗑 Удалить
-  </button>
-)}
+            <button
+              className="btn btn-ghost btn-sm text-error"
+              onClick={handleDelete}
+            >
+              🗑
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
