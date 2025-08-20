@@ -65,8 +65,6 @@ export default function RegisterPage() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-4">
-            /* Поля формы с иконками и валидацией */
-            /* Email, Username, FullName, Password, BirthDate, Bio */
             
             <button
               type="submit"

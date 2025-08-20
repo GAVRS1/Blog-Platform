@@ -40,7 +40,6 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        /* Заголовок */
         <div className="text-center mb-8">
           <motion.div
             initial={{ scale: 0 }}
@@ -56,7 +55,6 @@ export default function LoginPage() {
           <p className="text-gray-600">Добро пожаловать в BlogPlatform</p>
         </div>
 
-        /* Форма */
         <motion.div
           className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
           initial={{ opacity: 0, y: 20 }}
@@ -64,7 +62,6 @@ export default function LoginPage() {
           transition={{ delay: 0.3 }}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
-            /* Email */
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email адрес
@@ -82,7 +79,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            /* Password */
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Пароль
@@ -107,7 +103,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            /* Submit Button */
             <motion.button
               type="submit"
               disabled={loading}
@@ -129,7 +124,6 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          /* Дополнительные ссылки */
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Нет аккаунта?{' '}

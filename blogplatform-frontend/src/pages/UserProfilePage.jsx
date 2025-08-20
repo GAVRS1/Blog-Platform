@@ -104,7 +104,6 @@ export default function UserProfilePage() {
         </div>
       </div>
 
-      /* Посты пользователя */
       <div className="bg-white rounded-lg shadow-xl p-6">
         <h3 className="text-2xl font-bold text-gray-800 mb-6">
           Публикации пользователя

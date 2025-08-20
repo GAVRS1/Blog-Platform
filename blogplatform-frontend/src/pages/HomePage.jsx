@@ -66,7 +66,6 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      /* Заголовок с кнопкой создания поста */
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-primary">
           <i className="fas fa-stream mr-3"></i>
@@ -81,13 +80,11 @@ export default function HomePage() {
         </button>
       </div>
 
-      /* Список постов */
       <div className="space-y-6">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
         
-        /* Загрузка следующих постов */
         {isFetchingNextPage && (
           <div className="space-y-6">
             {[...Array(2)].map((_, i) => (
@@ -96,17 +93,14 @@ export default function HomePage() {
           </div>
         )}
         
-        /* Индикатор для бесконечной прокрутки */
         {hasNextPage && <div ref={ref} className="h-10" />}
         
-        /* Сообщение о конце ленты */
         {!hasNextPage && posts.length > 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">Вы просмотрели все посты!</p>
           </div>
         )}
         
-        /* Пустое состояние */
         {posts.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
@@ -126,7 +120,6 @@ export default function HomePage() {
         )}
       </div>
 
-      /* Модальное окно создания поста */
       {showModal && (
         <CreatePostModal
           onClose={() => setShowModal(false)}

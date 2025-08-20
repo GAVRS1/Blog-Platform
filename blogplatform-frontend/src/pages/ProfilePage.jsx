@@ -83,7 +83,6 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      /* Профиль пользователя */
       <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
@@ -122,7 +121,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      /* Табы */
       <div className="bg-white rounded-lg shadow-xl">
         <div className="flex border-b border-gray-200">
           {tabs.map((tabItem) => (
@@ -183,7 +181,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      /* Модальное окно редактирования */
       {showModal && (
         <EditProfileModal
           onClose={() => setShowModal(false)}

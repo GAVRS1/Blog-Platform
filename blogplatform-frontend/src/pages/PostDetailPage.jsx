@@ -53,7 +53,6 @@ export default function PostDetailPage() {
       setComments(prev => [...prev, response.data]);
       setNewComment('');
       
-      // Обновляем счетчик комментариев в посте
       setPost(prev => ({
         ...prev,
         commentsCount: (prev.commentsCount || 0) + 1
@@ -93,7 +92,6 @@ export default function PostDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      /* Основной пост */
       <motion.div
         className="bg-white rounded-lg shadow-xl p-8 mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -121,11 +119,9 @@ export default function PostDetailPage() {
           </Link>
         </div>
 
-        /* Контент поста */
         <h1 className="text-3xl font-bold text-gray-800 mb-4">{post.title}</h1>
         <p className="text-gray-700 text-lg leading-relaxed mb-6">{post.content}</p>
 
-        /* Медиа */
         {(post.imageUrl || post.videoUrl || post.audioUrl) && (
           <div className="mb-6">
             <MediaPlayer 
@@ -138,7 +134,6 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        /* Действия */
         <div className="flex items-center gap-6 pt-6 border-t border-gray-200">
           <LikeButton 
             postId={post.id} 
@@ -157,13 +152,11 @@ export default function PostDetailPage() {
         </div>
       </motion.div>
 
-      /* Секция комментариев */
       <div className="bg-white rounded-lg shadow-xl p-8" id="comments">
         <h3 className="text-2xl font-bold text-gray-800 mb-6">
           Комментарии ({comments.length})
         </h3>
 
-        /* Форма добавления комментария */
         {user && (
           <div className="flex gap-4 mb-8">
             <img
@@ -194,7 +187,6 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        /* Список комментариев */
         <div className="space-y-6">
           {comments.map((comment) => (
             <Comment 
