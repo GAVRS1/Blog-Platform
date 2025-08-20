@@ -6,7 +6,7 @@ export default function ThemeToggle() {
   return (
     <motion.button
       title="Сменить тему"
-      className="btn btn-circle btn-sm btn-ghost self-center"
+      className="btn btn-circle btn-md btn-ghost"
       onClick={toggle}
       whileHover={{ rotate: 180 }}
       transition={{ duration: 0.2 }}
