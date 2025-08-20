@@ -1,13 +1,15 @@
 import { useTheme } from '@/context/ThemeProvider';
 import { motion } from 'framer-motion';
 
-export default function ThemeToggle({ mobile }) {
+export default function ThemeToggle() {
   const { dark, toggle } = useTheme();
   return (
     <motion.button
-      className={`btn btn-ghost ${mobile ? 'btn-circle text-2xl' : 'w-full'}`}
+      title="Сменить тему"
+      className="btn btn-circle btn-sm btn-ghost self-center"
       onClick={toggle}
-      whileTap={{ rotate: 180 }}
+      whileHover={{ rotate: 180 }}
+      transition={{ duration: 0.2 }}
     >
       {dark ? '☀️' : '🌙'}
     </motion.button>

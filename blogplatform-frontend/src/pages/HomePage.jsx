@@ -33,19 +33,9 @@ export default function HomePage() {
   const posts = data?.pages.flat() ?? [];
 
   return (
-    <div className="container mx-auto px-4 py-8 flex gap-4">
+    <div className="container mx-auto px-4 py-8 flex gap-8">
       <Sidebar />
       <main className="flex-1 max-w-3xl">
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-primary">Лента</h1>
-          <button
-            className="btn btn-primary hidden lg:inline-flex"
-            onClick={() => setShowModal(true)}
-          >
-            + Новый пост
-          </button>
-        </header>
-
         <div className="space-y-6">
           {posts.map((p) => <PostCard key={p.id} post={p} />)}
           {isFetchingNextPage &&
@@ -63,7 +53,6 @@ export default function HomePage() {
           />
         )}
       </main>
-      <aside className="hidden lg:block w-64" /> {/* пустой слот для симметрии */}
     </div>
   );
 }
