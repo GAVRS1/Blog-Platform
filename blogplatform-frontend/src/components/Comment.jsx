@@ -57,7 +57,7 @@ export default function Comment({ comment, onDelete }) {
 
         <div className="flex items-center gap-3 text-xs text-base-content/60 mt-1">
           <button onClick={toggleReplies}>
-            {comment.repliesCount || 0} ответа
+            {comment.replyCount || 0} ответа
           </button>
           {isOwner && (
             <button onClick={deleteComment} className="text-error">

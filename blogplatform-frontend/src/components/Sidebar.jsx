@@ -1,17 +1,19 @@
-import { NavLink } from 'react-router-dom';
+// src/components/Sidebar.jsx
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { getAvatarUrl } from '@/utils/avatar';
-import { useNavigate } from 'react-router-dom';
 
+// Компонент NavItem оставлен без изменений
 const NavItem = ({ to, children }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
       `btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 ` +
-      (isActive 
-        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg' 
+      (isActive
+        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
         : 'btn-ghost hover:bg-primary/10 hover:scale-[1.02]')
     }
   >
@@ -24,7 +26,8 @@ const NavItem = ({ to, children }) => (
   </NavLink>
 );
 
-export default function Sidebar() {
+// Изменен экспорт по умолчанию и добавлен пропс onOpenCreatePostModal
+export default function Sidebar({ onOpenCreatePostModal }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -36,14 +39,14 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden lg:block sticky top-6 h-fit max-h-[calc(100vh-3rem)] w-64 flex-shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-      <motion.div 
+      <motion.div
         className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300/50 p-6"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
         {/* Профиль пользователя */}
-        <motion.div 
+        <motion.div
           className="flex flex-col items-center mb-8 p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl"
           whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 300 }}
@@ -67,6 +70,18 @@ export default function Sidebar() {
         {/* Навигация */}
         <nav className="space-y-3 mb-6">
           <NavItem to="/">🏠 Главная</NavItem>
+          {/* Добавлен новый пункт меню для создания поста */}
+          <button // Используем button для действия
+            onClick={onOpenCreatePostModal} // Вызываем переданную функцию
+            className={`btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 btn-ghost hover:bg-primary/10 hover:scale-[1.02]`}
+          >
+            <motion.div
+              whileHover={{ x: 4 }}
+              transition={{ type: 'spring', stiffness: 400 }}
+            >
+              ✍️ Создать пост {/* Или используйте иконку, например: <i className="fas fa-plus mr-2"></i>Создать пост */}
+            </motion.div>
+          </button>
           <NavItem to="/profile">👤 Профиль</NavItem>
         </nav>
 
