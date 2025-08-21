@@ -23,9 +23,10 @@ export default function PostCard({ post }) {
         >
           <Link to={`/profile/${post.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <motion.img
-              src={getAvatarUrl(post.userAvatar)}
+              src={getAvatarUrl(post.userAvatar)} // Используем getAvatarUrl
               alt={post.userFullName}
-              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+              // Добавим object-cover и aspect-square
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20 aspect-square"
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400 }}
             />

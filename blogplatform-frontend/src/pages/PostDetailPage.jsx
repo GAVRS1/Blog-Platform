@@ -104,9 +104,10 @@ export default function PostDetailPage() {
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <img
-              src={getAvatarUrl(post.userAvatar)}
+              src={getAvatarUrl(post.userAvatar)} // Используем getAvatarUrl
               alt={post.userFullName}
-              className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
+              // Добавим object-cover и aspect-square
+              className="w-14 h-14 rounded-full object-cover border-2 border-primary/20 aspect-square"
             />
             <div>
               <h3 className="font-semibold text-lg hover:text-primary transition-colors text-base-content"> {/* text-gray-800 -> text-base-content */}
@@ -160,9 +161,10 @@ export default function PostDetailPage() {
         {user && (
           <div className="flex gap-4 mb-8">
             <img
-              src={getAvatarUrl(user.profile?.profilePictureUrl)}
+              src={getAvatarUrl(user.profile?.profilePictureUrl)} // Используем getAvatarUrl
               alt={user.fullName}
-              className="w-10 h-10 rounded-full object-cover"
+              // Добавим object-cover и aspect-square
+              className="w-10 h-10 rounded-full object-cover aspect-square"
             />
             <div className="flex-1">
               <textarea

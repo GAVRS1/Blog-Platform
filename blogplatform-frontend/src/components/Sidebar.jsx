@@ -54,7 +54,8 @@ export default function Sidebar({ onOpenCreatePostModal }) {
           <motion.img
             src={avatarUrl}
             alt={user?.username || 'User'}
-            className="w-20 h-20 rounded-full border-4 border-primary/20 shadow-lg cursor-pointer"
+            // Добавим object-cover и aspect-square для предотвращения растягивания
+            className="w-20 h-20 rounded-full border-4 border-primary/20 shadow-lg cursor-pointer object-cover aspect-square"
             onClick={() => navigate('/profile')}
             whileHover={{ scale: 1.1, borderColor: 'var(--primary)' }}
             whileTap={{ scale: 0.95 }}

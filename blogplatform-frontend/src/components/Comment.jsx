@@ -47,9 +47,10 @@ export default function Comment({ comment, onDelete }) {
   return (
     <div className="flex gap-3 mb-4">
       <img
-        src={getAvatarUrl(comment.userAvatar)}
+        src={avatarError ? '/avatar.png' : getAvatarUrl(comment.userAvatar)} // Используем getAvatarUrl
         alt={comment.username}
-        className="w-8 h-8 rounded-full mt-1"
+        className="w-8 h-8 rounded-full mt-1 object-cover aspect-square" // Добавим object-cover и aspect-square
+        onError={() => setAvatarError(true)} // Обработка ошибки загрузки
       />
       <div className="flex-1">
         <div className="bg-base-200 rounded-lg p-2"> {/* Этот цвет должен адаптироваться под тему */}
@@ -73,9 +74,10 @@ export default function Comment({ comment, onDelete }) {
             {replies.map((r) => (
               <div key={r.id} className="flex gap-2 mb-2">
                 <img
-                  src={getAvatarUrl(r.userAvatar)}
+                  src={avatarError ? '/avatar.png' : getAvatarUrl(r.userAvatar)} // Используем getAvatarUrl
                   alt={r.username}
-                  className="w-6 h-6 rounded-full"
+                  className="w-6 h-6 rounded-full object-cover aspect-square" // Добавим object-cover и aspect-square
+                  onError={() => setAvatarError(true)} // Обработка ошибки загрузки
                 />
                 <div className="bg-base-200 rounded px-2 py-1 text-sm"> {/* bg-gray-50 -> bg-base-200 */}
                   <b className="text-base-content">{r.username}</b> {/* text-gray-800 -> text-base-content */}
