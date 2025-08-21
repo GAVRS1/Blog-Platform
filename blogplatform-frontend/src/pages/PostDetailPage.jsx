@@ -1,4 +1,4 @@
-// src/pages/PostDetailPage.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// src/pages/PostDetailPage.jsx
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -85,7 +85,7 @@ export default function PostDetailPage() {
   if (!post) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-700">Пост не найден</h2>
+        <h2 className="text-2xl font-bold text-base-content">Пост не найден</h2> {/* text-gray-700 -> text-base-content */}
       </div>
     );
   }
@@ -93,11 +93,11 @@ export default function PostDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <motion.div
-        className="bg-white rounded-lg shadow-xl p-8 mb-8"
+        className="bg-base-100 rounded-lg shadow-xl p-8 mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        /* Автор поста */
+        {/* Автор поста */}
         <div className="flex items-center gap-4 mb-6">
           <Link 
             to={`/profile/${post.userId}`}
@@ -109,18 +109,18 @@ export default function PostDetailPage() {
               className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
             />
             <div>
-              <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg hover:text-primary transition-colors text-base-content"> {/* text-gray-800 -> text-base-content */}
                 {post.userFullName}
               </h3>
-              <p className="text-gray-500">
+              <p className="text-base-content/70"> {/* text-gray-500 -> text-base-content/70 */}
                 @{post.username} • {new Date(post.createdAt).toLocaleDateString('ru-RU')}
               </p>
             </div>
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">{post.title}</h1>
-        <p className="text-gray-700 text-lg leading-relaxed mb-6">{post.content}</p>
+        <h1 className="text-3xl font-bold text-base-content mb-4">{post.title}</h1> {/* text-gray-800 -> text-base-content */}
+        <p className="text-base-content text-lg leading-relaxed mb-6">{post.content}</p> {/* text-gray-700 -> text-base-content */}
 
         {(post.imageUrl || post.videoUrl || post.audioUrl) && (
           <div className="mb-6">
@@ -134,14 +134,14 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        <div className="flex items-center gap-6 pt-6 border-t border-gray-200">
+        <div className="flex items-center gap-6 pt-6 border-t border-base-300"> {/* border-gray-200 -> border-base-300 */}
           <LikeButton 
             postId={post.id} 
             initialLiked={post.isLikedByCurrentUser || false} 
             initialCount={post.likeCount || 0}            
           />
           
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-base-content/70"> {/* text-gray-600 -> text-base-content/70 */}
             <i className="far fa-comment text-xl"></i>
             <span className="font-medium">{post.commentCount || 0}</span> {/* <-- commentCount */}
           </div>
@@ -152,8 +152,8 @@ export default function PostDetailPage() {
         </div>
       </motion.div>
 
-      <div className="bg-white rounded-lg shadow-xl p-8" id="comments">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6">
+      <div className="bg-base-100 rounded-lg shadow-xl p-8" id="comments"> {/* bg-white -> bg-base-100 */}
+        <h3 className="text-2xl font-bold text-base-content mb-6"> {/* text-gray-800 -> text-base-content */}
           Комментарии ({comments.length})
         </h3>
 
@@ -169,7 +169,7 @@ export default function PostDetailPage() {
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Написать комментарий..."
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full p-3 border border-base-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent" // border-gray-300 -> border-base-300
                 rows={3}
               />
               <button
@@ -198,8 +198,8 @@ export default function PostDetailPage() {
           
           {comments.length === 0 && (
             <div className="text-center py-8">
-              <i className="far fa-comments text-4xl text-gray-300 mb-3"></i>
-              <p className="text-gray-500">
+              <i className="far fa-comments text-4xl text-base-content/30 mb-3"></i> {/* text-gray-300 -> text-base-content/30 */}
+              <p className="text-base-content/70"> {/* text-gray-500 -> text-base-content/70 */}
                 {user ? 'Будьте первым, кто оставит комментарий!' : 'Войдите, чтобы оставить комментарий'}
               </p>
             </div>

@@ -1,4 +1,4 @@
-// src/pages/UserProfilePage.jsx - НОВЫЙ ФАЙЛ
+// src/pages/UserProfilePage.jsx
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -61,15 +61,15 @@ export default function UserProfilePage() {
   if (!userProfile) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-700">Пользователь не найден</h2>
+        <h2 className="text-2xl font-bold text-base-content">Пользователь не найден</h2> {/* text-gray-700 -> text-base-content */}
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      /* Профиль пользователя */
-      <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
+      {/* Профиль пользователя */}
+      <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8"> {/* bg-white -> bg-base-100 */}
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
             src={getAvatarUrl(userProfile.profile?.profilePictureUrl)}
@@ -78,15 +78,15 @@ export default function UserProfilePage() {
           />
           
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{userProfile.fullName}</h1>
-            <p className="text-gray-600 mb-4">@{userProfile.username}</p>
+            <h1 className="text-3xl font-bold text-base-content mb-2">{userProfile.fullName}</h1> {/* text-gray-800 -> text-base-content */}
+            <p className="text-base-content/80 mb-4">@{userProfile.username}</p> {/* text-gray-600 -> text-base-content/80 */}
             
             {userProfile.profile?.bio && (
-              <p className="text-gray-700 mb-4">{userProfile.profile.bio}</p>
+              <p className="text-base-content mb-4">{userProfile.profile.bio}</p>
             )}
             
-            /* Статистика */
-            <div className="flex gap-6 text-sm text-gray-600">
+            {/* Статистика */}
+            <div className="flex gap-6 text-sm text-base-content/70"> {/* text-gray-600 -> text-base-content/70 */}
               <span>
                 <i className="fas fa-file-alt mr-1"></i>
                 {userProfile.stats?.postsCount || 0} постов
@@ -104,18 +104,19 @@ export default function UserProfilePage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-xl p-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6">
+      {/* Публикации */}
+      <div className="bg-base-100 rounded-lg shadow-xl p-6"> {/* bg-white -> bg-base-100 */}
+        <h3 className="text-2xl font-bold text-base-content mb-6"> {/* text-gray-800 -> text-base-content */}
           Публикации пользователя
         </h3>
 
         {posts.length === 0 && !isFetchingNextPage ? (
           <div className="text-center py-12">
-            <i className="fas fa-file-alt text-6xl text-gray-300 mb-4"></i>
-            <h4 className="text-xl font-semibold text-gray-500 mb-2">
+            <i className="fas fa-file-alt text-6xl text-base-content/30 mb-4"></i> {/* text-gray-300 -> text-base-content/30 */}
+            <h4 className="text-xl font-semibold text-base-content/70 mb-2"> {/* text-gray-500 -> text-base-content/70 */}
               Пока нет публикаций
             </h4>
-            <p className="text-gray-400">
+            <p className="text-base-content/60"> {/* text-gray-400 -> text-base-content/60 */}
               Пользователь еще не создал ни одного поста
             </p>
           </div>
