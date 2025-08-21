@@ -1,9 +1,9 @@
 // src/pages/ProfilePage.jsx
 import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query'; // <-- Добавлен импорт
+import { useQueryClient } from '@tanstack/react-query';
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
-import { getAvatarUrl } from '@/utils/avatar';
+import { getAvatarUrl } from '@/utils/avatar'; // Убедиться, что импортировано
 import SkeletonPost from '@/components/SkeletonPost';
 import PostCard from '@/components/PostCard';
 import Comment from '@/components/Comment';
@@ -12,12 +12,12 @@ import EditProfileModal from '@/components/EditProfileModal';
 // Обновленные эндпоинты (используем правильные пути)
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
-  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' }, // <-- Исправлено
-  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' }, // <-- Исправлено
+  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' },
+  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' },
 ];
 
 export default function ProfilePage() {
-  const queryClient = useQueryClient(); // <-- Получаем queryClient
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState('posts');
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
@@ -69,15 +69,19 @@ export default function ProfilePage() {
     );
   }
 
+  // Используем getAvatarUrl для аватара профиля
+  const profileAvatarUrl = getAvatarUrl(user.profile?.profilePictureUrl);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Карточка профиля */}
       <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
-            src={getAvatarUrl(user.profile?.profilePictureUrl)}
+            src={profileAvatarUrl} // Используем обработанный URL
             alt={user.fullName}
-            className="w-24 h-24 rounded-full object-cover border-4 border-primary/20"
+            // Добавим object-cover и aspect-square для предотвращения растягивания
+            className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
           />
           
           <div className="flex-1">
