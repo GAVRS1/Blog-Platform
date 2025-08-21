@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'; // Добавлен useEffect
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import { getAvatarUrl } from '@/utils/avatar';
 import SkeletonPost from '@/components/SkeletonPost';
 import PostCard from '@/components/PostCard';
@@ -11,11 +12,12 @@ import EditProfileModal from '@/components/EditProfileModal';
 // Обновленные эндпоинты
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
-  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' },
-  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' },
+  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' }, // <-- Исправлено
+  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' }, // <-- Исправлено
 ];
 
 export default function ProfilePage() {
+  const queryClient = useQueryClient(); // <-- Получаем queryClient
   const [tab, setTab] = useState('posts');
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
@@ -26,14 +28,14 @@ export default function ProfilePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    invalidate // Получаем функцию инвалидации
+    // invalidate // Убираем, будем использовать queryClient напрямую
   } = useMyData(currentTab.endpoint);
 
   // Эффект для инвалидации кэша при смене вкладки
   useEffect(() => {
     // Принудительно обновляем данные при смене вкладки
-    invalidate();
-  }, [tab, invalidate]); // Зависимости: tab и функция invalidate
+    queryClient.invalidateQueries({ queryKey: ['my-data', currentTab.endpoint] });
+  }, [tab, currentTab.endpoint, queryClient]); // Зависимости
 
   const items = data?.pages.flat() ?? [];
 
@@ -59,6 +61,7 @@ export default function ProfilePage() {
       ));
     }
   };
+
 
   if (!user) {
     return (
