@@ -1,17 +1,19 @@
+// src/components/Comment.jsx
 import { useState } from 'react';
 import { getAvatarUrl } from '@/utils/avatar';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth'; // <-- Импортируем useAuth
 
 export default function Comment({ comment, onDelete }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState('');
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const isOwner = user && comment.userId === user.id;
+  const { user } = useAuth(); // <-- Получаем данные текущего пользователя
+  // const currentUserId = localStorage.getItem('uid'); // <-- Убираем это
+  const isOwner = user && comment.userId === user.id; // <-- Сравниваем с user.id
 
   const toggleReplies = () => {
     if (!showReplies) {
@@ -37,7 +39,7 @@ export default function Comment({ comment, onDelete }) {
       .then(({ data }) => {
         setReplies([data, ...replies]);
         setReplyText('');
-        queryClient.invalidateQueries(['post', comment.postId]);
+        queryClient.invalidateQueries({ queryKey: ['post', comment.postId] }); // Используем объект queryKey
       })
       .catch(() => toast.error('Не удалось отправить ответ'));
   };
@@ -50,14 +52,14 @@ export default function Comment({ comment, onDelete }) {
         className="w-8 h-8 rounded-full mt-1"
       />
       <div className="flex-1">
-        <div className="bg-base-200 rounded-lg p-2">
-          <p className="text-sm font-bold">@{comment.username}</p>
-          <p className="text-sm">{comment.content}</p>
+        <div className="bg-base-200 rounded-lg p-2"> {/* Этот цвет должен адаптироваться под тему */}
+          <p className="text-sm font-bold text-base-content">{comment.username}</p> {/* text-gray-800 -> text-base-content */}
+          <p className="text-sm text-base-content">{comment.content}</p> {/* text-gray-700 -> text-base-content */}
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-base-content/60 mt-1">
+        <div className="flex items-center gap-3 text-xs text-base-content/60 mt-1"> {/* text-gray-500 -> text-base-content/60 */}
           <button onClick={toggleReplies}>
-            {comment.replyCount || 0} ответа
+            {comment.replyCount || 0} ответа {/* <-- replyCount */}
           </button>
           {isOwner && (
             <button onClick={deleteComment} className="text-error">
@@ -67,7 +69,7 @@ export default function Comment({ comment, onDelete }) {
         </div>
 
         {showReplies && (
-          <div className="mt-2 pl-4 border-l-2">
+          <div className="mt-2 pl-4 border-l-2 border-base-300"> {/* border-gray-200 -> border-base-300 */}
             {replies.map((r) => (
               <div key={r.id} className="flex gap-2 mb-2">
                 <img
@@ -75,8 +77,9 @@ export default function Comment({ comment, onDelete }) {
                   alt={r.username}
                   className="w-6 h-6 rounded-full"
                 />
-                <div className="bg-base-200 rounded px-2 py-1 text-sm">
-                  <b>@{r.username}</b> {r.content}
+                <div className="bg-base-200 rounded px-2 py-1 text-sm"> {/* bg-gray-50 -> bg-base-200 */}
+                  <b className="text-base-content">{r.username}</b> {/* text-gray-800 -> text-base-content */}
+                  <span className="text-base-content"> {r.content}</span> {/* text-gray-700 -> text-base-content */}
                 </div>
               </div>
             ))}
@@ -86,7 +89,7 @@ export default function Comment({ comment, onDelete }) {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Ответить..."
-                className="input input-xs input-bordered w-full"
+                className="input input-xs input-bordered w-full" // Предполагается, что input-bordered адаптируется
               />
               <button onClick={sendReply} className="btn btn-xs btn-primary">
                 Отправить
