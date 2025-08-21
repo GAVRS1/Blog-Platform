@@ -83,7 +83,14 @@ export default function App() {
                 </MainLayout>
               }
             />
-            <Route path="/profile/:userId" element={<UserProfilePage />} />
+            <Route
+  path="/profile/:userId"
+  element={
+    <MainLayout>
+      <UserProfilePage />
+    </MainLayout>
+  }
+/>
 <Route path="/my-posts" element={
   <MyItemsPage 
     title="Мои посты" 
