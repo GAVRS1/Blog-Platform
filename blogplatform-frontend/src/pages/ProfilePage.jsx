@@ -1,15 +1,15 @@
 // src/pages/ProfilePage.jsx
-import { useState, useEffect } from 'react'; // Добавлен useEffect
+import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query'; // <-- Добавлен импорт
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
-import { useQueryClient } from '@tanstack/react-query';
 import { getAvatarUrl } from '@/utils/avatar';
 import SkeletonPost from '@/components/SkeletonPost';
 import PostCard from '@/components/PostCard';
 import Comment from '@/components/Comment';
 import EditProfileModal from '@/components/EditProfileModal';
 
-// Обновленные эндпоинты
+// Обновленные эндпоинты (используем правильные пути)
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
   { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' }, // <-- Исправлено
@@ -28,14 +28,13 @@ export default function ProfilePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    // invalidate // Убираем, будем использовать queryClient напрямую
   } = useMyData(currentTab.endpoint);
 
   // Эффект для инвалидации кэша при смене вкладки
   useEffect(() => {
     // Принудительно обновляем данные при смене вкладки
     queryClient.invalidateQueries({ queryKey: ['my-data', currentTab.endpoint] });
-  }, [tab, currentTab.endpoint, queryClient]); // Зависимости
+  }, [tab, currentTab.endpoint, queryClient]); // <-- Корректные зависимости
 
   const items = data?.pages.flat() ?? [];
 
@@ -61,7 +60,6 @@ export default function ProfilePage() {
       ));
     }
   };
-
 
   if (!user) {
     return (
