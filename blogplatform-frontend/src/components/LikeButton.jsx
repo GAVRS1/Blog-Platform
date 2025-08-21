@@ -20,33 +20,34 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
     onMutate: () => {
       const prevLiked = liked;
       const prevCount = count;
-      
-      setLiked(!liked);
-      setCount(prev => liked ? prev - 1 : prev + 1);
+      // Оптимистичное обновление UI
+      setLiked(!prevLiked); 
+      // Предполагаем изменение счетчика (это может быть неточно, если одновременно лайкают несколько пользователей)
+      // Но оно будет исправлено в onSuccess
+      setCount(prev => prevLiked ? prev - 1 : prev + 1); 
       setIsAnimating(true);
-      
       return { prevLiked, prevCount };
     },
     onSuccess: (response) => {
-      // API возвращает { liked: boolean }
-      const newLiked = response.data.liked;
+      // Предполагаем, что API возвращает { liked: boolean, count: number }
+      const { liked: newLiked, count: newCount } = response.data;
+      
+      // Устанавливаем точные значения, полученные от сервера
       setLiked(newLiked);
-      
-      // Обновляем счетчик на основе изменения состояния
-      setCount(prev => newLiked ? prev + (liked ? 0 : 1) : prev - (liked ? 1 : 0));
-      
-      queryClient.invalidateQueries(['posts']);
-      queryClient.invalidateQueries(['post', postId]);
+      setCount(newCount); // <-- Ключевое изменение: берем счетчик напрямую
+
+      queryClient.invalidateQueries({ queryKey: ['posts'] }); // Можно использовать объект
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
       
       setTimeout(() => setIsAnimating(false), 300);
     },
     onError: (error, variables, context) => {
+      // Откат при ошибке
       if (context) {
         setLiked(context.prevLiked);
         setCount(context.prevCount);
       }
       setIsAnimating(false);
-      
       const message = error.response?.data?.message || 'Не удалось обновить лайк';
       toast.error(message);
     },
