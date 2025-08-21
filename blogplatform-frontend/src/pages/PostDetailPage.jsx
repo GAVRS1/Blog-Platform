@@ -90,6 +90,11 @@ export default function PostDetailPage() {
     );
   }
 
+  // Используем getAvatarUrl для аватара автора поста
+  const authorAvatarUrl = getAvatarUrl(post.userAvatar);
+  // Используем getAvatarUrl для аватара текущего пользователя (если залогинен)
+  const currentUserAvatarUrl = user?.profile?.profilePictureUrl ? getAvatarUrl(user.profile.profilePictureUrl) : '/avatar.png';
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <motion.div
@@ -104,7 +109,7 @@ export default function PostDetailPage() {
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <img
-              src={getAvatarUrl(post.userAvatar)} // Используем getAvatarUrl
+              src={authorAvatarUrl} // Используем обработанный URL
               alt={post.userFullName}
               // Добавим object-cover и aspect-square для предотвращения растягивания
               className="w-14 h-14 rounded-full object-cover border-2 border-primary/20 aspect-square"
@@ -161,7 +166,7 @@ export default function PostDetailPage() {
         {user && (
           <div className="flex gap-4 mb-8">
             <img
-              src={getAvatarUrl(user.profile?.profilePictureUrl)} // Используем getAvatarUrl
+              src={currentUserAvatarUrl} // Используем обработанный URL
               alt={user.fullName}
               // Добавим object-cover и aspect-square для предотвращения растягивания
               className="w-10 h-10 rounded-full object-cover aspect-square"
