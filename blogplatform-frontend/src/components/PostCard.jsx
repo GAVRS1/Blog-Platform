@@ -98,7 +98,7 @@ export default function PostCard({ post }) {
               className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
             >
               <i className="far fa-comment text-lg"></i>
-              <span className="text-sm font-medium">{post.commentsCount || 0}</span>
+              <span className="text-sm font-medium">{post.commentCount || 0}</span> {/* <-- commentCount */}
             </Link>
           </div>
 

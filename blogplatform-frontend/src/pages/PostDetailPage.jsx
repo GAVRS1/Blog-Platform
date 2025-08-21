@@ -54,9 +54,9 @@ export default function PostDetailPage() {
       setNewComment('');
       
       setPost(prev => ({
-        ...prev,
-        commentsCount: (prev.commentsCount || 0) + 1
-      }));
+            ...prev,
+            commentCount: (prev.commentCount || 0) + 1 // <-- commentCount
+          }));
       
       toast.success('Комментарий добавлен!');
     } catch (error) {
@@ -69,9 +69,9 @@ export default function PostDetailPage() {
   const handleDeleteComment = (commentId) => {
     setComments(prev => prev.filter(c => c.id !== commentId));
     setPost(prev => ({
-      ...prev,
-      commentsCount: Math.max((prev.commentsCount || 1) - 1, 0)
-    }));
+        ...prev,
+        commentCount: Math.max((prev.commentCount || 1) - 1, 0) // <-- commentCount
+      }));
   };
 
   if (loading) {
@@ -143,7 +143,7 @@ export default function PostDetailPage() {
           
           <div className="flex items-center gap-2 text-gray-600">
             <i className="far fa-comment text-xl"></i>
-            <span className="font-medium">{post.commentsCount || 0}</span>
+            <span className="font-medium">{post.commentCount || 0}</span> {/* <-- commentCount */}
           </div>
           
           <span className="badge badge-primary badge-outline ml-auto">

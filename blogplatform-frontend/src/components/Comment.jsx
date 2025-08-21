@@ -3,15 +3,15 @@ import { getAvatarUrl } from '@/utils/avatar';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Comment({ comment, onDelete }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState('');
   const queryClient = useQueryClient();
-  const currentUserId = localStorage.getItem('uid');
-
-  const isOwner = comment.userId === currentUserId;
+  const { user } = useAuth();
+  const isOwner = user && comment.userId === user.id;
 
   const toggleReplies = () => {
     if (!showReplies) {
