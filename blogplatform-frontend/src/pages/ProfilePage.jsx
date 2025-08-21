@@ -1,5 +1,5 @@
 // src/pages/ProfilePage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Добавлен useEffect
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -11,8 +11,8 @@ import EditProfileModal from '@/components/EditProfileModal';
 // Обновленные эндпоинты
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
-  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' }, // <-- Исправлено
-  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' }, // <-- Исправлено
+  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' },
+  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' },
 ];
 
 export default function ProfilePage() {
@@ -26,7 +26,14 @@ export default function ProfilePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    invalidate // Получаем функцию инвалидации
   } = useMyData(currentTab.endpoint);
+
+  // Эффект для инвалидации кэша при смене вкладки
+  useEffect(() => {
+    // Принудительно обновляем данные при смене вкладки
+    invalidate();
+  }, [tab, invalidate]); // Зависимости: tab и функция invalidate
 
   const items = data?.pages.flat() ?? [];
 
@@ -40,7 +47,6 @@ export default function ProfilePage() {
     
     if (tab === 'likes') {
       // items - это массив постов, которые пользователь лайкнул
-      // Эндпоинт /api/Users/me/liked-posts возвращает сами посты
       return items.map(post => (
         <PostCard key={post.id} post={post} />
       ));
@@ -48,7 +54,6 @@ export default function ProfilePage() {
     
     if (tab === 'comments') {
       // items - это массив постов, в которых пользователь оставил комментарий
-      // Эндпоинт /api/Users/me/commented-posts возвращает сами посты
       return items.map(post => (
         <PostCard key={post.id} post={post} />
       ));
