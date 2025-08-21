@@ -89,8 +89,8 @@ export default function PostCard({ post }) {
           <div className="flex items-center gap-4">
             <LikeButton 
               postId={post.id} 
-              initialLiked={post.isLiked || false}
-              initialCount={post.likesCount || 0}
+              initialLiked={post.isLikedByCurrentUser || false} // <-- Исправлено имя поля
+              initialCount={post.likeCount || 0}               // <-- Исправлено имя поля
             />
             
             <Link 

@@ -137,8 +137,8 @@ export default function PostDetailPage() {
         <div className="flex items-center gap-6 pt-6 border-t border-gray-200">
           <LikeButton 
             postId={post.id} 
-            initialLiked={post.isLiked || false}
-            initialCount={post.likesCount || 0}
+            initialLiked={post.isLikedByCurrentUser || false} 
+            initialCount={post.likeCount || 0}            
           />
           
           <div className="flex items-center gap-2 text-gray-600">
