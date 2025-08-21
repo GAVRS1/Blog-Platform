@@ -1,3 +1,4 @@
+// src/components/LikeButton.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import api from '@/api/axios';
@@ -16,7 +17,8 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
   }, [initialLiked, initialCount]);
 
   const likeMutation = useMutation({
-    mutationFn: () => api.post(`/api/Likes/post/${postId}`),
+    // Исправляем URL - убираем дублирование /api
+    mutationFn: () => api.post(`/Likes/post/${postId}`),
     onMutate: () => {
       const prevLiked = liked;
       const prevCount = count;
@@ -49,6 +51,7 @@ export default function LikeButton({ postId, initialLiked, initialCount }) {
       
       const message = error.response?.data?.message || 'Не удалось обновить лайк';
       toast.error(message);
+      console.error('Like error:', error);
     },
   });
 

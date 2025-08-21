@@ -1,3 +1,4 @@
+// src/pages/LoginPage.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -33,87 +34,86 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 p-4">
       <motion.div
-        className="w-full max-w-md"
+        className="card bg-base-100/80 backdrop-blur-sm shadow-2xl w-full max-w-md border border-base-300/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="text-center mb-8">
+        <div className="card-body p-8">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
           >
-            <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fab fa-blogger text-white text-2xl"></i>
-            </div>
+            <h1 className="text-3xl font-bold text-primary mb-2">Вход</h1>
+            <p className="text-base-content/60">Добро пожаловать обратно!</p>
           </motion.div>
-          
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Вход в аккаунт</h2>
-          <p className="text-gray-600">Добро пожаловать в BlogPlatform</p>
-        </div>
 
-        <motion.div
-          className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email адрес
+            <motion.div
+              className="form-control"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <label className="label">
+                <span className="label-text text-base-content font-medium">Email</span>
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  placeholder="example@email.com"
-                  required
-                />
-                <i className="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              </div>
-            </div>
+              <input
+                type="email"
+                placeholder="your@email.com"
+                className="input input-bordered w-full bg-base-100 border-base-300 focus:border-primary text-base-content"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                required
+              />
+            </motion.div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Пароль
+            <motion.div
+              className="form-control"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <label className="label">
+                <span className="label-text text-base-content font-medium">Пароль</span>
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  className="input input-bordered w-full bg-base-100 border-base-300 focus:border-primary text-base-content pr-12"
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  placeholder="Введите пароль"
                   required
                 />
-                <i className="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <button
                   type="button"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-base-content/60 hover:text-base-content"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             <motion.button
               type="submit"
+              className="btn btn-primary w-full text-white font-medium shadow-lg hover:shadow-xl"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-lg font-semibold transition-all hover:shadow-lg disabled:opacity-50"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               {loading ? (
                 <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Вход...
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Входим...
                 </>
               ) : (
                 <>
@@ -124,18 +124,32 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <motion.div
+            className="divider text-base-content/60"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            или
+          </motion.div>
+
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <p className="text-base-content/60">
               Нет аккаунта?{' '}
               <Link 
                 to="/register" 
-                className="text-primary hover:text-secondary font-semibold transition-colors"
+                className="link link-primary font-medium hover:text-primary/80"
               >
                 Зарегистрироваться
               </Link>
             </p>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </div>
   );
