@@ -89,8 +89,8 @@ export default function EditProfileModal({ onClose, onSaved }) {
         // Получаем текущего пользователя для userId
         const { data: userData } = await api.get('/Auth/me');
         
-        // Загружаем файл
-        const {  uploadResult } = await api.post(
+        // Загружаем файл через Media/upload
+        const uploadResponse = await api.post(
           `/Media/upload?type=avatar&userId=${userData.id}`, 
           formData,
           {
@@ -98,15 +98,15 @@ export default function EditProfileModal({ onClose, onSaved }) {
           }
         );
         
-        console.log('Upload result:', uploadResult); // Для отладки
+        console.log('Upload result:', uploadResponse.data); // Для отладки
         
-        // Обновляем аватар пользователя - отправляем URL как строку в JSON
-        const avatarUrl = uploadResult.publicUrl || uploadResult.url;
+        // Получаем URL из ответа
+        const avatarUrl = uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
+        
         if (avatarUrl) {
-          await api.put('/Users/profile/avatar', avatarUrl, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
+          // Отправляем URL аватара в правильном формате
+          await api.put('/Users/profile/avatar', {
+            avatarUrl: avatarUrl
           });
         } else {
           throw new Error('Не удалось получить URL аватара');

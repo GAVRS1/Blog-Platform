@@ -1,3 +1,4 @@
+// src/components/AvatarUploader.jsx
 import { useRef, useState } from 'react';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
@@ -19,9 +20,11 @@ export default function AvatarUploader({ onCropped }) {
     const cropper = cropperRef.current?.cropper;
     if (cropper) {
       cropper.getCroppedCanvas().toBlob((blob) => {
-        onCropped(blob);
+        if (blob) {
+          onCropped(blob);
+        }
         setSrc(null);
-      });
+      }, 'image/jpeg', 0.8); // Указываем тип JPEG и качество 80%
     }
   };
 
