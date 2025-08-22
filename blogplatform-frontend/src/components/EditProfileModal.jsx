@@ -100,20 +100,18 @@ export default function EditProfileModal({ onClose, onSaved }) {
       
       console.log('Upload result:', uploadResponse.data); // Для отладки
       
-      // Получаем URL из ответа и корректируем его
+      // Получаем URL из ответа
       let avatarUrl = uploadResponse.data.url || uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
       
       if (avatarUrl) {
-        // Исправляем путь - заменяем обратные слеши на прямые и убираем .tmp
+        // Исправляем путь - заменяем обратные слеши на прямые и убираем .tmp если есть
         avatarUrl = avatarUrl
           .replace(/\\/g, '/')
           .replace(/\.tmp$/, `.${fileExtension}`);
         
-        // Отправляем URL аватара как строку (не как объект)
-        await api.put('/Users/profile/avatar', avatarUrl, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
+        // Отправляем URL аватара в правильном формате (как объект с полем avatarUrl)
+        await api.put('/Users/profile/avatar', {
+          avatarUrl: avatarUrl
         });
       } else {
         throw new Error('Не удалось получить URL аватара');
