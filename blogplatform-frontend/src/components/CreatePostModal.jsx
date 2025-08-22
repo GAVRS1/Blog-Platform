@@ -10,7 +10,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
   const [type, setType] = useState('Article'); // 'Article', 'Photo', 'Video', 'Music'
   const [file, setFile] = useState(null);
   const [drag, setDrag] = useState(false);
-  const [loading, setLoading] = useState(false); // Добавлено состояние загрузки
+  const [loading, setLoading] = useState(false); // Состояние загрузки
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,10 +31,9 @@ export default function CreatePostModal({ onClose, onCreated }) {
         const mediaFormData = new FormData();
         mediaFormData.append('file', file);
 
-        // Загружаем файл через Media/upload
-        // ВАЖНО: Убедитесь, что эндпоинт правильный и не содержит лишнего /api/
+        // --- Исправлен путь API (убран дублирующийся /api) ---
         const uploadResponse = await api.post(
-          `/Media/upload?type=${mediaType}`,
+          `/Media/upload?type=${mediaType}`, // <-- Путь без /api/
           mediaFormData,
           {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -45,15 +44,11 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
         // Извлекаем URL из ответа
         // Адаптируйте это в зависимости от структуры ответа вашего MediaController
-        // Например: { url: "..." } или { uploadResult: { publicUrl: "..." } }
         mediaUrl = uploadResponse.data.url || uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
 
         if (!mediaUrl) {
           throw new Error('Не удалось получить URL загруженного файла');
         }
-
-        // Опционально: корректируем URL, если нужно (например, заменить \ на /)
-        mediaUrl = mediaUrl.replace(/\\/g, '/');
       }
       // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
@@ -66,7 +61,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
       // Добавляем URL медиа в соответствующее поле
       if (mediaUrl) {
         // Определяем, в какое поле добавить URL, основываясь на типе
-        // Убедитесь, что имена полей соответствуют ожидаемым в PostDto
+        // Убедитесь, что имена полей соответствуют ожидаемым в PostDto на бэкенде
         if (type === 'Photo') {
           postFormData.append('imageUrl', mediaUrl);
         } else if (type === 'Video') {
@@ -77,10 +72,10 @@ export default function CreatePostModal({ onClose, onCreated }) {
         // Для 'Article' mediaUrl будет null, и поле добавлено не будет
       }
 
+      // --- Исправлен путь API (убран дублирующийся /api) ---
       // Отправляем данные поста (включая URL медиа) в PostsController
-      // ВАЖНО: Убедитесь, что эндпоинт правильный и не содержит лишнего /api/
-      await api.post('/posts', postFormData, { // Используем postFormData, а не оригинальный formData
-        headers: { 'Content-Type': 'multipart/form-data' }, // Важно для FormData
+      await api.post('/posts', postFormData, { // <-- Путь без /api/
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       toast.success('Пост опубликован!');
@@ -187,7 +182,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
             </button>
             <button 
               type="submit" 
-              className={`btn btn-primary ${loading ? 'loading' : ''}`} // Индикатор загрузки
+              className={`btn btn-primary ${loading ? 'loading' : ''}`}
               disabled={loading} 
             >
               {loading ? 'Публикация...' : 'Опубликовать'}
