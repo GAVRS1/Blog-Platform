@@ -71,13 +71,6 @@ export default function HomePage() {
           <i className="fas fa-stream mr-3"></i>
           Лента постов
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn btn-primary lg:hidden"
-        >
-          <i className="fas fa-plus mr-2"></i>
-          Создать пост
-        </button>
       </div>
 
       <div className="space-y-6">

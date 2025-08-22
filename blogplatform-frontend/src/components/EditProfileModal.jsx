@@ -30,7 +30,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
   }, 500);
 
   useEffect(() => {
-    // Исправлен путь: убран дублирующийся /api
     api.get('/Auth/me').then(({ data }) => {
       setForm({
         username: data.username || '',
@@ -55,7 +54,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
     if (usernameError) return;
     setLoading(true);
     try {
-      // Исправлен путь: убран дублирующийся /api
       // Обновляем основные данные профиля
       await api.put('/Users/profile', {
         username: form.username,
@@ -69,11 +67,9 @@ export default function EditProfileModal({ onClose, onSaved }) {
         const formData = new FormData();
         formData.append('file', avatarBlob, 'avatar.jpg');
         
-        // Исправлен путь: убран дублирующийся /api
         // Получаем текущего пользователя для userId
         const { data: userData } = await api.get('/Auth/me');
         
-        // Исправлен путь: убран дублирующийся /api
         // Загружаем файл
         const { data: uploadResult } = await api.post(
           `/Media/upload?type=avatar&userId=${userData.id}`, 
@@ -83,19 +79,19 @@ export default function EditProfileModal({ onClose, onSaved }) {
           }
         );
         
-        // Исправлен путь: убран дублирующийся /api
-        // Обновляем аватар пользователя
-        await api.put('/Users/profile/avatar', { 
-          avatarUrl: uploadResult.url 
-        });
+        console.log('Upload result:', uploadResult); // Для отладки
+        
+        // Обновляем аватар пользователя - используем publicUrl
+        const avatarUrl = uploadResult.publicUrl || uploadResult.url;
+        if (avatarUrl) {
+          await api.put('/Users/profile/avatar', avatarUrl);
+        } else {
+          throw new Error('Не удалось получить URL аватара');
+        }
       }
 
-      // Инвалидируем правильные ключи кэша для обновления данных пользователя
-      // Предполагая, что в useAuth данные получаются по ключу ['auth', 'me']
+      // Инвалидируем кэш для обновления данных пользователя
       await queryClient.invalidateQueries({ queryKey: ['auth'] });
-      // Если используются другие ключи, их тоже нужно инвалидировать
-      // await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      // await queryClient.invalidateQueries({ queryKey: ['me'] });
       
       toast.success('Профиль успешно обновлён!');
       onSaved?.();
@@ -174,6 +170,11 @@ export default function EditProfileModal({ onClose, onSaved }) {
               <span className="label-text">Аватар</span>
             </label>
             <AvatarUploader onCropped={setAvatarBlob} />
+            {avatarBlob && (
+              <div className="mt-2">
+                <p className="text-sm text-success">Аватар готов к загрузке</p>
+              </div>
+            )}
           </div>
         </div>
         <div className="modal-action">
