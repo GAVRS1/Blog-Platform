@@ -87,7 +87,7 @@ export default function EditProfileModal({ onClose, onSaved }) {
         formData.append('file', fileWithProperName);
         
         // Получаем текущего пользователя для userId
-        const {  userData } = await api.get('/Auth/me');
+        const { data: userData } = await api.get('/Auth/me');
         
         // Загружаем файл
         const {  uploadResult } = await api.post(
