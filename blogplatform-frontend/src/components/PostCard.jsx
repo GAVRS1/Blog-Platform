@@ -1,51 +1,35 @@
-// src/components/PostCard.jsx - УЛУЧШЕННАЯ ВЕРСИЯ
+// src/components/PostCard.jsx
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 import { getAvatarUrl } from '@/utils/avatar';
 import MediaPlayer from '@/components/MediaPlayer';
 import LikeButton from '@/components/LikeButton';
-import { useAuth } from '@/hooks/useAuth';
-import api from '@/api/axios';
-import toast from 'react-hot-toast';
-import { Link } from 'react-router-dom';
-export default function PostCard({ post, onDelete }) {
-  const { user } = useAuth();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
-  
+import { useAuth } from '@/hooks/useAuth'; // Добавлено для проверки владельца поста
+import api from '@/api/axios'; // Добавлено для запроса удаления
+import toast from 'react-hot-toast'; // Добавлено для уведомлений
+
+export default function PostCard({ post, onDelete }) { // Добавлен пропс onDelete
+  const { user } = useAuth(); // Получаем текущего пользователя
   const authorAvatarUrl = getAvatarUrl(post.userAvatar);
+
+  // Проверяем, является ли текущий пользователь автором поста
   const isOwner = user && post.userId === user.id;
 
+  // Функция для удаления поста
   const handleDeletePost = async () => {
     if (!window.confirm('Вы уверены, что хотите удалить этот пост?')) return;
 
-    setIsDeleting(true);
     try {
       await api.delete(`/posts/${post.id}`);
       toast.success('Пост удален');
-      onDelete?.(post.id);
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      toast.error('Ошибка при удалении поста');
-    } finally {
-      setIsDeleting(false);
+      // Вызываем функцию onDelete, переданную из родителя, чтобы обновить список
+      if (onDelete) {
+        onDelete(post.id);
+      }
+    } catch (err) {
+      console.error('Ошибка при удалении поста:', err);
+      toast.error('Не удалось удалить пост');
     }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) return `${diffMins}м назад`;
-    if (diffHours < 24) return `${diffHours}ч назад`;
-    if (diffDays < 7) return `${diffDays}д назад`;
-    return date.toLocaleDateString('ru-RU');
   };
 
   return (
