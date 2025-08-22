@@ -42,9 +42,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
         console.log('Media upload response:', uploadResponse.data); // Для отладки
 
-        // --- ИСПРАВЛЕНО: Правильное извлечение URL ---
-        // MediaController возвращает {"Url": "..."}
-        mediaUrl = uploadResponse.data?.url; // <-- Важно: 'Url' с большой буквы
+        mediaUrl = uploadResponse.data?.url; 
 
         if (!mediaUrl) {
           // Добавим больше информации об ошибке для отладки
@@ -63,18 +61,16 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
       // Добавляем URL медиа в соответствующее поле
       if (mediaUrl) {
-        // Определяем, в какое поле добавить URL, основываясь на типе
-        // Убедитесь, что имена полей соответствуют ожидаемым в PostDto на бэкенде
-        if (type === 'Photo') {
-          postFormData.append('imageUrl', mediaUrl);
-        } else if (type === 'Video') {
-          postFormData.append('videoUrl', mediaUrl);
-        } else if (type === 'Music') {
-          postFormData.append('audioUrl', mediaUrl);
-        }
-        // Для 'Article' mediaUrl будет null, и поле добавлено не будет
-      }
-
+  // Определяем, в какое поле добавить URL, основываясь на типе
+  if (type === 'Photo') {
+    postFormData.append('ImageUrl', mediaUrl); // <-- 'ImageUrl' с большой 'I'
+  } else if (type === 'Video') {
+    postFormData.append('VideoUrl', mediaUrl); // <-- 'VideoUrl' с большой 'V'
+  } else if (type === 'Music') {
+    postFormData.append('AudioUrl', mediaUrl); // <-- 'AudioUrl' с большой 'A'
+  }
+  // Для 'Article' mediaUrl будет null, и поле добавлено не будет
+}
       // --- Исправлен путь API (убран дублирующийся /api) ---
       // Отправляем данные поста (включая URL медиа) в PostsController
       const postResponse = await api.post('/posts', postFormData, { // <-- Путь без /api/
