@@ -62,42 +62,56 @@ export default function EditProfileModal({ onClose, onSaved }) {
         birthDate: form.birthDate,
       });
 
+      // Если есть новый аватар, загружаем его
       if (avatarBlob) {
-  const formData = new FormData();
-  
-  // Создаем новый файл с правильным расширением
-  const fileExtension = avatarBlob.type.split('/')[1] || 'jpg';
-  const fileName = `avatar.${fileExtension}`;
-  const fileWithExtension = new File([avatarBlob], fileName, { type: avatarBlob.type });
-  
-  formData.append('file', fileWithExtension);
-  
-  // Получаем текущего пользователя для userId
-  const { data: userData } = await api.get('/Auth/me');
-  
-  // Загружаем файл
-  const { data: uploadResult } = await api.post(
-    `/Media/upload?type=avatar&userId=${userData.id}`, 
-    formData,
-    {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }
-  );
-  
-  console.log('Upload result:', uploadResult); // Для отладки
-  
-  // Обновляем аватар пользователя - отправляем URL как строку в JSON
-  const avatarUrl = uploadResult.publicUrl || uploadResult.url;
-  if (avatarUrl) {
-    await api.put('/Users/profile/avatar', avatarUrl, {
-      headers: {
-        'Content-Type': 'application/json'
+        // Определяем правильное расширение файла
+        let fileExtension = 'jpg';
+        let mimeType = 'image/jpeg';
+        
+        if (avatarBlob.type) {
+          mimeType = avatarBlob.type;
+          if (avatarBlob.type === 'image/png') {
+            fileExtension = 'png';
+          } else if (avatarBlob.type === 'image/gif') {
+            fileExtension = 'gif';
+          } else if (avatarBlob.type === 'image/webp') {
+            fileExtension = 'webp';
+          }
+        }
+        
+        // Создаем новый файл с правильным именем и расширением
+        const fileName = `avatar.${fileExtension}`;
+        const fileWithProperName = new File([avatarBlob], fileName, { type: mimeType });
+        
+        const formData = new FormData();
+        formData.append('file', fileWithProperName);
+        
+        // Получаем текущего пользователя для userId
+        const {  userData } = await api.get('/Auth/me');
+        
+        // Загружаем файл
+        const {  uploadResult } = await api.post(
+          `/Media/upload?type=avatar&userId=${userData.id}`, 
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        );
+        
+        console.log('Upload result:', uploadResult); // Для отладки
+        
+        // Обновляем аватар пользователя - отправляем URL как строку в JSON
+        const avatarUrl = uploadResult.publicUrl || uploadResult.url;
+        if (avatarUrl) {
+          await api.put('/Users/profile/avatar', avatarUrl, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        } else {
+          throw new Error('Не удалось получить URL аватара');
+        }
       }
-    });
-  } else {
-    throw new Error('Не удалось получить URL аватара');
-  }
-}
 
       // Инвалидируем кэш для обновления данных пользователя
       await queryClient.invalidateQueries({ queryKey: ['auth'] });
