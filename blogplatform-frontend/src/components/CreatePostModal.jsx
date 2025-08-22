@@ -42,13 +42,16 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
         console.log('Media upload response:', uploadResponse.data); // Для отладки
 
-        // Извлекаем URL из ответа
-        // Адаптируйте это в зависимости от структуры ответа вашего MediaController
-        mediaUrl = uploadResponse.data.url || uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
+        // --- ИСПРАВЛЕНО: Правильное извлечение URL ---
+        // MediaController возвращает {"Url": "..."}
+        mediaUrl = uploadResponse.data?.Url; // <-- Важно: 'Url' с большой буквы
 
         if (!mediaUrl) {
-          throw new Error('Не удалось получить URL загруженного файла');
+          // Добавим больше информации об ошибке для отладки
+          console.error('Не удалось извлечь Url из ответа:', uploadResponse.data);
+          throw new Error('Не удалось получить URL загруженного файла. Проверьте консоль.');
         }
+        console.log('Извлеченный mediaUrl:', mediaUrl); // Для отладки
       }
       // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
@@ -74,16 +77,28 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
       // --- Исправлен путь API (убран дублирующийся /api) ---
       // Отправляем данные поста (включая URL медиа) в PostsController
-      await api.post('/posts', postFormData, { // <-- Путь без /api/
+      const postResponse = await api.post('/posts', postFormData, { // <-- Путь без /api/
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      console.log('Post creation response:', postResponse.data); // Для отладки
 
       toast.success('Пост опубликован!');
       onCreated(); // Вызываем onCreated, который может обновить ленту
       onClose();   // Закрываем модалку
     } catch (err) {
       console.error('Ошибка при создании поста:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Ошибка при публикации';
+      // Попробуем получить более подробное сообщение об ошибке от сервера
+      let errorMessage = 'Ошибка при публикации';
+      if (err.response) {
+        // Сервер ответил кодом состояния вне диапазона 2xx
+        errorMessage = err.response.data?.message || err.response.data?.title || JSON.stringify(err.response.data) || errorMessage;
+      } else if (err.request) {
+        // Запрос был сделан, но ответа не получено
+        errorMessage = 'Нет ответа от сервера';
+      } else {
+        // Что-то пошло не так при настройке запроса
+        errorMessage = err.message || errorMessage;
+      }
       toast.error(errorMessage);
     } finally {
       setLoading(false); // Завершаем загрузку
