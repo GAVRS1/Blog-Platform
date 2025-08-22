@@ -81,14 +81,17 @@ export default function EditProfileModal({ onClose, onSaved }) {
         
         console.log('Upload result:', uploadResult); // Для отладки
         
+        // Обновляем аватар пользователя - отправляем URL как строку в JSON
         const avatarUrl = uploadResult.publicUrl || uploadResult.url;
-if (avatarUrl) {
-  await api.put('/Users/profile/avatar', avatarUrl, {
-    headers: {
-      'Content-Type': 'text/plain'
-    }
-  });
-}
+        if (avatarUrl) {
+          await api.put('/Users/profile/avatar', avatarUrl, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        } else {
+          throw new Error('Не удалось получить URL аватара');
+        }
       }
 
       // Инвалидируем кэш для обновления данных пользователя
