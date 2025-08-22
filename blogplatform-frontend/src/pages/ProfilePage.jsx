@@ -1,15 +1,13 @@
-// src/pages/ProfilePage.jsx
+// src/pages/ProfilePage.jsx (обновленная версия)
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
-import { getAvatarUrl } from '@/utils/avatar'; // Убедиться, что импортировано
+import { getAvatarUrl } from '@/utils/avatar';
 import SkeletonPost from '@/components/SkeletonPost';
-import PostCard from '@/components/PostCard';
-import Comment from '@/components/Comment';
+import PostCard from '@/components/PostCard'; // Убедиться, что PostCard импортирован
 import EditProfileModal from '@/components/EditProfileModal';
 
-// Обновленные эндпоинты (используем правильные пути)
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
   { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' },
@@ -21,42 +19,64 @@ export default function ProfilePage() {
   const [tab, setTab] = useState('posts');
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
-
   const currentTab = tabs.find(t => t.key === tab);
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    invalidate // Получаем функцию инвалидации из useMyData
   } = useMyData(currentTab.endpoint);
 
-  // Эффект для инвалидации кэша при смене вкладки
   useEffect(() => {
-    // Принудительно обновляем данные при смене вкладки
     queryClient.invalidateQueries({ queryKey: ['my-data', currentTab.endpoint] });
-  }, [tab, currentTab.endpoint, queryClient]); // <-- Корректные зависимости
+  }, [tab, currentTab.endpoint, queryClient]);
 
   const items = data?.pages.flat() ?? [];
 
-  // Функция для рендера контента в зависимости от типа вкладки
+  // --- Добавлено: Функция для обработки удаления поста ---
+  const handlePostDeleted = (postId) => {
+    // Инвалидируем кэш, чтобы данные перезагрузились
+    invalidate(); 
+    // Альтернативно, можно обновить кэш вручную, но invalidate проще
+    // queryClient.setQueryData(['my-data', currentTab.endpoint], oldData => {
+    //   if (!oldData) return oldData;
+    //   return {
+    //     ...oldData,
+    //     pages: oldData.pages.map(page => 
+    //       page.filter(post => post.id !== postId)
+    //     )
+    //   };
+    // });
+  };
+  // --- Конец добавления ---
+
   const renderTabContent = () => {
     if (tab === 'posts') {
       return items.map(post => (
-        <PostCard key={post.id} post={post} />
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete
+        />
       ));
     }
-    
     if (tab === 'likes') {
-      // items - это массив постов, которые пользователь лайкнул
       return items.map(post => (
-        <PostCard key={post.id} post={post} />
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete (хотя удаление из лайков это другое действие)
+        />
       ));
     }
-    
     if (tab === 'comments') {
-      // items - это массив постов, в которых пользователь оставил комментарий
       return items.map(post => (
-        <PostCard key={post.id} post={post} />
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete
+        />
       ));
     }
   };
@@ -69,21 +89,17 @@ export default function ProfilePage() {
     );
   }
 
-  // Используем getAvatarUrl для аватара профиля
   const profileAvatarUrl = getAvatarUrl(user.profile?.profilePictureUrl);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Карточка профиля */}
       <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
-            src={profileAvatarUrl} // Используем обработанный URL
+            src={profileAvatarUrl}
             alt={user.fullName}
-            // Добавим object-cover и aspect-square для предотвращения растягивания
             className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
           />
-          
           <div className="flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
               <h1 className="text-3xl font-bold text-base-content">{user.fullName}</h1>
@@ -95,18 +111,15 @@ export default function ProfilePage() {
                 Редактировать
               </button>
             </div>
-            
             <p className="text-base-content/80 mb-2">@{user.username}</p>
-            
             {user.profile?.bio && (
               <p className="text-base-content mb-4">{user.profile.bio}</p>
             )}
-            
             <div className="flex gap-6 text-sm text-base-content/70">
               <span>
                 <i className="fas fa-calendar mr-1"></i>
-                Дата рождения: {user.profile?.birthDate ? 
-                  new Date(user.profile.birthDate).toLocaleDateString('ru-RU') : 
+                Дата рождения: {user.profile?.birthDate ?
+                  new Date(user.profile.birthDate).toLocaleDateString('ru-RU') :
                   'Не указана'}
               </span>
             </div>
@@ -114,7 +127,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Вкладки и контент */}
       <div className="bg-base-100 rounded-lg shadow-xl">
         <div className="flex border-b border-base-300">
           {tabs.map((tabItem) => (
@@ -132,7 +144,6 @@ export default function ProfilePage() {
             </button>
           ))}
         </div>
-
         <div className="p-6">
           {items.length === 0 && !isFetchingNextPage ? (
             <div className="text-center py-12">
@@ -151,7 +162,6 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-6">
               {renderTabContent()}
-              
               {isFetchingNextPage && (
                 <div className="space-y-6">
                   {[...Array(2)].map((_, i) => (
@@ -159,7 +169,6 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
-              
               {hasNextPage && (
                 <div className="text-center pt-6">
                   <button
@@ -174,7 +183,6 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-
       {showModal && (
         <EditProfileModal
           onClose={() => setShowModal(false)}

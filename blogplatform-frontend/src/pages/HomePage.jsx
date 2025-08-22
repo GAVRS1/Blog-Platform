@@ -1,16 +1,16 @@
-// src/pages/HomePage.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// src/pages/HomePage.jsx (обновленная версия)
 import { useState, useEffect } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'; // Добавлен useQueryClient
 import { useInView } from 'react-intersection-observer';
-import PostCard from '@/components/PostCard';
+import PostCard from '@/components/PostCard'; // Убедиться, что PostCard импортирован
 import CreatePostModal from '@/components/CreatePostModal';
 import SkeletonPost from '@/components/SkeletonPost';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
 export default function HomePage() {
+  const queryClient = useQueryClient(); // Получаем queryClient
   const [showModal, setShowModal] = useState(false);
-  
   const {
     data,
     fetchNextPage,
@@ -20,18 +20,18 @@ export default function HomePage() {
     error,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['posts'],
+    queryKey: ['posts'], // Используем общий ключ для ленты
     queryFn: async ({ pageParam = 1 }) => {
       const response = await api.get(`/posts/feed?page=${pageParam}&limit=5`);
       return response.data.posts || response.data;
     },
-    getNextPageParam: (lastPage, allPages) => 
+    getNextPageParam: (lastPage, allPages) =>
       lastPage.length < 5 ? undefined : allPages.length + 1,
-    staleTime: 1000 * 60 * 5, // 5 минут
+    staleTime: 1000 * 60 * 5,
   });
 
   const { ref, inView } = useInView({ threshold: 0.5 });
-  
+
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -51,6 +51,14 @@ export default function HomePage() {
     setShowModal(false);
     toast.success('Пост успешно создан!');
   };
+
+  // --- Добавлено: Функция для обработки удаления поста в ленте ---
+  const handlePostDeleted = (postId) => {
+    // Инвалидируем кэш ленты постов
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+    // Альтернативно, можно обновить кэш вручную
+  };
+  // --- Конец добавления ---
 
   if (isLoading) {
     return (
@@ -72,12 +80,16 @@ export default function HomePage() {
           Лента постов
         </h1>
       </div>
-
       <div className="space-y-6">
+        {/* --- Изменено: Передаем onDelete в PostCard --- */}
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard 
+            key={post.id} 
+            post={post} 
+            onDelete={handlePostDeleted} 
+          />
         ))}
-        
+        {/* --- Конец изменений --- */}
         {isFetchingNextPage && (
           <div className="space-y-6">
             {[...Array(2)].map((_, i) => (
@@ -85,15 +97,12 @@ export default function HomePage() {
             ))}
           </div>
         )}
-        
         {hasNextPage && <div ref={ref} className="h-10" />}
-        
         {!hasNextPage && posts.length > 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">Вы просмотрели все посты!</p>
           </div>
         )}
-        
         {posts.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
@@ -112,7 +121,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
       {showModal && (
         <CreatePostModal
           onClose={() => setShowModal(false)}
