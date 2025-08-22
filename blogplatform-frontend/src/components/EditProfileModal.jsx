@@ -90,9 +90,13 @@ export default function EditProfileModal({ onClose, onSaved }) {
         });
       }
 
-      // Инвалидируем кеш
-      await queryClient.invalidateQueries(['me']);
-      await queryClient.invalidateQueries(['auth']);
+      // Инвалидируем правильные ключи кэша для обновления данных пользователя
+      // Предполагая, что в useAuth данные получаются по ключу ['auth', 'me']
+      await queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Если используются другие ключи, их тоже нужно инвалидировать
+      // await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      // await queryClient.invalidateQueries({ queryKey: ['me'] });
+      
       toast.success('Профиль успешно обновлён!');
       onSaved?.();
       onClose?.();
