@@ -1,7 +1,7 @@
 // src/pages/PostDetailPage.jsx
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; // Импортируем AnimatePresence
 import { getAvatarUrl } from '@/utils/avatar';
 import MediaPlayer from '@/components/MediaPlayer';
 import Comment from '@/components/Comment';
@@ -11,39 +11,44 @@ import { useAuth } from '@/hooks/useAuth';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
-// --- Добавлено для модального окна изображения ---
+// --- Компонент модального окна ---
 const ImageModal = ({ isOpen, imageUrl, onClose }) => {
   if (!isOpen || !imageUrl) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 cursor-zoom-out"
-      onClick={onClose} // Закрытие при клике на фон
-    >
+    <AnimatePresence> {/* Обернул в AnimatePresence для анимаций framer-motion */}
       <motion.div
-        className="relative max-w-full max-h-full"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()} // Предотвращение закрытия при клике на изображение
+        className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 cursor-zoom-out"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
       >
-        {/* Кнопка закрытия внутри модального окна (опционально) */}
-        <button 
-          className="absolute top-4 right-4 text-white text-2xl bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/70"
-          onClick={onClose}
+        <motion.div
+          className="relative max-w-full max-h-full"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          &times;
-        </button>
-        <img 
-          src={imageUrl} 
-          alt="Увеличенное изображение" 
-          className="max-h-[90vh] max-w-full object-contain" // object-contain для сохранения пропорций
-        />
+          <button
+            className="absolute top-4 right-4 text-white text-2xl bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/70 z-10"
+            onClick={onClose}
+          >
+            &times;
+          </button>
+          {/* Используем обычный img для модального окна, чтобы избежать проблем с LazyLoadImage внутри модалки */}
+          <img
+            src={imageUrl}
+            alt="Увеличенное изображение"
+            className="max-h-[90vh] max-w-full object-contain"
+          />
+        </motion.div>
       </motion.div>
-    </div>
+    </AnimatePresence>
   );
 };
-// --- Конец добавления ---
+// --- Конец компонента модального окна ---
 
 export default function PostDetailPage() {
   const { id } = useParams();
@@ -54,10 +59,10 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  // --- Добавлено для модального окна изображения ---
+  // --- Состояние для модального окна ---
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState('');
-  // --- Конец добавления ---
+  // --- Конец состояния ---
 
   useEffect(() => {
     const loadData = async () => {
@@ -107,17 +112,21 @@ export default function PostDetailPage() {
     }));
   };
 
-  // --- Добавлено для модального окна изображения ---
+  // --- Функции для модального окна ---
   const openImageModal = (url) => {
     setSelectedImageUrl(url);
     setIsImageModalOpen(true);
+    // Предотвращаем скролл body при открытии модального окна
+    document.body.style.overflow = 'hidden';
   };
 
   const closeImageModal = () => {
     setIsImageModalOpen(false);
     setSelectedImageUrl('');
+    // Восстанавливаем скролл
+    document.body.style.overflow = 'unset';
   };
-  // --- Конец добавления ---
+  // --- Конец функций ---
 
   if (loading) {
     return (
@@ -144,9 +153,9 @@ export default function PostDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* --- Добавлено для модального окна изображения --- */}
+      {/* --- Модальное окно --- */}
       <ImageModal isOpen={isImageModalOpen} imageUrl={selectedImageUrl} onClose={closeImageModal} />
-      {/* --- Конец добавления --- */}
+      {/* --- Конец модального окна --- */}
 
       <motion.div
         className="bg-base-100 rounded-lg shadow-xl p-8 mb-8"
@@ -175,31 +184,20 @@ export default function PostDetailPage() {
         </div>
         <h1 className="text-3xl font-bold text-base-content mb-4">{post.title}</h1>
         <p className="text-base-content text-lg leading-relaxed mb-6">{post.content}</p>
-        
-        {/* --- Изменено: Обернул MediaPlayer в кликабельный div для изображений --- */}
-        {mediaUrl && mediaType === 'image' && (
-          <div 
-            className="mb-6 cursor-zoom-in flex justify-center" // Добавлен cursor-zoom-in и flex justify-center
-            onClick={() => openImageModal(mediaUrl)} // Открытие модального окна при клике
-          >
-            <MediaPlayer
-              url={mediaUrl}
-              type={mediaType}
-              className="max-h-96" // Убедитесь, что MediaPlayer сам центрирует изображение внутри себя, если нужно
-            />
-          </div>
-        )}
-        {/* --- Для видео и аудио оставляем как есть --- */}
-        {mediaUrl && mediaType !== 'image' && (
+
+        {/* --- Обновленный блок отображения медиа --- */}
+        {mediaUrl && (
           <div className="mb-6">
             <MediaPlayer
               url={mediaUrl}
               type={mediaType}
-              className="max-h-96"
+              className="max-h-96 w-full" // Ограничиваем высоту контейнера MediaPlayer
+              // Передаем функцию открытия модального окна только для изображений
+              onClick={mediaType === 'image' ? () => openImageModal(mediaUrl) : undefined}
             />
           </div>
         )}
-        {/* --- Конец изменений --- */}
+        {/* --- Конец обновленного блока --- */}
 
         <div className="flex items-center gap-6 pt-6 border-t border-base-300">
           <LikeButton
@@ -207,7 +205,7 @@ export default function PostDetailPage() {
             initialLiked={post.isLikedByCurrentUser || false}
             initialCount={post.likeCount || 0}
           />
-          {/* --- Изменено: Заменена иконка комментариев --- */}
+          {/* --- Заменена иконка комментариев --- */}
           <Link
             to={`/post/${post.id}#comments`}
             className="flex items-center gap-2 text-base-content/70 hover:text-primary transition-colors"
@@ -215,7 +213,7 @@ export default function PostDetailPage() {
             <span className="text-xl">💬</span> {/* Заменено на смайлик */}
             <span className="font-medium">{post.commentCount || 0}</span>
           </Link>
-          {/* --- Конец изменений --- */}
+          {/* --- Конец замены --- */}
           <span className="badge badge-primary badge-outline ml-auto">
             {post.contentType}
           </span>
