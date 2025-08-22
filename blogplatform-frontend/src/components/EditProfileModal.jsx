@@ -62,37 +62,42 @@ export default function EditProfileModal({ onClose, onSaved }) {
         birthDate: form.birthDate,
       });
 
-      // Если есть новый аватар, загружаем его
       if (avatarBlob) {
-        const formData = new FormData();
-        formData.append('file', avatarBlob, 'avatar.jpg');
-        
-        // Получаем текущего пользователя для userId
-        const { data: userData } = await api.get('/Auth/me');
-        
-        // Загружаем файл
-        const { data: uploadResult } = await api.post(
-          `/Media/upload?type=avatar&userId=${userData.id}`, 
-          formData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          }
-        );
-        
-        console.log('Upload result:', uploadResult); // Для отладки
-        
-        // Обновляем аватар пользователя - отправляем URL как строку в JSON
-        const avatarUrl = uploadResult.publicUrl || uploadResult.url;
-        if (avatarUrl) {
-          await api.put('/Users/profile/avatar', avatarUrl, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-        } else {
-          throw new Error('Не удалось получить URL аватара');
-        }
+  const formData = new FormData();
+  
+  // Создаем новый файл с правильным расширением
+  const fileExtension = avatarBlob.type.split('/')[1] || 'jpg';
+  const fileName = `avatar.${fileExtension}`;
+  const fileWithExtension = new File([avatarBlob], fileName, { type: avatarBlob.type });
+  
+  formData.append('file', fileWithExtension);
+  
+  // Получаем текущего пользователя для userId
+  const { data: userData } = await api.get('/Auth/me');
+  
+  // Загружаем файл
+  const { data: uploadResult } = await api.post(
+    `/Media/upload?type=avatar&userId=${userData.id}`, 
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }
+  );
+  
+  console.log('Upload result:', uploadResult); // Для отладки
+  
+  // Обновляем аватар пользователя - отправляем URL как строку в JSON
+  const avatarUrl = uploadResult.publicUrl || uploadResult.url;
+  if (avatarUrl) {
+    await api.put('/Users/profile/avatar', avatarUrl, {
+      headers: {
+        'Content-Type': 'application/json'
       }
+    });
+  } else {
+    throw new Error('Не удалось получить URL аватара');
+  }
+}
 
       // Инвалидируем кэш для обновления данных пользователя
       await queryClient.invalidateQueries({ queryKey: ['auth'] });
