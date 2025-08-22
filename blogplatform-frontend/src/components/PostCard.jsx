@@ -33,147 +33,113 @@ export default function PostCard({ post, onDelete }) { // Добавлен пр�
   };
 
   return (
-    <motion.article
-      className="bg-base-100 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-base-200/50"
+    <motion.div
+      className="card bg-base-100/80 backdrop-blur-sm shadow-xl border border-base-300/50 mb-6 overflow-hidden hover:shadow-2xl"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      layout
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="p-6">
-        {/* Заголовок поста */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3 flex-1">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            >
-              <Link to={`/user/${post.userId}`}>
-                <img
-                  src={avatarError ? '/default-avatar.png' : authorAvatarUrl}
-                  alt={post.fullName}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-base-200"
-                  onError={() => setAvatarError(true)}
-                />
-              </Link>
-            </motion.div>
-            
-            <div className="flex-1 min-w-0">
-              <Link 
-                to={`/user/${post.userId}`}
-                className="font-semibold text-base-content hover:text-primary transition-colors text-sm"
-              >
-                {post.fullName}
-              </Link>
-              <div className="flex items-center gap-2 text-xs text-base-content/60">
-                <span>@{post.username}</span>
-                <span>•</span>
-                <time>{formatDate(post.createdAt)}</time>
-              </div>
+      <div className="card-body p-6">
+        <motion.div
+          className="flex items-center gap-4 mb-4"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Link to={`/profile/${post.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <motion.img
+              src={authorAvatarUrl}
+              alt={post.userFullName}
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20 aspect-square"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 400 }}
+            />
+            <div>
+              <h3 className="font-semibold text-base-content hover:text-primary transition-colors">
+                {post.userFullName}
+              </h3>
+              <p className="text-sm text-base-content/60">
+                @{post.username} • {new Date(post.createdAt).toLocaleDateString('ru-RU')}
+              </p>
             </div>
-          </div>
-
-          {/* Меню действий */}
-          {isOwner && (
-            <div className="relative">
-              <motion.button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 hover:bg-base-200 rounded-full transition-colors"
-                whileTap={{ scale: 0.9 }}
-              >
-                <span className="text-base-content/60">⋯</span>
-              </motion.button>
-              
-              {showMenu && (
-                <motion.div
-                  className="absolute right-0 top-full mt-1 bg-base-100 rounded-2xl shadow-xl border border-base-200 py-1 z-10 min-w-32"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                >
-                  <button
-                    onClick={handleDeletePost}
-                    disabled={isDeleting}
-                    className="w-full px-4 py-2 text-left text-error hover:bg-error/10 transition-colors text-sm flex items-center gap-2"
-                  >
-                    {isDeleting ? (
-                      <div className="loading loading-spinner loading-xs" />
-                    ) : (
-                      <span>🗑️</span>
-                    )}
-                    Удалить
-                  </button>
-                </motion.div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Заголовок и содержание */}
-        {post.title && (
-          <Link to={`/post/${post.id}`}>
-            <h2 className="font-bold text-lg text-base-content mb-3 hover:text-primary transition-colors line-clamp-2">
-              {post.title}
-            </h2>
           </Link>
-        )}
+          {/* --- Добавлено: Кнопка удаления для владельца поста --- */}
+          {isOwner && (
+            <button
+              onClick={handleDeletePost}
+              className="ml-auto btn btn-ghost btn-sm text-error hover:text-error/80"
+              aria-label="Удалить пост"
+            >
+              🗑️ {/* Или используйте иконку, например, <i className="fas fa-trash"></i> */}
+            </button>
+          )}
+          {/* --- Конец добавления --- */}
+        </motion.div>
 
-        {post.content && (
-          <div className="text-base-content/80 mb-4 leading-relaxed">
-            <p className="line-clamp-4">{post.content}</p>
-          </div>
-        )}
-
-        {/* Медиа контент */}
-        {post.mediaUrl && (
-          <motion.div 
-            className="mb-4 rounded-2xl overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+        <Link to={`/post/${post.id}`}>
+          <motion.h2
+            className="text-xl font-bold text-base-content mb-3 hover:text-primary transition-colors cursor-pointer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
           >
-            <Link to={`/post/${post.id}`}>
-              <MediaPlayer
-                url={post.mediaUrl}
-                type={post.mediaType || 'image'}
-                className="w-full max-h-96 object-cover"
-              />
-            </Link>
+            {post.title}
+          </motion.h2>
+        </Link>
+        <motion.p
+          className="text-base-content/80 mb-4 leading-relaxed"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {post.content}
+        </motion.p>
+
+        {(post.imageUrl || post.videoUrl || post.audioUrl) && (
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <MediaPlayer
+              url={post.imageUrl || post.videoUrl || post.audioUrl}
+              type={post.imageUrl ? 'image' :
+                post.videoUrl ? 'video' :
+                  post.audioUrl ? 'audio' : 'image'}
+              className="max-h-96 object-cover"
+            />
           </motion.div>
         )}
 
-        {/* Действия */}
-        <div className="flex items-center justify-between pt-4 border-t border-base-200/50">
-          <LikeButton
-            postId={post.id}
-            initialLiked={post.isLiked}
-            initialCount={post.likesCount || 0}
-          />
-
-          <Link 
-            to={`/post/${post.id}`}
-            className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
-          >
-            <span className="text-lg">💬</span>
-            <span className="text-sm">{post.commentsCount || 0}</span>
-          </Link>
-
-          <motion.button
-            className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
-            whileTap={{ scale: 0.9 }}
-          >
-            <span className="text-lg">📤</span>
-            <span className="text-sm">Поделиться</span>
-          </motion.button>
-        </div>
+        <motion.div
+          className="flex items-center justify-between pt-4 border-t border-base-300"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="flex items-center gap-4">
+            <LikeButton
+              postId={post.id}
+              initialLiked={post.isLikedByCurrentUser || false}
+              initialCount={post.likeCount || 0}
+            />
+            <Link
+              to={`/post/${post.id}#comments`}
+              className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
+            >
+              <span className="text-lg">💬</span> {/* Заменено на смайлик */}
+              <span className="text-sm font-medium">{post.commentCount || 0}</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="badge badge-primary badge-outline">
+              {post.contentType}
+            </span>
+          </div>
+        </motion.div>
       </div>
-
-      {/* Overlay для закрытия меню */}
-      {showMenu && (
-        <div 
-          className="fixed inset-0 z-5"
-          onClick={() => setShowMenu(false)}
-        />
-      )}
-    </motion.article>
+    </motion.div>
   );
 }
