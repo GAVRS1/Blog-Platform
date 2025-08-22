@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getAvatarUrl } from '@/utils/avatar';
+import { getAvatarUrl } from '@/utils/avatar'; // Убедиться, что импортировано
 import PostCard from '@/components/PostCard';
 import SkeletonPost from '@/components/SkeletonPost';
 import api from '@/api/axios';
@@ -17,11 +17,14 @@ export default function UserProfilePage() {
 
   // Загружаем профиль пользователя
   useEffect(() => {
+    // Сброс состояния ошибки аватара при начале загрузки нового профиля
+    setAvatarError(false);
+    
     const loadUserProfile = async () => {
       try {
         const response = await api.get(`/users/${userId}/profile`);
         setUserProfile(response.data);
-        // Сброс ошибки аватара при загрузке нового профиля
+        // Сброс ошибки аватара при успешной загрузке нового профиля
         setAvatarError(false);
       } catch (error) {
         toast.error('Не удалось загрузить профиль пользователя');
@@ -33,7 +36,7 @@ export default function UserProfilePage() {
     if (userId) {
       loadUserProfile();
     }
-  }, [userId]);
+  }, [userId]); // Зависимость от userId
 
   // Загружаем посты пользователя
   const {
@@ -49,7 +52,7 @@ export default function UserProfilePage() {
     },
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < 5 ? undefined : allPages.length + 1,
-    enabled: !!userId,
+    enabled: !!userId && !loading, // Включаем только если userId есть и загрузка профиля завершена
   });
 
   const posts = postsData?.pages.flat() ?? [];
@@ -83,9 +86,12 @@ export default function UserProfilePage() {
           <img
             src={profileAvatarUrl} // Используем обработанный URL или fallback
             alt={userProfile.fullName}
-            // Добавим object-cover и aspect-square для предотвращения растягивания
+            // Добавим object-cover и aspect-square для предотвращения растягивания и обеспечения квадратной формы
             className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
-            onError={() => setAvatarError(true)} // Обработчик ошибки загрузки
+            onError={() => {
+              console.error(`Ошибка загрузки аватара: ${profileAvatarUrl}`); // Для отладки
+              setAvatarError(true);
+            }} // Обработчик ошибки загрузки
           />
           
           <div className="flex-1">
