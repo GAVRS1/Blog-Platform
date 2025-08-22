@@ -1,3 +1,4 @@
+// src/components/EditProfileModal.jsx
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/axios';
@@ -29,7 +30,8 @@ export default function EditProfileModal({ onClose, onSaved }) {
   }, 500);
 
   useEffect(() => {
-    api.get('/api/Auth/me').then(({ data }) => {
+    // Исправлен путь: убран дублирующийся /api
+    api.get('/Auth/me').then(({ data }) => {
       setForm({
         username: data.username || '',
         originalUsername: data.username || '',
@@ -51,11 +53,11 @@ export default function EditProfileModal({ onClose, onSaved }) {
 
   const handleSave = async () => {
     if (usernameError) return;
-    
     setLoading(true);
     try {
+      // Исправлен путь: убран дублирующийся /api
       // Обновляем основные данные профиля
-      await api.put('/api/Users/profile', {
+      await api.put('/Users/profile', {
         username: form.username,
         fullName: form.fullName,
         bio: form.bio,
@@ -67,20 +69,23 @@ export default function EditProfileModal({ onClose, onSaved }) {
         const formData = new FormData();
         formData.append('file', avatarBlob, 'avatar.jpg');
         
+        // Исправлен путь: убран дублирующийся /api
         // Получаем текущего пользователя для userId
-        const { data: userData } = await api.get('/api/Auth/me');
+        const { data: userData } = await api.get('/Auth/me');
         
+        // Исправлен путь: убран дублирующийся /api
         // Загружаем файл
         const { data: uploadResult } = await api.post(
-          `/api/Media/upload?type=avatar&userId=${userData.id}`, 
+          `/Media/upload?type=avatar&userId=${userData.id}`, 
           formData,
           {
             headers: { 'Content-Type': 'multipart/form-data' },
           }
         );
         
+        // Исправлен путь: убран дублирующийся /api
         // Обновляем аватар пользователя
-        await api.put('/api/Users/profile/avatar', { 
+        await api.put('/Users/profile/avatar', { 
           avatarUrl: uploadResult.url 
         });
       }
@@ -88,7 +93,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
       // Инвалидируем кеш
       await queryClient.invalidateQueries(['me']);
       await queryClient.invalidateQueries(['auth']);
-      
       toast.success('Профиль успешно обновлён!');
       onSaved?.();
       onClose?.();
@@ -104,7 +108,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
     <div className="modal modal-open">
       <div className="modal-box w-11/12 max-w-md">
         <h3 className="font-bold text-lg mb-4">Редактировать профиль</h3>
-
         <div className="space-y-4">
           <label className="form-control">
             <div className="label">
@@ -124,7 +127,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
               </div>
             )}
           </label>
-
           <label className="form-control">
             <div className="label">
               <span className="label-text">Имя и фамилия</span>
@@ -138,7 +140,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
               placeholder="Введите имя и фамилию"
             />
           </label>
-
           <label className="form-control">
             <div className="label">
               <span className="label-text">Дата рождения</span>
@@ -151,7 +152,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
               className="input input-bordered"
             />
           </label>
-
           <label className="form-control">
             <div className="label">
               <span className="label-text">О себе</span>
@@ -165,7 +165,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
               placeholder="Расскажите о себе"
             />
           </label>
-
           <div className="form-control">
             <label className="label">
               <span className="label-text">Аватар</span>
@@ -173,7 +172,6 @@ export default function EditProfileModal({ onClose, onSaved }) {
             <AvatarUploader onCropped={setAvatarBlob} />
           </div>
         </div>
-
         <div className="modal-action">
           <button 
             className={`btn btn-primary ${loading ? 'loading' : ''}`}
