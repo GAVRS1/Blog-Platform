@@ -25,24 +25,52 @@ export default function AvatarUploader({ onCropped }) {
     }
   };
 
-  return (
-    <div className="avatar-uploader">
-      <label>
-        Выбрать аватар
-        <input type="file" accept="image/*" onChange={handleFile} hidden />
-      </label>
+  // Автоматическая обрезка при закрытии кроппера (по желанию)
+  const handleCancel = () => {
+    setSrc(null);
+    onCropped(null); // Сбрасываем аватар если пользователь отменил
+  };
 
-      {src && (
-        <>
+  return (
+    <div className="avatar-uploader space-y-4">
+      {!src ? (
+        <label className="btn btn-outline w-full">
+          Выбрать аватар
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleFile} 
+            hidden 
+          />
+        </label>
+      ) : (
+        <div className="space-y-4">
           <Cropper
             src={src}
             style={{ height: 300, width: '100%' }}
             aspectRatio={1}
             guides={false}
             ref={cropperRef}
+            viewMode={1}
+            autoCropArea={1}
+            movable={false}
+            zoomable={false}
           />
-          <button onClick={crop}>Обрезать</button>
-        </>
+          <div className="flex gap-2">
+            <button 
+              className="btn btn-primary flex-1"
+              onClick={crop}
+            >
+              Применить
+            </button>
+            <button 
+              className="btn btn-outline flex-1"
+              onClick={handleCancel}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

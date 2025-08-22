@@ -85,7 +85,9 @@ export default function EditProfileModal({ onClose, onSaved }) {
         
         // Исправлен путь: убран дублирующийся /api
         // Обновляем аватар пользователя
-        await api.put('/Users/profile/avatar', uploadResult.url);
+        await api.put('/Users/profile/avatar', { 
+          avatarUrl: uploadResult.url 
+        });
       }
 
       // Инвалидируем правильные ключи кэша для обновления данных пользователя
