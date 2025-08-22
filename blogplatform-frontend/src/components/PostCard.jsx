@@ -8,7 +8,7 @@ import LikeButton from '@/components/LikeButton';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
-
+import { Link } from 'react-router-dom';
 export default function PostCard({ post, onDelete }) {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
