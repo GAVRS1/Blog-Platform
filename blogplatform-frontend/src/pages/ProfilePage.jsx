@@ -1,34 +1,31 @@
-// src/pages/ProfilePage.jsx - УЛУЧШЕННАЯ ВЕРСИЯ
+// src/pages/ProfilePage.jsx (обновленная версия)
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
 import { getAvatarUrl } from '@/utils/avatar';
 import SkeletonPost from '@/components/SkeletonPost';
-import PostCard from '@/components/PostCard';
+import PostCard from '@/components/PostCard'; // Убедиться, что PostCard импортирован
 import EditProfileModal from '@/components/EditProfileModal';
 
 const tabs = [
-  { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: '📝', count: 0 },
-  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: '❤️', count: 0 },
-  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: '💬', count: 0 },
+  { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
+  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' },
+  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' },
 ];
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('posts');
   const [showModal, setShowModal] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
   const { user } = useAuth();
-  
   const currentTab = tabs.find(t => t.key === tab);
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    invalidate
+    invalidate // Получаем функцию инвалидации из useMyData
   } = useMyData(currentTab.endpoint);
 
   useEffect(() => {
@@ -37,56 +34,57 @@ export default function ProfilePage() {
 
   const items = data?.pages.flat() ?? [];
 
+  // --- Добавлено: Функция для обработки удаления поста ---
   const handlePostDeleted = (postId) => {
-    invalidate();
+    // Инвалидируем кэш, чтобы данные перезагрузились
+    invalidate(); 
+    // Альтернативно, можно обновить кэш вручную, но invalidate проще
+    // queryClient.setQueryData(['my-data', currentTab.endpoint], oldData => {
+    //   if (!oldData) return oldData;
+    //   return {
+    //     ...oldData,
+    //     pages: oldData.pages.map(page => 
+    //       page.filter(post => post.id !== postId)
+    //     )
+    //   };
+    // });
   };
+  // --- Конец добавления ---
 
   const renderTabContent = () => {
-    if (!items.length && !isFetchingNextPage) {
-      return (
-        <motion.div 
-          className="text-center py-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="text-6xl mb-4">{currentTab.icon}</div>
-          <h3 className="text-xl font-semibold text-base-content/70 mb-2">
-            {tab === 'posts' && 'Пока нет публикаций'}
-            {tab === 'likes' && 'Пока нет лайков'}  
-            {tab === 'comments' && 'Пока нет комментариев'}
-          </h3>
-          <p className="text-base-content/50">
-            {tab === 'posts' && 'Создайте свой первый пост!'}
-            {tab === 'likes' && 'Начните лайкать интересные посты!'}
-            {tab === 'comments' && 'Поделитесь своим мнением в комментариях!'}
-          </p>
-        </motion.div>
-      );
+    if (tab === 'posts') {
+      return items.map(post => (
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete
+        />
+      ));
     }
-
-    return (
-      <div className="space-y-4">
-        {items.map((post, index) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <PostCard post={post} onDelete={handlePostDeleted} />
-          </motion.div>
-        ))}
-      </div>
-    );
+    if (tab === 'likes') {
+      return items.map(post => (
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete (хотя удаление из лайков это другое действие)
+        />
+      ));
+    }
+    if (tab === 'comments') {
+      return items.map(post => (
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted} // Передаем функцию onDelete
+        />
+      ));
+    }
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="text-base-content/70">Загрузка профиля...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
       </div>
     );
   }

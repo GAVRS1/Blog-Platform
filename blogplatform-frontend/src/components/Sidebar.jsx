@@ -1,4 +1,4 @@
-// src/components/Sidebar.jsx - УЛУЧШЕННАЯ ВЕРСИЯ
+// src/components/Sidebar.jsx
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,54 +6,36 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { getAvatarUrl } from '@/utils/avatar';
 
-const NavItem = ({ to, icon, children, isSpecial = false }) => (
+// Компонент NavItem оставлен без изменений
+const NavItem = ({ to, children }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `group flex items-center gap-4 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${
-        isSpecial
-          ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:shadow-xl'
-          : isActive
-          ? 'bg-primary/10 text-primary border border-primary/20'
-          : 'text-base-content/70 hover:bg-base-200 hover:text-primary'
-      }`
+      `btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 ` +
+      (isActive
+        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+        : 'btn-ghost hover:bg-primary/10 hover:scale-[1.02]')
     }
   >
     <motion.div
-      className="flex items-center gap-4 w-full"
-      whileHover={{ x: isSpecial ? 0 : 4 }}
+      whileHover={{ x: 4 }}
       transition={{ type: 'spring', stiffness: 400 }}
     >
-      <span className={`text-xl ${isSpecial ? 'animate-pulse' : ''}`}>
-        {icon}
-      </span>
-      <span className="font-medium">{children}</span>
-      {isSpecial && (
-        <motion.span
-          className="ml-auto text-lg"
-          animate={{ rotate: [0, 90, 180, 270, 360] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        >
-          ✨
-        </motion.span>
-      )}
+      {children}
     </motion.div>
   </NavLink>
 );
 
+// Изменен экспорт по умолчанию и добавлен пропс onOpenCreatePostModal
 export default function Sidebar({ onOpenCreatePostModal }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [avatarError, setAvatarError] = useState(false);
 
-  const handleLogout = () => {
-    if (window.confirm('Вы уверены, что хотите выйти?')) {
-      localStorage.removeItem('token');
-      navigate('/login');
-    }
-  };
+  const avatarUrl = user?.profile?.profilePictureUrl
+    ? getAvatarUrl(user.profile.profilePictureUrl)
+    : '/avatar.png';
 
-  const profileAvatarUrl = user ? getAvatarUrl(user.profile?.profilePictureUrl) : null;
+  if (user === undefined) return null;
 
   return (
     <motion.aside
