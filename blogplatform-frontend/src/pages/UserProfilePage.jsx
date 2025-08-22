@@ -12,6 +12,8 @@ export default function UserProfilePage() {
   const { userId } = useParams();
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Состояние для ошибки загрузки аватара
+  const [avatarError, setAvatarError] = useState(false);
 
   // Загружаем профиль пользователя
   useEffect(() => {
@@ -19,6 +21,8 @@ export default function UserProfilePage() {
       try {
         const response = await api.get(`/users/${userId}/profile`);
         setUserProfile(response.data);
+        // Сброс ошибки аватара при загрузке нового профиля
+        setAvatarError(false);
       } catch (error) {
         toast.error('Не удалось загрузить профиль пользователя');
       } finally {
@@ -61,32 +65,39 @@ export default function UserProfilePage() {
   if (!userProfile) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold text-base-content">Пользователь не найден</h2> {/* text-gray-700 -> text-base-content */}
+        <h2 className="text-2xl font-bold text-base-content">Пользователь не найден</h2>
       </div>
     );
   }
 
+  // Получаем URL аватара, обрабатывая возможные ошибки
+  const profileAvatarUrl = avatarError 
+    ? '/avatar.png' 
+    : getAvatarUrl(userProfile.profile?.profilePictureUrl);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Профиль пользователя */}
-      <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8"> {/* bg-white -> bg-base-100 */}
+      <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
-            src={getAvatarUrl(userProfile.profile?.profilePictureUrl)}
+            src={profileAvatarUrl} // Используем обработанный URL или fallback
             alt={userProfile.fullName}
-            className="w-24 h-24 rounded-full object-cover border-4 border-primary/20"
+            // Добавим object-cover и aspect-square для предотвращения растягивания
+            className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
+            onError={() => setAvatarError(true)} // Обработчик ошибки загрузки
           />
           
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-base-content mb-2">{userProfile.fullName}</h1> {/* text-gray-800 -> text-base-content */}
-            <p className="text-base-content/80 mb-4">@{userProfile.username}</p> {/* text-gray-600 -> text-base-content/80 */}
+            <h1 className="text-3xl font-bold text-base-content mb-2">{userProfile.fullName}</h1>
+            <p className="text-base-content/80 mb-4">@{userProfile.username}</p>
             
             {userProfile.profile?.bio && (
               <p className="text-base-content mb-4">{userProfile.profile.bio}</p>
             )}
             
             {/* Статистика */}
-            <div className="flex gap-6 text-sm text-base-content/70"> {/* text-gray-600 -> text-base-content/70 */}
+            <div className="flex gap-6 text-sm text-base-content/70">
               <span>
                 <i className="fas fa-file-alt mr-1"></i>
                 {userProfile.stats?.postsCount || 0} постов
@@ -105,18 +116,18 @@ export default function UserProfilePage() {
       </div>
 
       {/* Публикации */}
-      <div className="bg-base-100 rounded-lg shadow-xl p-6"> {/* bg-white -> bg-base-100 */}
-        <h3 className="text-2xl font-bold text-base-content mb-6"> {/* text-gray-800 -> text-base-content */}
+      <div className="bg-base-100 rounded-lg shadow-xl p-6">
+        <h3 className="text-2xl font-bold text-base-content mb-6">
           Публикации пользователя
         </h3>
 
         {posts.length === 0 && !isFetchingNextPage ? (
           <div className="text-center py-12">
-            <i className="fas fa-file-alt text-6xl text-base-content/30 mb-4"></i> {/* text-gray-300 -> text-base-content/30 */}
-            <h4 className="text-xl font-semibold text-base-content/70 mb-2"> {/* text-gray-500 -> text-base-content/70 */}
+            <i className="fas fa-file-alt text-6xl text-base-content/30 mb-4"></i>
+            <h4 className="text-xl font-semibold text-base-content/70 mb-2">
               Пока нет публикаций
             </h4>
-            <p className="text-base-content/60"> {/* text-gray-400 -> text-base-content/60 */}
+            <p className="text-base-content/60">
               Пользователь еще не создал ни одного поста
             </p>
           </div>
