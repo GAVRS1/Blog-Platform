@@ -80,7 +80,7 @@ export default function EditProfileModal({ onClose, onSaved }) {
         }
         
         // Создаем новый файл с правильным именем и расширением
-        const fileName = `avatar.${fileExtension}`;
+        const fileName = `avatar_${Date.now()}.${fileExtension}`;
         const fileWithProperName = new File([avatarBlob], fileName, { type: mimeType });
         
         const formData = new FormData();
@@ -100,10 +100,15 @@ export default function EditProfileModal({ onClose, onSaved }) {
         
         console.log('Upload result:', uploadResponse.data); // Для отладки
         
-        // Получаем URL из ответа
-        const avatarUrl = uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
+        // Получаем URL из ответа и корректируем его
+        let avatarUrl = uploadResponse.data.url || uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
         
         if (avatarUrl) {
+          // Исправляем путь - заменяем обратные слеши на прямые и убираем .tmp
+          avatarUrl = avatarUrl
+            .replace(/\\/g, '/')
+            .replace(/\.tmp$/, `.${fileExtension}`);
+          
           // Отправляем URL аватара в правильном формате
           await api.put('/Users/profile/avatar', {
             avatarUrl: avatarUrl
