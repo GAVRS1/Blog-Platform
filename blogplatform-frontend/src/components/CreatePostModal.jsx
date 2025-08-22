@@ -44,7 +44,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
 
         // --- ИСПРАВЛЕНО: Правильное извлечение URL ---
         // MediaController возвращает {"Url": "..."}
-        mediaUrl = uploadResponse.data?.Url; // <-- Важно: 'Url' с большой буквы
+        mediaUrl = uploadResponse.data?.url; // <-- Важно: 'Url' с большой буквы
 
         if (!mediaUrl) {
           // Добавим больше информации об ошибке для отладки
