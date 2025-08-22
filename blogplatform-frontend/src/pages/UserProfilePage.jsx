@@ -84,15 +84,14 @@ export default function UserProfilePage() {
       <div className="bg-base-100 rounded-lg shadow-xl p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           <img
-            src={profileAvatarUrl} // Используем обработанный URL или fallback
-            alt={userProfile.fullName}
-            // Добавим object-cover и aspect-square для предотвращения растягивания и обеспечения квадратной формы
-            className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
-            onError={() => {
-              console.error(`Ошибка загрузки аватара: ${profileAvatarUrl}`); // Для отладки
-              setAvatarError(true);
-            }} // Обработчик ошибки загрузки
-          />
+    src={profileAvatarUrl} // Вычисляется с учетом avatarError
+    alt={userProfile.fullName}
+    className="w-24 h-24 rounded-full object-cover border-4 border-primary/20 aspect-square"
+    onError={() => {
+      console.error(`Ошибка загрузки аватара: ${profileAvatarUrl}`);
+      setAvatarError(true); // Установка флага ошибки
+    }}
+  />
           
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-base-content mb-2">{userProfile.fullName}</h1>
