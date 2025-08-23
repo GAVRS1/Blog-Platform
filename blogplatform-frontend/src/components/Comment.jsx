@@ -1,20 +1,19 @@
-// src/components/Comment.jsx
+// src/components/Comment.jsx (исправленная версия)
 import { useState } from 'react';
-import { getAvatarUrl } from '@/utils/avatar'; // Убедиться, что импортировано
+import { getAvatarUrl } from '@/utils/avatar';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth'; // <-- Импортируем useAuth
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Comment({ comment, onDelete }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState('');
-  const [avatarError, setAvatarError] = useState(false); // <-- Добавлено состояние для ошибки аватара
+  const [avatarError, setAvatarError] = useState(false);
   const queryClient = useQueryClient();
-  const { user } = useAuth(); // <-- Получаем данные текущего пользователя
-  // const currentUserId = localStorage.getItem('uid'); // <-- Убираем это
-  const isOwner = user && comment.userId === user.id; // <-- Сравниваем с user.id
+  const { user } = useAuth();
+  const isOwner = user && comment.userId === user.id;
 
   const toggleReplies = () => {
     if (!showReplies) {
@@ -40,14 +39,12 @@ export default function Comment({ comment, onDelete }) {
       .then(({ data }) => {
         setReplies([data, ...replies]);
         setReplyText('');
-        queryClient.invalidateQueries({ queryKey: ['post', comment.postId] }); // Используем объект queryKey
+        queryClient.invalidateQueries({ queryKey: ['post', comment.postId] });
       })
       .catch(() => toast.error('Не удалось отправить ответ'));
   };
 
-  // Используем getAvatarUrl для аватара комментатора
   const commenterAvatarUrl = avatarError ? '/avatar.png' : getAvatarUrl(comment.userAvatar);
-  // Используем getAvatarUrl для аватаров в ответах
   const getReplyAvatarUrl = (replyAvatarPath) => {
     try {
       return getAvatarUrl(replyAvatarPath);
@@ -57,45 +54,49 @@ export default function Comment({ comment, onDelete }) {
   };
 
   return (
-    <div className="flex gap-3 mb-4">
+    <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4">
       <img
-        src={commenterAvatarUrl} // Используем обработанный URL или дефолтный при ошибке
+        src={commenterAvatarUrl}
         alt={comment.username}
-        // Добавим object-cover и aspect-square для предотвращения растягивания
-        className="w-8 h-8 rounded-full mt-1 object-cover aspect-square"
-        onError={() => setAvatarError(true)} // Обработка ошибки загрузки
+        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full mt-1 object-cover aspect-square flex-shrink-0"
+        onError={() => setAvatarError(true)}
       />
-      <div className="flex-1">
-        <div className="bg-base-200 rounded-lg p-2">
-          <p className="text-sm font-bold text-base-content">{comment.username}</p>
-          <p className="text-sm text-base-content">{comment.content}</p>
+      <div className="flex-1 min-w-0">
+        <div className="bg-base-200/70 rounded-xl sm:rounded-2xl p-2 sm:p-3">
+          <p className="text-xs sm:text-sm font-bold text-base-content mb-1">{comment.username}</p>
+          <p className="text-xs sm:text-sm text-base-content leading-relaxed break-words">{comment.content}</p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-base-content/60 mt-1">
-          <button onClick={toggleReplies}>
-            {comment.replyCount || 0} ответа {/* <-- replyCount */}
+        <div className="flex items-center gap-2 sm:gap-3 text-xs text-base-content/60 mt-1 sm:mt-2">
+          <button 
+            onClick={toggleReplies}
+            className="hover:text-primary transition-colors"
+          >
+            {comment.replyCount || 0} ответа
           </button>
           {isOwner && (
-            <button onClick={deleteComment} className="text-error">
+            <button 
+              onClick={deleteComment} 
+              className="text-error hover:text-error/80 transition-colors"
+            >
               Удалить
             </button>
           )}
         </div>
 
         {showReplies && (
-          <div className="mt-2 pl-4 border-l-2 border-base-300">
+          <div className="mt-2 sm:mt-3 pl-3 sm:pl-4 border-l-2 border-base-300">
             {replies.map((r) => (
               <div key={r.id} className="flex gap-2 mb-2">
                 <img
-                  src={getReplyAvatarUrl(r.userAvatar)} // Используем обработанный URL или дефолтный
+                  src={getReplyAvatarUrl(r.userAvatar)}
                   alt={r.username}
-                  // Добавим object-cover и aspect-square для предотвращения растягивания
-                  className="w-6 h-6 rounded-full object-cover aspect-square"
-                  onError={(e) => { e.target.src = '/avatar.png'; }} // Обработка ошибки загрузки для ответов
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover aspect-square flex-shrink-0"
+                  onError={(e) => { e.target.src = '/avatar.png'; }}
                 />
-                <div className="bg-base-200 rounded px-2 py-1 text-sm">
+                <div className="bg-base-200/50 rounded-lg px-2 py-1 text-xs sm:text-sm flex-1 min-w-0">
                   <b className="text-base-content">{r.username}</b>
-                  <span className="text-base-content"> {r.content}</span>
+                  <span className="text-base-content ml-1 break-words">{r.content}</span>
                 </div>
               </div>
             ))}
@@ -105,9 +106,12 @@ export default function Comment({ comment, onDelete }) {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Ответить..."
-                className="input input-xs input-bordered w-full"
+                className="input input-xs sm:input-sm input-bordered w-full text-xs sm:text-sm"
               />
-              <button onClick={sendReply} className="btn btn-xs btn-primary">
+              <button 
+                onClick={sendReply} 
+                className="btn btn-xs sm:btn-sm btn-primary"
+              >
                 Отправить
               </button>
             </div>

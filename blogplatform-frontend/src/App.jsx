@@ -1,17 +1,16 @@
-// src/App.jsx
-import { useState } from 'react'; // Добавлен useState
+// src/App.jsx (обновленная версия)
+import { useState } from 'react';
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query'; // Добавлен useQueryClient
+import { useQueryClient } from '@tanstack/react-query';
 
 // Компоненты
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
-import AddPostFAB from '@/components/AddPostFAB';
 import withAuth from '@/hocs/withAuth';
-import CreatePostModal from '@/components/CreatePostModal'; // Добавлен импорт модального окна
+import CreatePostModal from '@/components/CreatePostModal';
 
 // Ленивые страницы
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -32,35 +31,30 @@ const Spinner = () => (
   </div>
 );
 
-// Новый компонент MainLayoutWithModal для управления состоянием модального окна
+// Компонент MainLayoutWithModal
 const MainLayoutWithModal = ({ children, onOpenCreatePostModal, showCreatePostModal, setShowCreatePostModal }) => {
   const queryClient = useQueryClient();
 
   const handlePostCreated = () => {
     setShowCreatePostModal(false);
-    // Инвалидируем кэши, которые могут содержать новые посты
-    queryClient.invalidateQueries({ queryKey: ['posts'] }); // Лента
-    // Если нужно обновить и вкладку профиля "Публикации", добавьте:
-    // queryClient.invalidateQueries({ queryKey: ['my-data', 'posts/user/me'] });
-    // Или если используется отдельный ключ для профиля:
-    // queryClient.invalidateQueries({ queryKey: ['user-posts', 'me'] });
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex gap-8 max-w-7xl mx-auto">
-          {/* Левая панель - теперь получает onOpenCreatePostModal */}
-          <div className="w-64 flex-shrink-0">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+        <div className="flex gap-4 sm:gap-8 max-w-7xl mx-auto">
+          {/* Левая панель */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
             <Sidebar onOpenCreatePostModal={onOpenCreatePostModal} />
           </div>
 
           {/* Основной контент */}
-          <main className="flex-1 max-w-2xl">
+          <main className="flex-1 max-w-full lg:max-w-2xl">
             {children}
           </main>
 
-          {/* Правая панель (для будущих фич) */}
+          {/* Правая панель */}
           <div className="w-64 flex-shrink-0 hidden xl:block">
             <div className="sticky top-6 bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300/50 p-6">
               <h3 className="font-bold text-lg mb-4">Рекомендации</h3>
@@ -72,8 +66,7 @@ const MainLayoutWithModal = ({ children, onOpenCreatePostModal, showCreatePostMo
         </div>
       </div>
 
-      <BottomNav />
-      <AddPostFAB />
+      <BottomNav onOpenCreatePost={onOpenCreatePostModal} />
 
       {/* Модальное окно создания поста */}
       {showCreatePostModal && (
@@ -87,10 +80,8 @@ const MainLayoutWithModal = ({ children, onOpenCreatePostModal, showCreatePostMo
 };
 
 export default function App() {
-  // Состояние для управления модальным окном создания поста
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
 
-  // Функция для открытия модального окна
   const handleOpenCreatePostModal = () => {
     setShowCreatePostModal(true);
   };
@@ -103,7 +94,6 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             
-            {/* Передаем состояние и функции в MainLayoutWithModal */}
             <Route
               path="/"
               element={
