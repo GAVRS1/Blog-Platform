@@ -1,5 +1,5 @@
 // src/pages/ProfilePage.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,11 +8,11 @@ import SkeletonPost from '@/components/SkeletonPost';
 import PostCard from '@/components/PostCard';
 import EditProfileModal from '@/components/EditProfileModal';
 
-// Исправлены endpoint'ы для соответствия оригинальному API
+// Используем рабочие endpoint'ы, предоставленные вами
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
-  { key: 'likes', label: 'Лайки', endpoint: 'likes/me', icon: 'fas fa-heart' }, // Исправлено
-  { key: 'comments', label: 'Комментарии', endpoint: 'comments/me', icon: 'fas fa-comments' }, // Исправлено
+  { key: 'likes', label: 'Лайки', endpoint: 'Users/me/liked-posts', icon: 'fas fa-heart' }, // Исправлено на ваш endpoint
+  { key: 'comments', label: 'Комментарии', endpoint: 'Users/me/commented-posts', icon: 'fas fa-comments' }, // Исправлено на ваш endpoint
 ];
 
 export default function ProfilePage() {
@@ -29,7 +29,7 @@ export default function ProfilePage() {
     invalidate
   } = useMyData(currentTab.endpoint);
 
-  // Удален избыточный useEffect, вызывавший лишнюю инвалидацию
+  // Удален избыточный useEffect
 
   const items = data?.pages.flat() ?? [];
 
@@ -47,7 +47,8 @@ export default function ProfilePage() {
         />
       ));
     }
-    // Предполагаем, что likes/me и comments/me возвращают список постов
+    // Предполагаем, что Users/me/liked-posts и Users/me/commented-posts возвращают список постов
+    // Если структура ответа отличается, useMyData должен это обработать.
     if (tab === 'likes') {
       return items.map(post => (
         <PostCard 
@@ -77,8 +78,8 @@ export default function ProfilePage() {
     );
   }
 
-  // Используем fullName или username как fallback
-  const displayName = user.fullName || user.username || 'Имя не указано';
+  // Приоритетное отображение fullName, fallback на username
+  const displayName = user.profile?.fullName || user.fullName || user.username || 'Имя не указано';
   const profileAvatarUrl = getAvatarUrl(user.profile?.profilePictureUrl);
 
   return (
@@ -210,7 +211,6 @@ export default function ProfilePage() {
         <EditProfileModal
           onClose={() => setShowModal(false)}
           onSaved={() => {
-            // После сохранения профиля можно инвалидировать данные аутентификации
             queryClient.invalidateQueries({ queryKey: ['auth'] });
             setShowModal(false);
           }}
