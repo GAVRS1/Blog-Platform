@@ -109,24 +109,26 @@ export default function PostCard({ post, onDelete }) {
           </motion.div>
         )}
 
+        {/* Исправленная панель действий для лучшего выравнивания */}
         <motion.div
           className="flex items-center justify-between pt-3 sm:pt-4 border-t border-base-300/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2"> {/* Уменьшен gap для мобильных */}
+            {/* LikeButton остается без изменений, он уже кнопка DaisyUI */}
             <LikeButton
               postId={post.id}
               initialLiked={post.isLikedByCurrentUser || false}
               initialCount={post.likeCount || 0}
             />
-            {/* Исправлено выравнивание и добавлена анимация наведения для кнопки комментариев */}
+            {/* Стилизованный Link для комментариев, выровненный по высоте с LikeButton */}
             <Link
               to={`/post/${post.id}#comments`}
-              className="flex items-center gap-1 sm:gap-2 text-base-content/60 hover:text-primary hover:bg-base-200 transition-colors duration-200 btn btn-ghost btn-sm p-0 min-h-0 h-auto rounded-btn"
+              className="flex items-center gap-1 text-base-content/60 hover:text-primary hover:bg-base-200 transition-colors duration-200 btn btn-ghost btn-sm h-8 min-h-0 px-2" // Ключевые стили: h-8, min-h-0, px-2
             >
-              <span className="text-base sm:text-lg">💬</span>
+              <span className="text-base sm:text-lg leading-none">💬</span> {/* leading-none для предотвращения сдвига текста внутри span */}
               <span className="text-xs sm:text-sm font-medium">{post.commentCount || 0}</span>
             </Link>
           </div>
