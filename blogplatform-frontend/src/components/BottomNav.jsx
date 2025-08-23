@@ -82,7 +82,7 @@ export default function BottomNav({ onOpenCreatePost }) {
         <div className="flex items-center justify-center p-2 bg-base-100/95 backdrop-blur-xl rounded-full shadow-2xl border border-base-300/50">
           <motion.div
             whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }} {/* Немного увеличиваем при наведении для обратной связи */}
+            whileHover={{ scale: 1.1 }}
             transition={{ type: 'spring', stiffness: 400 }}
           >
             {/* Используем ThemeToggle с mobile=true и уменьшенным размером */}
