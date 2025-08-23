@@ -1,3 +1,4 @@
+// src/components/BottomNav.jsx
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -5,13 +6,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 const NavItem = ({ to, icon, children, onClick }) => {
   const content = (
     <motion.div
-      className="flex flex-col items-center gap-1 py-2 px-3"
+      className="flex flex-col items-center gap-0.5 py-2 px-1" // Уменьшен px, gap=0.5 для компактности
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.05 }}
       transition={{ type: 'spring', stiffness: 400 }}
     >
-      <span className="text-xl">{icon}</span>
-      {children && <span className="text-xs font-medium leading-tight">{children}</span>}
+      {/* Увеличены иконки и текст для лучшей видимости на мобильных */}
+      <span className="text-2xl">{icon}</span> {/* text-xl -> text-2xl */}
+      {children && <span className="text-xs font-medium leading-tight">{children}</span>} {/* text-xs -> оставлен, но можно text-xs если 2xl много */}
     </motion.div>
   );
 
@@ -50,18 +52,26 @@ export default function BottomNav({ onOpenCreatePost }) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        <NavItem to="/" icon="🏠">
-          Главная
-        </NavItem>
-        
-        <NavItem 
-          icon="➕" 
-          onClick={onOpenCreatePost}
-        >
-          Создать
-        </NavItem>
+        {/* Основные кнопки навигации */}
+        <div className="flex items-center justify-around flex-1"> {/* Используем justify-around для равномерного распределения */}
+          <NavItem to="/" icon="🏠">
+            Главная
+          </NavItem>
+          
+          <NavItem 
+            icon="➕" 
+            onClick={onOpenCreatePost}
+          >
+            Создать
+          </NavItem>
 
-        <div className="flex-1 flex justify-center py-2 px-3">
+          <NavItem to="/profile" icon="👤">
+            Профиль
+          </NavItem>
+        </div>
+
+        {/* Кнопка смены темы отдельно, сбалансированно справа */}
+        <div className="flex items-center justify-center py-2 px-2"> {/* Отдельный контейнер справа */}
           <motion.div
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.05 }}
@@ -70,12 +80,8 @@ export default function BottomNav({ onOpenCreatePost }) {
             <ThemeToggle mobile />
           </motion.div>
         </div>
-
-        <NavItem to="/profile" icon="👤">
-          Профиль
-        </NavItem>
       </motion.nav>
-      <div className="lg:hidden h-24" />
+      <div className="lg:hidden h-24" /> {/* Отступ для основного контента под fixed nav */}
     </>
   );
 }
