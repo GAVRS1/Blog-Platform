@@ -1,5 +1,5 @@
 // src/pages/ProfilePage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMyData } from '@/hooks/useMyData';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,10 +8,9 @@ import SkeletonPost from '@/components/SkeletonPost';
 import PostCard from '@/components/PostCard';
 import EditProfileModal from '@/components/EditProfileModal';
 
-// Убедитесь, что эти endpoint'ы корректны для вашего API
+// Исправлены endpoint'ы для соответствия оригинальному API
 const tabs = [
   { key: 'posts', label: 'Публикации', endpoint: 'posts/user/me', icon: 'fas fa-file-alt' },
-  // Используйте те endpoint'ы, которые работают на вашем сервере
   { key: 'likes', label: 'Лайки', endpoint: 'likes/me', icon: 'fas fa-heart' }, // Исправлено
   { key: 'comments', label: 'Комментарии', endpoint: 'comments/me', icon: 'fas fa-comments' }, // Исправлено
 ];
@@ -22,65 +21,52 @@ export default function ProfilePage() {
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
   const currentTab = tabs.find(t => t.key === tab);
-
-  // Получаем данные через useMyData
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    invalidate // Функция для инвалидации кэша useMyData
+    invalidate
   } = useMyData(currentTab.endpoint);
 
-  // УДАЛЕН ИЗБЫТОЧНЫЙ useEffect, который вызывал invalidateQueries при каждом изменении tab
+  // Удален избыточный useEffect, вызывавший лишнюю инвалидацию
 
   const items = data?.pages.flat() ?? [];
 
-  // Обработчик удаления поста (или других действий, требующих обновления данных вкладки)
   const handlePostDeleted = (postId) => {
-    // Инвалидируем кэш useMyData для текущей вкладки, чтобы данные перезагрузились
-    invalidate();
-    // Альтернатива: можно обновить кэш вручную, но invalidate проще
-    // queryClient.setQueryData(['my-data', currentTab.endpoint], oldData => {
-    //   if (!oldData) return oldData;
-    //   return {
-    //     ...oldData,
-    //     pages: oldData.pages.map(page =>
-    //       page.filter(post => post.id !== postId)
-    //     )
-    //   };
-    // });
+    invalidate(); 
   };
 
   const renderTabContent = () => {
     if (tab === 'posts') {
       return items.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onDelete={handlePostDeleted} // Передаем функцию onDelete для вкладки постов
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted}
         />
       ));
     }
+    // Предполагаем, что likes/me и comments/me возвращают список постов
     if (tab === 'likes') {
       return items.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onDelete={handlePostDeleted} // Передаем функцию onDelete для вкладки лайков (если нужно обновлять список)
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted}
         />
       ));
     }
     if (tab === 'comments') {
       return items.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onDelete={handlePostDeleted} // Передаем функцию onDelete для вкладки комментариев (если нужно обновлять список)
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          onDelete={handlePostDeleted}
         />
       ));
     }
-    return null; // На случай, если tab не совпадает ни с одной вкладкой
+    return null;
   };
 
   if (!user) {
@@ -91,6 +77,8 @@ export default function ProfilePage() {
     );
   }
 
+  // Используем fullName или username как fallback
+  const displayName = user.fullName || user.username || 'Имя не указано';
   const profileAvatarUrl = getAvatarUrl(user.profile?.profilePictureUrl);
 
   return (
@@ -98,44 +86,42 @@ export default function ProfilePage() {
       {/* Профильная карточка с улучшенной симметрией */}
       <div className="bg-base-100/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-base-300/30 p-6 sm:p-8 mb-6 sm:mb-8">
         <div className="flex flex-col items-center text-center space-y-4 sm:space-y-6">
-          {/* Аватар */}
+          {/* Аватар - Удален большой фиолетовый кружок */}
           <div className="relative">
             <img
               src={profileAvatarUrl}
-              alt={user.fullName}
+              alt={displayName}
               className="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-primary/20 shadow-lg aspect-square"
               onError={({ currentTarget }) => {
                  currentTarget.onerror = null; // prevents looping
                  currentTarget.src="/avatar.png";
                }}
             />
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg">
-              <i className="fas fa-user text-white text-sm"></i>
-            </div>
+            {/* Фиолетовый кружок удален */}
           </div>
-
+          
           {/* Информация о пользователе */}
           <div className="space-y-2 sm:space-y-3 max-w-md">
-            <h1 className="text-2xl sm:text-3xl font-bold text-base-content">{user.fullName || 'Имя не указано'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-base-content">{displayName}</h1>
             <p className="text-base sm:text-lg text-base-content/70">@{user.username || 'username'}</p>
             {user.profile?.bio && (
               <p className="text-sm sm:text-base text-base-content/80 leading-relaxed px-4">
                 {user.profile.bio}
               </p>
             )}
-
+            
             {/* Дата рождения */}
             <div className="flex justify-center items-center gap-2 text-xs sm:text-sm text-base-content/60">
               <i className="fas fa-calendar"></i>
               <span>
-                {user.profile?.birthDate ?
-                  `Дата рождения: ${new Date(user.profile.birthDate).toLocaleDateString('ru-RU')}` :
+                {user.profile?.birthDate ? 
+                  `Дата рождения: ${new Date(user.profile.birthDate).toLocaleDateString('ru-RU')}` : 
                   'Дата рождения не указана'
                 }
               </span>
             </div>
           </div>
-
+          
           {/* Кнопка редактирования */}
           <button
             onClick={() => setShowModal(true)}
@@ -152,7 +138,7 @@ export default function ProfilePage() {
         {/* Заголовок вкладок */}
         <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-base-300/30">
           <div className="flex">
-            {tabs.map((tabItem) => ( // Убран index, так как он не используется
+            {tabs.map((tabItem) => (
               <button
                 key={tabItem.key}
                 onClick={() => setTab(tabItem.key)}
@@ -166,7 +152,7 @@ export default function ProfilePage() {
                 {tab === tabItem.key && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
                 )}
-
+                
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
                   <i className={`${tabItem.icon} text-base sm:text-lg`}></i>
                   <span className="text-xs sm:text-sm font-semibold">{tabItem.label}</span>

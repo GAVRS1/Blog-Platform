@@ -1,4 +1,4 @@
-// src/components/PostCard.jsx (обновленная версия без счетчика просмотров)
+// src/components/PostCard.jsx
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -121,9 +121,10 @@ export default function PostCard({ post, onDelete }) {
               initialLiked={post.isLikedByCurrentUser || false}
               initialCount={post.likeCount || 0}
             />
+            {/* Исправлено выравнивание и добавлена анимация наведения для кнопки комментариев */}
             <Link
               to={`/post/${post.id}#comments`}
-              className="flex items-center gap-1 sm:gap-2 text-base-content/60 hover:text-primary transition-colors"
+              className="flex items-center gap-1 sm:gap-2 text-base-content/60 hover:text-primary hover:bg-base-200 transition-colors duration-200 btn btn-ghost btn-sm p-0 min-h-0 h-auto rounded-btn"
             >
               <span className="text-base sm:text-lg">💬</span>
               <span className="text-xs sm:text-sm font-medium">{post.commentCount || 0}</span>

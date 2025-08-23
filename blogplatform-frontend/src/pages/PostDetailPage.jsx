@@ -1,4 +1,4 @@
-// src/pages/PostDetailPage.jsx (критические исправления мобильной верстки)
+// src/pages/PostDetailPage.jsx
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -221,6 +221,7 @@ export default function PostDetailPage() {
                 className="w-full p-2 sm:p-3 border border-base-300 rounded-lg sm:rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
                 rows={2}
               />
+              {/* Исправлен стиль кнопки отправки комментария для мобильной версии */}
               <button
                 onClick={handleComment}
                 disabled={!newComment.trim() || submittingComment}

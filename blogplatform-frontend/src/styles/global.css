@@ -7,30 +7,30 @@
   html {
     scroll-behavior: smooth;
   }
-
+  
   body {
     @apply bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 !important;
   }
-
+  
   /* Кастомный скроллбар */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: oklch(var(--p) / 0.3) transparent;
   }
-
+  
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
-
+  
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-
+  
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: oklch(var(--p) / 0.3);
     border-radius: 3px;
   }
-
+  
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: oklch(var(--p) / 0.5);
   }
@@ -41,12 +41,12 @@
   .card-hover {
     @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
   }
-
+  
   /* Градиентные кнопки */
   .btn-gradient {
     @apply bg-gradient-to-r from-primary to-secondary text-white border-none hover:shadow-lg hover:scale-105 transition-all duration-200;
   }
-
+  
   /* Стеклянный эффект */
   .glass-effect {
     @apply bg-base-100/80 backdrop-blur-md border border-base-300/50;
@@ -73,15 +73,15 @@
     .container {
       @apply px-2; /* Уменьшаем padding для очень маленьких экранов */
     }
-
+    
     .card-body {
       @apply p-4; /* Уменьшаем внутренние отступы карточек */
     }
-
+    
     .btn {
       @apply text-sm px-3 py-2; /* Уменьшаем размер кнопок */
     }
-
+    
     .btn-wide {
       @apply min-w-full; /* Кнопки занимают всю ширину на маленьких экранах */
     }
@@ -110,11 +110,11 @@
   .touch-manipulation {
     touch-action: manipulation;
   }
-
+  
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-
+  
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
