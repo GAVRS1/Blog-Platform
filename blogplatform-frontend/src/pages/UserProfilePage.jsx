@@ -103,9 +103,13 @@ export default function UserProfilePage() {
   // Используем обработанный URL аватара или дефолтный при ошибке
   const profileAvatarUrl = avatarError ? '/avatar.png' : getAvatarUrl(userProfile.profilePictureUrl);
   
-  // Форматируем дату рождения, если она есть
+  // Форматируем дату рождения в формате ДД.ММ.ГГГГ, если она есть
   const formattedBirthDate = userProfile.birthDate 
-    ? new Date(userProfile.birthDate).toLocaleDateString('ru-RU') 
+    ? new Date(userProfile.birthDate).toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).replace(/\//g, '.') // Заменяем / на . если браузер использует другой разделитель
     : null;
 
   return (
@@ -137,7 +141,7 @@ export default function UserProfilePage() {
               </p>
             )}
             
-            {/* Дата рождения - отображается только если указана */}
+            {/* Дата рождения - отображается только если указана, в формате ДД.ММ.ГГГГ */}
             {formattedBirthDate && (
               <div className="flex justify-center items-center gap-2 text-xs sm:text-sm text-base-content/60">
                 <i className="fas fa-calendar"></i>
@@ -147,14 +151,7 @@ export default function UserProfilePage() {
               </div>
             )}
             
-            {/* Статистика пользователя */}
-            <div className="flex justify-center gap-4 sm:gap-6 text-xs sm:text-sm pt-2">
-              <span className="flex items-center gap-1">
-                <i className="fas fa-file-alt"></i>
-                <span>{userProfile.postCount ?? 0} постов</span>
-              </span>
-              {/* Добавьте другие счетчики, если они есть в данных */}
-            </div>
+            {/* Статистика пользователя - убрана */}
           </div>
         </div>
       </div>

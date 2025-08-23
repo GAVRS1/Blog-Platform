@@ -6,14 +6,13 @@ import ThemeToggle from '@/components/ThemeToggle';
 const NavItem = ({ to, icon, children, onClick }) => {
   const content = (
     <motion.div
-      className="flex flex-col items-center gap-0.5 py-2 px-1" // Уменьшен px, gap=0.5 для компактности
+      className="flex flex-col items-center gap-0.5 py-2 px-1"
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.05 }}
       transition={{ type: 'spring', stiffness: 400 }}
     >
-      {/* Увеличены иконки и текст для лучшей видимости на мобильных */}
-      <span className="text-2xl">{icon}</span> {/* text-xl -> text-2xl */}
-      {children && <span className="text-xs font-medium leading-tight">{children}</span>} {/* text-xs -> оставлен, но можно text-xs если 2xl много */}
+      <span className="text-2xl">{icon}</span>
+      {children && <span className="text-xs font-medium leading-tight">{children}</span>}
     </motion.div>
   );
 
@@ -46,6 +45,7 @@ const NavItem = ({ to, icon, children, onClick }) => {
 export default function BottomNav({ onOpenCreatePost }) {
   return (
     <>
+      {/* Основная панель навигации */}
       <motion.nav 
         className="lg:hidden fixed bottom-4 left-4 right-4 bg-base-100/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-base-300/50 h-18 flex items-center px-2 z-40"
         initial={{ y: 100, opacity: 0 }}
@@ -53,7 +53,7 @@ export default function BottomNav({ onOpenCreatePost }) {
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         {/* Основные кнопки навигации */}
-        <div className="flex items-center justify-around flex-1"> {/* Используем justify-around для равномерного распределения */}
+        <div className="flex items-center justify-around flex-1">
           <NavItem to="/" icon="🏠">
             Главная
           </NavItem>
@@ -69,19 +69,30 @@ export default function BottomNav({ onOpenCreatePost }) {
             Профиль
           </NavItem>
         </div>
-
-        {/* Кнопка смены темы отдельно, сбалансированно справа */}
-        <div className="flex items-center justify-center py-2 px-2"> {/* Отдельный контейнер справа */}
+        {/* ThemeToggle удален из основной панели */}
+      </motion.nav>
+      
+      {/* Отдельная миниатюрная круглая кнопка смены темы */}
+      <motion.div
+        className="lg:hidden fixed bottom-24 right-4 z-30" // Позиционирование выше и правее панели, z-30 меньше чем у модалок (z-50) и панели (z-40)
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        <div className="flex items-center justify-center p-2 bg-base-100/95 backdrop-blur-xl rounded-full shadow-2xl border border-base-300/50">
           <motion.div
             whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.1 }} {/* Немного увеличиваем при наведении для обратной связи */}
             transition={{ type: 'spring', stiffness: 400 }}
           >
-            <ThemeToggle mobile />
+            {/* Используем ThemeToggle с mobile=true и уменьшенным размером */}
+            <ThemeToggle mobile={true} />
           </motion.div>
         </div>
-      </motion.nav>
-      <div className="lg:hidden h-24" /> {/* Отступ для основного контента под fixed nav */}
+      </motion.div>
+
+      {/* Отступ для основного контента под fixed nav */}
+      <div className="lg:hidden h-24" />
     </>
   );
 }
