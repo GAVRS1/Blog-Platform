@@ -8,9 +8,7 @@ import PostCard from '@/components/PostCard';
 import api from '@/api/axios';
 import toast from 'react-hot-toast';
 
-// Определяем вкладки. Для чужого профиля убираем вкладки 'likes' и 'comments',
-// если они не реализованы на бэкенде для просмотра другими пользователями.
-// Оставляем только 'posts'. Если они доступны, можно их вернуть.
+// Определяем вкладки.
 const tabs = [
   { key: 'posts', label: 'Публикации', icon: 'fas fa-file-alt' },
   // Если API поддерживает просмотр лайков/комментариев другими пользователями, раскомментируйте:
@@ -22,7 +20,7 @@ export default function UserProfilePage() {
   const { userId } = useParams();
   const [userProfile, setUserProfile] = useState(null);
   const [avatarError, setAvatarError] = useState(false);
-  const [tab, setTab] = useState('posts'); // По умолчанию активна вкладка 'posts'
+  const [tab, setTab] = useState('posts');
   const [loading, setLoading] = useState(true);
 
   // Загрузка данных пользователя
@@ -51,47 +49,26 @@ export default function UserProfilePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    refetch // Для обновления данных при необходимости
+    refetch
   } = useInfiniteQuery({
-    queryKey: ['user-posts', userId, tab], // Добавляем 'tab' в ключ, если будут другие вкладки
+    queryKey: ['user-posts', userId, tab],
     queryFn: async ({ pageParam = 1 }) => {
-      // Для вкладки 'posts' загружаем посты пользователя
       if (tab === 'posts') {
         const response = await api.get(`/posts/user/${userId}?page=${pageParam}&limit=5`);
         return response.data.posts || response.data;
       }
-      // Если будут другие вкладки (likes, comments), добавить логику здесь
-      // Например:
-      // if (tab === 'likes') {
-      //   const response = await api.get(`/Users/${userId}/liked-posts?page=${pageParam}&limit=5`);
-      //   return response.data.posts || response.data;
-      // }
-      // Возвращаем пустой массив по умолчанию
       return [];
     },
     getNextPageParam: (lastPage, allPages) => {
-      // Предполагаем, что API возвращает { posts: [...], totalPages: N, currentPage: N }
-      // или просто массив постов и информацию о страницах в заголовках
-      // Этот пример предполагает наличие `hasNextPage` или подобной логики
-      // Вам нужно адаптировать это под ваш API
-      if (lastPage && lastPage.length === 5) { // Если вернулось 5 постов, предполагаем, что могут быть еще
+      if (lastPage && lastPage.length === 5) {
          return allPages.length + 1;
       }
-      return undefined; // Больше страниц нет
+      return undefined;
     },
-    enabled: !!userId && !!userProfile, // Запускаем только если есть userId и данные профиля загружены
+    enabled: !!userId && !!userProfile,
   });
 
   const items = data?.pages.flat() ?? [];
-
-  // Обработчик удаления поста (если пользователь удаляет свой пост из этого списка)
-  // В данном случае, для чужого профиля, onDelete в PostCard будет null или не передан,
-  // так как пользователь не может удалять чужие посты напрямую отсюда.
-  // Но если это его собственный профиль (проверка внутри PostCard), onDelete может быть нужен.
-  // Для простоты, не передаем onDelete для чужих профилей.
-  // const handlePostDeleted = (postId) => {
-  //   refetch(); // Или обновить локальное состояние items
-  // };
 
   const renderTabContent = () => {
     if (tab === 'posts') {
@@ -99,11 +76,9 @@ export default function UserProfilePage() {
         <PostCard 
           key={post.id} 
           post={post} 
-          // onDelete={null} // Не передаем onDelete для чужих постов
         />
       ));
     }
-    // Добавить рендер для 'likes' и 'comments' если они будут
     return null;
   };
 
@@ -124,8 +99,14 @@ export default function UserProfilePage() {
   }
 
   // Приоритетное отображение fullName, fallback на username
-  const displayName = userProfile.profile?.fullName || userProfile.fullName || userProfile.username || 'Имя не указано';
-  const profileAvatarUrl = avatarError ? '/avatar.png' : getAvatarUrl(userProfile.profile?.profilePictureUrl);
+  const displayName = userProfile.fullName || userProfile.username || 'Имя не указано';
+  // Используем обработанный URL аватара или дефолтный при ошибке
+  const profileAvatarUrl = avatarError ? '/avatar.png' : getAvatarUrl(userProfile.profilePictureUrl);
+  
+  // Форматируем дату рождения, если она есть
+  const formattedBirthDate = userProfile.birthDate 
+    ? new Date(userProfile.birthDate).toLocaleDateString('ru-RU') 
+    : null;
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-4xl">
@@ -143,48 +124,38 @@ export default function UserProfilePage() {
                 setAvatarError(true);
               }}
             />
-            {/* Фиолетовый кружок онлайна удален, как в собственном профиле */}
+            {/* Фиолетовый кружок онлайна удален */}
           </div>
           
           {/* Информация о пользователе */}
           <div className="space-y-2 sm:space-y-3 max-w-md">
             <h1 className="text-2xl sm:text-3xl font-bold text-base-content">{displayName}</h1>
             <p className="text-base sm:text-lg text-base-content/70">@{userProfile.username || 'username'}</p>
-            {userProfile.profile?.bio && (
+            {userProfile.bio && (
               <p className="text-sm sm:text-base text-base-content/80 leading-relaxed px-4">
-                {userProfile.profile.bio}
+                {userProfile.bio}
               </p>
             )}
             
-            {/* Дата рождения */}
-            <div className="flex justify-center items-center gap-2 text-xs sm:text-sm text-base-content/60">
-              <i className="fas fa-calendar"></i>
-              <span>
-                {userProfile.profile?.birthDate ? 
-                  `Дата рождения: ${new Date(userProfile.profile.birthDate).toLocaleDateString('ru-RU')}` : 
-                  'Дата рождения не указана'
-                }
-              </span>
-            </div>
-
-            {/* Статистика пользователя (если доступна) */}
+            {/* Дата рождения - отображается только если указана */}
+            {formattedBirthDate && (
+              <div className="flex justify-center items-center gap-2 text-xs sm:text-sm text-base-content/60">
+                <i className="fas fa-calendar"></i>
+                <span>
+                  Дата рождения: {formattedBirthDate}
+                </span>
+              </div>
+            )}
+            
+            {/* Статистика пользователя */}
             <div className="flex justify-center gap-4 sm:gap-6 text-xs sm:text-sm pt-2">
               <span className="flex items-center gap-1">
                 <i className="fas fa-file-alt"></i>
-                <span>{userProfile.stats?.postsCount ?? 0} постов</span>
+                <span>{userProfile.postCount ?? 0} постов</span>
               </span>
-              <span className="flex items-center gap-1">
-                <i className="fas fa-heart"></i>
-                <span>{userProfile.stats?.likesCount ?? 0} лайков</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <i className="fas fa-comments"></i>
-                <span>{userProfile.stats?.commentsCount ?? 0} комментариев</span>
-              </span>
+              {/* Добавьте другие счетчики, если они есть в данных */}
             </div>
           </div>
-          
-          {/* Кнопка "Редактировать профиль" отсутствует для чужого профиля */}
         </div>
       </div>
 
@@ -227,11 +198,9 @@ export default function UserProfilePage() {
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-base-content/70 mb-2">
                 {tab === 'posts' && 'Пока нет публикаций'}
-                {/* Добавить сообщения для других вкладок при необходимости */}
               </h3>
               <p className="text-sm sm:text-base text-base-content/50 max-w-sm mx-auto">
                 {tab === 'posts' && 'Пользователь еще не создал ни одного поста'}
-                {/* Добавить сообщения для других вкладок при необходимости */}
               </p>
             </div>
           ) : (
