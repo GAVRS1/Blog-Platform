@@ -1,122 +1,177 @@
-// src/components/Comment.jsx (исправленная версия)
-import { useState } from 'react';
-import { getAvatarUrl } from '@/utils/avatar';
-import api from '@/api/axios';
+// src/components/Comment.jsx
+import { useEffect, useState } from 'react';
+import LikeButton from '@/components/LikeButton';
+import { commentsService } from '@/services/comments';
 import toast from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
 
-export default function Comment({ comment, onDelete }) {
+/**
+ * Компонент комментария с возможностью:
+ * - поставить лайк комменту (если включено)
+ * - ответить на комментарий
+ * - подгрузить/показать ответы
+ */
+export default function Comment({ comment, enableLike = false }) {
+  const [local, setLocal] = useState(() => ({
+    id: comment.id,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    userId: comment.userId,
+    username: comment.username,
+    userAvatar: comment.userAvatar,
+    likeCount: comment.likeCount ?? 0,
+    replyCount: comment.replyCount ?? 0,
+    isLiked: !!comment.isLikedByCurrentUser
+  }));
+
   const [showReplies, setShowReplies] = useState(false);
-  const [replies, setReplies] = useState([]);
+  const [replies, setReplies] = useState(null);
+  const [replyPage, setReplyPage] = useState(1);
+  const [replyHasMore, setReplyHasMore] = useState(true);
   const [replyText, setReplyText] = useState('');
-  const [avatarError, setAvatarError] = useState(false);
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const isOwner = user && comment.userId === user.id;
+  const [replyLoading, setReplyLoading] = useState(false);
 
-  const toggleReplies = () => {
-    if (!showReplies) {
-      api.get(`/comments/${comment.id}/replies`)
-        .then(({ data }) => setReplies(data))
-        .catch(() => toast.error('Не удалось загрузить ответы'));
-    }
-    setShowReplies(!showReplies);
-  };
+  useEffect(() => {
+    setLocal((s) => ({
+      ...s,
+      likeCount: comment.likeCount ?? s.likeCount,
+      replyCount: comment.replyCount ?? s.replyCount,
+      isLiked: !!comment.isLikedByCurrentUser
+    }));
+  }, [comment.likeCount, comment.replyCount, comment.isLikedByCurrentUser]);
 
-  const deleteComment = () => {
-    api.delete(`/comments/${comment.id}`)
-      .then(() => {
-        toast.success('Комментарий удалён');
-        onDelete(comment.id);
-      })
-      .catch(() => toast.error('Ошибка при удалении'));
-  };
-
-  const sendReply = () => {
-    if (!replyText.trim()) return;
-    api.post(`/comments/${comment.id}/reply`, { content: replyText })
-      .then(({ data }) => {
-        setReplies([data, ...replies]);
-        setReplyText('');
-        queryClient.invalidateQueries({ queryKey: ['post', comment.postId] });
-      })
-      .catch(() => toast.error('Не удалось отправить ответ'));
-  };
-
-  const commenterAvatarUrl = avatarError ? '/avatar.png' : getAvatarUrl(comment.userAvatar);
-  const getReplyAvatarUrl = (replyAvatarPath) => {
+  async function loadReplies(p = 1, replace = false) {
     try {
-      return getAvatarUrl(replyAvatarPath);
-    } catch (e) {
-      return '/avatar.png';
+      const res = await commentsService.listReplies(local.id, p, 10);
+      if (!res || !res.items) {
+        // если на бэке выдачи нет — считаем нет реализации
+        setReplies([]);
+        setReplyHasMore(false);
+        return;
+      }
+      setReplies((prev) => replace ? res.items : ([...(prev || []), ...res.items]));
+      setReplyPage(p);
+      setReplyHasMore(res.items.length === 10);
+    } catch {
+      toast.error('Не удалось загрузить ответы');
+    }
+  }
+
+  const toggleReplies = async () => {
+    if (showReplies) {
+      setShowReplies(false);
+      return;
+    }
+    setShowReplies(true);
+    if (!replies) {
+      await loadReplies(1, true);
+    }
+  };
+
+  const sendReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    setReplyLoading(true);
+    try {
+      const saved = await commentsService.reply(local.id, replyText.trim());
+      // оптимистично приклеим снизу
+      setReplies((prev) => [...(prev || []), saved]);
+      setReplyText('');
+      setLocal((s) => ({ ...s, replyCount: (s.replyCount || 0) + 1 }));
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 429) toast.error('Слишком часто. Попробуйте позже.');
+      else if (status === 403) toast.error('Ответ запрещён настройками приватности/блокировками');
+      else toast.error(err.response?.data || 'Не удалось отправить ответ');
+    } finally {
+      setReplyLoading(false);
     }
   };
 
   return (
-    <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4">
-      <img
-        src={commenterAvatarUrl}
-        alt={comment.username}
-        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full mt-1 object-cover aspect-square flex-shrink-0"
-        onError={() => setAvatarError(true)}
-      />
-      <div className="flex-1 min-w-0">
-        <div className="bg-base-200/70 rounded-xl sm:rounded-2xl p-2 sm:p-3">
-          <p className="text-xs sm:text-sm font-bold text-base-content mb-1">{comment.username}</p>
-          <p className="text-xs sm:text-sm text-base-content leading-relaxed break-words">{comment.content}</p>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 text-xs text-base-content/60 mt-1 sm:mt-2">
-          <button 
-            onClick={toggleReplies}
-            className="hover:text-primary transition-colors"
-          >
-            {comment.replyCount || 0} ответа
-          </button>
-          {isOwner && (
-            <button 
-              onClick={deleteComment} 
-              className="text-error hover:text-error/80 transition-colors"
-            >
-              Удалить
-            </button>
-          )}
-        </div>
-
-        {showReplies && (
-          <div className="mt-2 sm:mt-3 pl-3 sm:pl-4 border-l-2 border-base-300">
-            {replies.map((r) => (
-              <div key={r.id} className="flex gap-2 mb-2">
-                <img
-                  src={getReplyAvatarUrl(r.userAvatar)}
-                  alt={r.username}
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover aspect-square flex-shrink-0"
-                  onError={(e) => { e.target.src = '/avatar.png'; }}
-                />
-                <div className="bg-base-200/50 rounded-lg px-2 py-1 text-xs sm:text-sm flex-1 min-w-0">
-                  <b className="text-base-content">{r.username}</b>
-                  <span className="text-base-content ml-1 break-words">{r.content}</span>
-                </div>
-              </div>
-            ))}
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Ответить..."
-                className="input input-xs sm:input-sm input-bordered w-full text-xs sm:text-sm"
-              />
-              <button 
-                onClick={sendReply} 
-                className="btn btn-xs sm:btn-sm btn-primary"
-              >
-                Отправить
-              </button>
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body p-4">
+        <div className="flex items-center gap-3">
+          <div className="avatar">
+            <div className="w-9 h-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
+              <img src={local.userAvatar || '/avatar.png'} alt={local.username} />
             </div>
           </div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">@{local.username}</div>
+            <div className="text-xs opacity-60">{new Date(local.createdAt).toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div className="mt-2 whitespace-pre-wrap break-words">{local.content}</div>
+
+        <div className="mt-2 flex items-center gap-2">
+          {enableLike && (
+            <LikeButton
+              type="comment"
+              targetId={local.id}
+              initialLiked={local.isLiked}
+              initialCount={local.likeCount}
+              onChange={(r) => setLocal((s) => ({ ...s, isLiked: !!r.liked, likeCount: r.count ?? s.likeCount }))}
+            />
+          )}
+          <button className="btn btn-sm btn-ghost" onClick={toggleReplies}>
+            Ответы <span className="ml-2">{local.replyCount}</span>
+          </button>
+        </div>
+
+        {/* REPLIES */}
+        {showReplies && (
+          <div className="mt-3 pl-4 border-l border-base-300 space-y-3">
+            {/* список ответов */}
+            {replies === null && (
+              <div className="flex justify-center py-3">
+                <span className="loading loading-spinner text-primary" />
+              </div>
+            )}
+            {replies?.length === 0 && (
+              <div className="text-sm opacity-60">Пока нет ответов</div>
+            )}
+            {replies?.map(r => (
+              <ReplyItem key={r.id} reply={r} />
+            ))}
+            {replyHasMore && (
+              <button className="btn btn-xs btn-outline" onClick={() => loadReplies(replyPage + 1)}>
+                Показать ещё
+              </button>
+            )}
+
+            {/* отправка ответа */}
+            <form onSubmit={sendReply} className="flex items-end gap-2">
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={2}
+                placeholder="Напишите ответ..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+              />
+              <button className={`btn btn-primary ${replyLoading ? 'loading' : ''}`} disabled={replyLoading}>
+                Отправить
+              </button>
+            </form>
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ReplyItem({ reply }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="avatar">
+        <div className="w-8 h-8 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2 overflow-hidden">
+          <img src={reply.userAvatar || '/avatar.png'} alt={reply.username} />
+        </div>
+      </div>
+      <div>
+        <div className="text-sm font-medium">@{reply.username}</div>
+        <div className="text-xs opacity-60">{new Date(reply.createdAt).toLocaleString()}</div>
+        <div className="mt-1 whitespace-pre-wrap break-words text-sm">{reply.content}</div>
       </div>
     </div>
   );

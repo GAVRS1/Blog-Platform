@@ -1,209 +1,209 @@
-// src/components/CreatePostModal.jsx (исправленная версия)
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import api from '@/api/axios';
+// src/components/CreatePostModal.jsx
+import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { mediaService } from '@/services/media';
+import { postsService } from '@/services/posts';
 
-export default function CreatePostModal({ onClose, onCreated }) {
-  const [title, setTitle] = useState('');
+const MAX_ATTACH = 10;
+
+export default function CreatePostModal() {
+  const [open, setOpen] = useState(false);
   const [content, setContent] = useState('');
-  const [type, setType] = useState('Article');
-  const [file, setFile] = useState(null);
-  const [drag, setDrag] = useState(false);
+  const [files, setFiles] = useState([]); // File[]
+  const [uploads, setUploads] = useState([]); // [{url, mediaType, mimeType, sizeBytes}]
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // Открытие по глобальному событию
+  useEffect(() => {
+    const openHandler = () => setOpen(true);
+    window.addEventListener('open-create-post', openHandler);
+    return () => window.removeEventListener('open-create-post', openHandler);
+  }, []);
 
-    try {
-      let mediaUrl = null;
+  const close = () => {
+    if (loading) return;
+    setOpen(false);
+    setContent('');
+    setFiles([]);
+    setUploads([]);
+  };
 
-      if (file && type !== 'Article') {
-        let mediaType = 'post_image';
-        if (type === 'Photo') mediaType = 'post_image';
-        else if (type === 'Video') mediaType = 'post_video';
-        else if (type === 'Music') mediaType = 'post_audio';
-
-        const mediaFormData = new FormData();
-        mediaFormData.append('file', file);
-
-        const uploadResponse = await api.post(
-          `/Media/upload?type=${mediaType}`,
-          mediaFormData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          }
-        );
-
-        mediaUrl = uploadResponse.data?.url;
-
-        if (!mediaUrl) {
-          throw new Error('Не удалось получить URL загруженного файла');
-        }
+  const onPickFiles = (e) => {
+    const list = Array.from(e.target.files || []);
+    if (list.length === 0) return;
+    if ((files.length + list.length) > MAX_ATTACH) {
+      toast.error(`Максимум ${MAX_ATTACH} вложений в посте`);
+      const allowed = MAX_ATTACH - files.length;
+      if (allowed > 0) {
+        setFiles((prev) => [...prev, ...list.slice(0, allowed)]);
       }
+    } else {
+      setFiles((prev) => [...prev, ...list]);
+    }
+    e.target.value = '';
+  };
 
-      const postFormData = new FormData();
-      postFormData.append('title', title);
-      postFormData.append('content', content);
-      postFormData.append('contentType', type);
+  const removeFile = (idx) => {
+    setFiles((arr) => arr.filter((_, i) => i !== idx));
+    setUploads((arr) => arr.filter((_, i) => i !== idx));
+  };
 
-      if (mediaUrl) {
-        if (type === 'Photo') {
-          postFormData.append('ImageUrl', mediaUrl);
-        } else if (type === 'Video') {
-          postFormData.append('VideoUrl', mediaUrl);
-        } else if (type === 'Music') {
-          postFormData.append('AudioUrl', mediaUrl);
-        }
-      }
+  const mediaTypeFromFile = (file) => {
+    const t = file.type.toLowerCase();
+    if (t.startsWith('image/')) return 'post_image';
+    if (t.startsWith('video/')) return 'post_video';
+    if (t.startsWith('audio/')) return 'post_audio';
+    return 'post_file';
+  };
 
-      const postResponse = await api.post('/posts', postFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+  const preview = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+
+  const uploadAll = async () => {
+    const results = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const type = mediaTypeFromFile(f);
+      const res = await mediaService.upload(f, type);
+      results.push({
+        url: res.url,
+        mediaType: type.includes('image') ? 'Image' :
+                   type.includes('video') ? 'Video' :
+                   type.includes('audio') ? 'Audio' : 'Other',
+        mimeType: f.type,
+        sizeBytes: f.size
       });
+    }
+    setUploads(results);
+    return results;
+  };
 
-      toast.success('Пост опубликован!');
-      onCreated();
-      onClose();
-    } catch (err) {
-      let errorMessage = 'Ошибка при публикации';
-      if (err.response) {
-        errorMessage = err.response.data?.message || err.response.data?.title || JSON.stringify(err.response.data) || errorMessage;
-      } else if (err.request) {
-        errorMessage = 'Нет ответа от сервера';
-      } else {
-        errorMessage = err.message || errorMessage;
+  // Мэппинг под бэкендовый enum ContentType { Article, Photo, Video, Music }
+  const detectContentType = () => {
+    const hasText = !!content.trim();
+    const hasImg = uploads.some(u => u.mediaType === 'Image');
+    const hasVid = uploads.some(u => u.mediaType === 'Video');
+    const hasAud = uploads.some(u => u.mediaType === 'Audio');
+
+    // Если есть смешение типов или есть текст — это Article
+    const mixed =
+      (hasImg && hasVid) || (hasImg && hasAud) || (hasVid && hasAud);
+
+    if (hasText || mixed) return 'Article';
+    if (hasImg && !hasVid && !hasAud && !hasText) return 'Photo';
+    if (hasVid && !hasImg && !hasAud && !hasText) return 'Video';
+    if (hasAud && !hasImg && !hasVid && !hasText) return 'Music';
+
+    // Пусто/неопределённо — считаем Article
+    return 'Article';
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!content.trim() && files.length === 0) {
+      toast.error('Добавьте текст или медиа');
+      return;
+    }
+    if (files.length > MAX_ATTACH) {
+      toast.error(`Максимум ${MAX_ATTACH} вложений`);
+      return;
+    }
+    setLoading(true);
+    try {
+      let uploaded = uploads;
+      if (files.length > 0 && uploads.length !== files.length) {
+        uploaded = await uploadAll();
       }
-      toast.error(errorMessage);
+      const payload = {
+        content: content || '',
+        contentType: detectContentType(), // Article/Photo/Video/Music
+        media: uploaded // [{ url, mediaType: Image|Video|Audio|Other, mimeType, sizeBytes }]
+      };
+      await postsService.create(payload);
+      toast.success('Пост опубликован!');
+      window.dispatchEvent(new CustomEvent('post-created'));
+      close();
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 429) toast.error('Слишком часто. Попробуйте позже.');
+      else if (status === 413) toast.error('Слишком большой файл');
+      else toast.error(err.response?.data?.message || 'Не удалось создать пост');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDrag(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) setFile(dropped);
-  };
-
   return (
-    <motion.div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div
-        className="card bg-base-100 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl rounded-2xl"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit} className="card-body gap-3 sm:gap-4 p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg sm:text-xl font-bold text-primary">Создать пост</h3>
-            <button 
-              type="button" 
-              className="btn btn-ghost btn-sm btn-circle"
-              onClick={onClose}
-            >
-              ✕
-            </button>
-          </div>
-          
-          <label className="form-control">
-            <span className="label-text font-semibold text-sm sm:text-base mb-1">Заголовок</span>
-            <input
-              type="text"
-              className="input input-bordered input-primary text-sm sm:text-base"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </label>
-          
-          <label className="form-control">
-            <span className="label-text font-semibold text-sm sm:text-base mb-1">Тип контента</span>
-            <select
-              className="select select-bordered select-primary text-sm sm:text-base"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              disabled={loading}
-            >
-              <option value="Article">Статья</option>
-              <option value="Photo">Фото</option>
-              <option value="Video">Видео</option>
-              <option value="Music">Аудио</option>
-            </select>
-          </label>
-          
-          {type !== 'Article' && (
-            <label className="form-control">
-              <span className="label-text font-semibold text-sm sm:text-base mb-1">Файл</span>
-              <div
-                className={`w-full h-24 sm:h-32 border-2 border-dashed rounded-xl flex items-center justify-center text-xs sm:text-sm transition-colors cursor-pointer
-                  ${drag ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary'}`}
-                onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-                onDragLeave={() => setDrag(false)}
-                onDrop={handleDrop}
-              >
-                {file ? (
-                  <span className="text-primary font-medium px-2 text-center break-all">{file.name}</span>
-                ) : (
-                  <div className="text-center px-2">
-                    <span className="text-base-content/60 block mb-1">
-                      Перетащите файл сюда
-                    </span>
-                    <label className="link link-primary cursor-pointer text-xs sm:text-sm">
-                      или нажмите для выбора
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(e) => setFile(e.target.files[0])} 
-                        disabled={loading} 
-                      />
-                    </label>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-3"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={close}
+        >
+          <motion.div
+            className="card w-full max-w-2xl bg-base-100 shadow-xl"
+            initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form className="card-body space-y-3" onSubmit={onSubmit}>
+              <div className="flex items-center justify-between">
+                <h3 className="card-title">Создать пост</h3>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={close}>✕</button>
+              </div>
+
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={4}
+                placeholder="Что нового?"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
+
+              {/* Files */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="btn btn-outline btn-sm">
+                    Прикрепить файлы
+                    <input type="file" hidden multiple onChange={onPickFiles} accept="image/*,video/*,audio/*" />
+                  </label>
+                  <div className="text-xs opacity-70">Выбрано: {files.length}/{MAX_ATTACH}</div>
+                </div>
+
+                {files.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {files.map((f, i) => (
+                      <div key={i} className="relative group">
+                        {f.type.startsWith('image/')
+                          ? <img src={preview[i]} alt="" className="rounded-lg max-h-40 w-full object-cover" />
+                          : f.type.startsWith('video/')
+                          ? <video src={preview[i]} className="rounded-lg max-h-40 w-full object-cover" />
+                          : f.type.startsWith('audio/')
+                          ? <div className="rounded-lg p-3 bg-base-200">Аудио: {f.name}</div>
+                          : <div className="rounded-lg p-3 bg-base-200">Файл: {f.name}</div>
+                        }
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-error absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                          onClick={() => removeFile(i)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-            </label>
-          )}
-          
-          <label className="form-control">
-            <span className="label-text font-semibold text-sm sm:text-base mb-1">Текст</span>
-            <textarea
-              className="textarea textarea-bordered textarea-primary text-sm sm:text-base resize-none"
-              rows="3"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </label>
-          
-          <div className="flex gap-2 sm:gap-3 mt-2 sm:mt-4">
-            <button 
-              type="button" 
-              className="btn btn-ghost flex-1" 
-              onClick={onClose} 
-              disabled={loading}
-            >
-              Отмена
-            </button>
-            <button 
-              type="submit" 
-              className={`btn btn-primary flex-1 ${loading ? 'loading' : ''}`}
-              disabled={loading}
-            >
-              {loading ? 'Публикация...' : 'Опубликовать'}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
+
+              <div className="card-actions justify-end">
+                <button type="submit" className={`btn btn-primary ${loading ? 'loading' : ''}`} disabled={loading}>
+                  Опубликовать
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

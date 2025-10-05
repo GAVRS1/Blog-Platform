@@ -1,59 +1,139 @@
-// src/pages/RegisterPage.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+// src/pages/RegisterPage.jsx
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '@/services/auth';
-import { checkUniqueUsername, checkUniqueEmail } from '@/utils/uniqueCheck';
+import { checkUniqueEmail, checkUniqueUsername } from '@/utils/uniqueCheck';
+import AvatarUploader from '@/components/AvatarUploader';
 import toast from 'react-hot-toast';
 import debounce from 'lodash.debounce';
 
+const container = { hidden: { opacity: 0 }, show: { opacity: 1 } };
+const stepAnim = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 }
+};
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
+  const [sp] = useSearchParams();
+
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const [email, setEmail] = useState(sp.get('email') || '');
+  const [emailOk, setEmailOk] = useState(null); // null | true | false
+  const [code, setCode] = useState(sp.get('code') || '');
+
+  const [profile, setProfile] = useState({
     username: '',
+    password: '',
     fullName: '',
     birthDate: '',
     bio: '',
+    profilePictureUrl: ''
   });
-  const [errors, setErrors] = useState({ username: '', email: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [usernameOk, setUsernameOk] = useState(null);
 
-  const debouncedCheckUsername = debounce(async (value) => {
-    if (!value) return;
-    const ok = await checkUniqueUsername(value);
-    setErrors((e) => ({ ...e, username: ok ? '' : 'Никнейм занят' }));
-  }, 500);
-
-  const debouncedCheckEmail = debounce(async (value) => {
-    if (!value) return;
-    const ok = await checkUniqueEmail(value);
-    setErrors((e) => ({ ...e, email: ok ? '' : 'Email уже используется' }));
-  }, 500);
-
+  // Авто-переход на шаг 2, если пришли по ссылке /verify?email=&code= и уже провалидировали там
   useEffect(() => {
-    if (form.username) debouncedCheckUsername(form.username);
-  }, [form.username]);
-
-  useEffect(() => {
-    if (form.email) debouncedCheckEmail(form.email);
-  }, [form.email]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (errors.username || errors.email) {
-      toast.error('Исправьте ошибки в форме');
-      return;
+    if (sp.get('verified') === 'true' && sp.get('email')) {
+      setEmail(sp.get('email'));
+      setStep(3); // можно сразу завершать регистрацию
     }
+  }, [sp]);
+
+  // Дебаунс-проверки uniq
+  const debouncedCheckEmail = useMemo(
+    () => debounce(async (value) => {
+      if (!value) return setEmailOk(null);
+      try {
+        const ok = await checkUniqueEmail(value);
+        setEmailOk(ok);
+      } catch {
+        setEmailOk(null);
+      }
+    }, 400),
+    []
+  );
+
+  const debouncedCheckUsername = useMemo(
+    () => debounce(async (value) => {
+      if (!value) return setUsernameOk(null);
+      try {
+        const ok = await checkUniqueUsername(value);
+        setUsernameOk(ok);
+      } catch {
+        setUsernameOk(null);
+      }
+    }, 400),
+    []
+  );
+
+  useEffect(() => { debouncedCheckEmail(email); }, [email]);
+  useEffect(() => { debouncedCheckUsername(profile.username); }, [profile.username]);
+
+  // === HANDLERS ===
+  const onRequestCode = async (e) => {
+    e.preventDefault();
+    if (!email) return toast.error('Введите email');
+    if (emailOk === false) return toast.error('Email уже занят');
+    setLoading(true);
+    try {
+      await authService.requestEmailCode(email);
+      toast.success('Код отправлен на почту');
+      setStep(2);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Не удалось отправить код';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onVerifyCode = async (e) => {
+    e.preventDefault();
+    if (!email || !code) return toast.error('Введите email и код');
+    setLoading(true);
+    try {
+      const res = await authService.verifyEmailCode(email, code);
+      if (res?.verified) {
+        toast.success('Email подтверждён');
+        setStep(3);
+      } else {
+        toast.error('Неверный код');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Ошибка подтверждения кода';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onComplete = async (e) => {
+    e.preventDefault();
+    if (!email) return toast.error('Email отсутствует');
+    if (!profile.username || !profile.password) {
+      return toast.error('Укажите логин и пароль');
+    }
+    if (usernameOk === false) return toast.error('Имя пользователя занято');
 
     setLoading(true);
     try {
-      await authService.register(form);
-      toast.success('Аккаунт создан!');
-      navigate('/');
+      const payload = { email, ...profile };
+      const result = await authService.completeRegistration(payload);
+
+      // Если бэкенд не вернул token — предложим войти
+      if (!result?.id && !result?.username) {
+        toast.success('Регистрация завершена!');
+        navigate('/');
+      } else {
+        // либо автологин выполнен (token установили внутри сервиса)
+        toast.success('Добро пожаловать!');
+        navigate('/');
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Ошибка регистрации';
       toast.error(msg);
@@ -62,217 +142,238 @@ export default function RegisterPage() {
     }
   };
 
-  const handleChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+  const onAvatarUploaded = (url) => {
+    setProfile((p) => ({ ...p, profilePictureUrl: url }));
   };
 
+  // === UI ===
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 p-4">
-      <motion.div
-        className="card bg-base-100/80 backdrop-blur-sm shadow-2xl w-full max-w-lg border border-base-300/50"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+    <motion.div
+      className="min-h-screen flex items-center justify-center bg-base-200 p-4"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      <div className="card w-full max-w-xl shadow-xl bg-base-100">
         <div className="card-body p-8">
-          <motion.div
-            className="text-center mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h1 className="text-3xl font-bold text-primary mb-2">Регистрация</h1>
-            <p className="text-base-content/60">Создайте свой аккаунт</p>
-          </motion.div>
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold text-primary">Регистрация</h1>
+            <p className="text-base-content/60 mt-2">Создайте аккаунт в три шага</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <motion.div
-                className="form-control"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="label">
-                  <span className="label-text text-base-content font-medium">Полное имя</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Иван Иванов"
-                  className="input input-bordered bg-base-100 border-base-300 focus:border-primary text-base-content"
-                  value={form.fullName}
-                  onChange={(e) => handleChange('fullName', e.target.value)}
-                  required
-                />
-              </motion.div>
+          {/* Steps */}
+          <div className="flex justify-center mb-6">
+            <ul className="steps">
+              <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Почта</li>
+              <li className={`step ${step >= 2 ? 'step-primary' : ''}`}>Код</li>
+              <li className={`step ${step >= 3 ? 'step-primary' : ''}`}>Профиль</li>
+            </ul>
+          </div>
 
-              <motion.div
-                className="form-control"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.form
+                key="step1"
+                variants={stepAnim}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                onSubmit={onRequestCode}
+                className="space-y-5"
               >
-                <label className="label">
-                  <span className="label-text text-base-content font-medium">Никнейм</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="username"
-                  className={`input input-bordered bg-base-100 border-base-300 focus:border-primary text-base-content ${
-                    errors.username ? 'input-error' : ''
-                  }`}
-                  value={form.username}
-                  onChange={(e) => handleChange('username', e.target.value)}
-                  required
-                />
-                {errors.username && (
+                <div className="form-control">
                   <label className="label">
-                    <span className="label-text-alt text-error">{errors.username}</span>
+                    <span className="label-text">Email</span>
                   </label>
-                )}
-              </motion.div>
-            </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value.trim())}
+                    placeholder="name@example.com"
+                    className={`input input-bordered ${emailOk === false ? 'input-error' : ''}`}
+                    required
+                  />
+                  {emailOk === false && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">Email занят</span>
+                    </label>
+                  )}
+                </div>
 
-            <motion.div
-              className="form-control"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <label className="label">
-                <span className="label-text text-base-content font-medium">Email</span>
-              </label>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                className={`input input-bordered w-full bg-base-100 border-base-300 focus:border-primary text-base-content ${
-                  errors.email ? 'input-error' : ''
-                }`}
-                value={form.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                required
-              />
-              {errors.email && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{errors.email}</span>
-                </label>
-              )}
-            </motion.div>
+                <button className={`btn btn-primary w-full ${loading ? 'loading' : ''}`} disabled={loading}>
+                  Отправить код
+                </button>
 
-            <motion.div
-              className="form-control"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <label className="label">
-                <span className="label-text text-base-content font-medium">Пароль</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  className="input input-bordered w-full bg-base-100 border-base-300 focus:border-primary text-base-content pr-12"
-                  value={form.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  required
-                />
+                <p className="text-sm text-base-content/60 text-center">
+                  Уже есть аккаунт?{' '}
+                  <Link className="link link-primary" to="/login">Войти</Link>
+                </p>
+              </motion.form>
+            )}
+
+            {step === 2 && (
+              <motion.form
+                key="step2"
+                variants={stepAnim}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                onSubmit={onVerifyCode}
+                className="space-y-5"
+              >
+                <div className="alert alert-info">
+                  Мы отправили код на <b>{email}</b>. Введите его ниже.
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Код подтверждения</span>
+                  </label>
+                  <input
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="input input-bordered tracking-widest text-center"
+                    placeholder="000000"
+                    required
+                  />
+                </div>
+
+                <button className={`btn btn-primary w-full ${loading ? 'loading' : ''}`} disabled={loading}>
+                  Подтвердить
+                </button>
+
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-base-content/60 hover:text-base-content"
-                  onClick={() => setShowPassword(!showPassword)}
+                  className="btn btn-ghost w-full"
+                  disabled={loading}
+                  onClick={onRequestCode}
                 >
-                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  Отправить код ещё раз
                 </button>
-              </div>
-            </motion.div>
 
-            <motion.div
-              className="form-control"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <label className="label">
-                <span className="label-text text-base-content font-medium">Дата рождения</span>
-              </label>
-              <input
-                type="date"
-                className="input input-bordered bg-base-100 border-base-300 focus:border-primary text-base-content"
-                value={form.birthDate}
-                onChange={(e) => handleChange('birthDate', e.target.value)}
-              />
-            </motion.div>
+                <button
+                  type="button"
+                  className="btn btn-outline w-full"
+                  disabled={loading}
+                  onClick={() => setStep(1)}
+                >
+                  Назад к почте
+                </button>
+              </motion.form>
+            )}
 
-            <motion.div
-              className="form-control"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-            >
-              <label className="label">
-                <span className="label-text text-base-content font-medium">О себе</span>
-              </label>
-              <textarea
-                placeholder="Расскажите о себе..."
-                className="textarea textarea-bordered bg-base-100 border-base-300 focus:border-primary text-base-content"
-                rows="3"
-                value={form.bio}
-                onChange={(e) => handleChange('bio', e.target.value)}
-              ></textarea>
-            </motion.div>
-
-            <motion.button
-              type="submit"
-              className="btn btn-primary w-full text-white font-medium shadow-lg hover:shadow-xl mt-6"
-              disabled={loading || errors.username || errors.email}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {loading ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Создаем аккаунт...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-user-plus mr-2"></i>
-                  Зарегистрироваться
-                </>
-              )}
-            </motion.button>
-          </form>
-
-          <motion.div
-            className="divider text-base-content/60"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-          >
-            или
-          </motion.div>
-
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
-          >
-            <p className="text-base-content/60">
-              Уже есть аккаунт?{' '}
-              <Link 
-                to="/login" 
-                className="link link-primary font-medium hover:text-primary/80"
+            {step === 3 && (
+              <motion.form
+                key="step3"
+                variants={stepAnim}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                onSubmit={onComplete}
+                className="space-y-5"
               >
-                Войти
-              </Link>
-            </p>
-          </motion.div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Имя пользователя</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.username}
+                      onChange={(e) => setProfile(p => ({ ...p, username: e.target.value.trim() }))}
+                      className={`input input-bordered ${usernameOk === false ? 'input-error' : ''}`}
+                      placeholder="username"
+                      required
+                    />
+                    {usernameOk === false && (
+                      <label className="label">
+                        <span className="label-text-alt text-error">Имя занято</span>
+                      </label>
+                    )}
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Пароль</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={profile.password}
+                      onChange={(e) => setProfile(p => ({ ...p, password: e.target.value }))}
+                      className="input input-bordered"
+                      placeholder="●●●●●●●●"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Полное имя</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.fullName}
+                      onChange={(e) => setProfile(p => ({ ...p, fullName: e.target.value }))}
+                      className="input input-bordered"
+                      placeholder="Иван Иванов"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Дата рождения</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={profile.birthDate}
+                      onChange={(e) => setProfile(p => ({ ...p, birthDate: e.target.value }))}
+                      className="input input-bordered"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">О себе</span>
+                  </label>
+                  <textarea
+                    value={profile.bio}
+                    onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
+                    className="textarea textarea-bordered"
+                    placeholder="Пара слов о себе..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Аватар</span>
+                  </label>
+                  <AvatarUploader onUploaded={onAvatarUploaded} />
+                  {profile.profilePictureUrl && (
+                    <div className="mt-2 text-sm opacity-70">
+                      Загружено: <span className="link">{profile.profilePictureUrl}</span>
+                    </div>
+                  )}
+                </div>
+
+                <button className={`btn btn-primary w-full ${loading ? 'loading' : ''}`} disabled={loading}>
+                  Завершить регистрацию
+                </button>
+
+                <p className="text-sm text-base-content/60 text-center">
+                  Уже есть аккаунт?{' '}
+                  <Link className="link link-primary" to="/login">Войти</Link>
+                </p>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

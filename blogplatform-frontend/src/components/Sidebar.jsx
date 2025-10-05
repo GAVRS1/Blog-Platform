@@ -1,92 +1,100 @@
 // src/components/Sidebar.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { getAvatarUrl } from '@/utils/avatar';
+import { messagesService } from '@/services/messages';
+import { notificationsService } from '@/services/notifications';
 
-// Компонент NavItem оставлен без изменений
-const NavItem = ({ to, children }) => (
+const NavItem = ({ to, children, badge }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
       `btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 ` +
       (isActive
         ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
-        : 'btn-ghost hover:bg-primary/10 hover:scale-[1.02]')
-    }
-  >
-    <motion.div
-      whileHover={{ x: 4 }}
-      transition={{ type: 'spring', stiffness: 400 }}
-    >
-      {children}
-    </motion.div>
+        : 'bg-base-100 hover:bg-base-200')}>
+    <span className="flex items-center gap-3 w-full">
+      <span className="truncate">{children}</span>
+      {badge ? <span className="badge badge-primary ml-auto">{badge}</span> : null}
+    </span>
   </NavLink>
 );
 
-// Изменен экспорт по умолчанию и добавлен пропс onOpenCreatePostModal
-export default function Sidebar({ onOpenCreatePostModal }) {
+export default function Sidebar() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [unreadNotif, setUnreadNotif] = useState(0);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
 
-  const avatarUrl = user?.profile?.profilePictureUrl
-    ? getAvatarUrl(user.profile.profilePictureUrl)
-    : '/avatar.png';
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const n = await notificationsService.unreadCount();
+        setUnreadNotif(n.unread || 0);
+      } catch {}
+      try {
+        const inbox = await messagesService.getInbox();
+        const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
+        setUnreadMsgs(sum);
+      } catch {}
+    })();
+  }, [user]);
 
-  if (user === undefined) return null;
+  const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
 
   return (
-    <aside className="hidden lg:block sticky top-6 h-fit max-h-[calc(100vh-3rem)] w-64 flex-shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-      <motion.div
-        className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300/50 p-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* Профиль пользователя */}
-        <motion.div
-          className="flex flex-col items-center mb-8 p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl"
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: 'spring', stiffness: 300 }}
-        >
-          <motion.img
-            src={avatarUrl}
-            alt={user?.username || 'User'}
-            // Добавим object-cover и aspect-square для предотвращения растягивания
-            className="w-20 h-20 rounded-full border-4 border-primary/20 shadow-lg cursor-pointer object-cover aspect-square"
-            onClick={() => navigate('/profile')}
-            whileHover={{ scale: 1.1, borderColor: 'var(--primary)' }}
-            whileTap={{ scale: 0.95 }}
-          />
-          <h3 className="font-bold text-lg mt-3 text-base-content">
-            {user?.profile?.fullName || 'Пользователь'}
-          </h3>
-          <p className="text-sm text-base-content/60">
-            @{user?.username || 'username'}
-          </p>
-        </motion.div>
+    <aside className="sticky top-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+        {/* Профиль */}
+        {user && (
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-4">
+              <div className="flex items-center gap-3">
+                <div className="avatar">
+                  <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                    <img src={user?.profile?.profilePictureUrl || '/avatar.png'} alt="" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">@{user.username}</div>
+                  <div className="text-xs opacity-70">{user.status}</div>
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm mt-3" onClick={() => navigate('/profile')}>
+                Мой профиль
+              </button>
+              {user.status === 'Banned' && (
+                <div className="alert alert-warning mt-3">
+                  <div>
+                    Аккаунт ограничен. <a className="link" href="/appeal">Подать апелляцию</a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Навигация */}
-        <nav className="space-y-3 mb-6">
-          <NavItem to="/">🏠 Главная</NavItem>
-          {/* Добавлен новый пункт меню для создания поста */}
-          <button // Используем button для действия
-            onClick={onOpenCreatePostModal} // Вызываем переданную функцию
-            className={`btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 btn-ghost hover:bg-primary/10 hover:scale-[1.02]`}
-          >
-            <motion.div
-              whileHover={{ x: 4 }}
-              transition={{ type: 'spring', stiffness: 400 }}
-            >
-              ✍️ Создать пост {/* Или используйте иконку, например: <i className="fas fa-plus mr-2"></i>Создать пост */}
-            </motion.div>
+        <nav className="grid gap-2">
+          <NavItem to="/">🏠 Лента</NavItem>
+          <NavItem to="/messages" badge={unreadMsgs || undefined}>💬 Сообщения</NavItem>
+          <NavItem to="/notifications" badge={unreadNotif || undefined}>🔔 Уведомления</NavItem>
+          <NavItem to="/settings">⚙️ Настройки</NavItem>
+          <NavItem to="/blocks">🚫 Блокировки</NavItem>
+          {user?.status === 'Admin' && <NavItem to="/admin">🛡️ Админ-панель</NavItem>}
+
+          <button onClick={openComposer} className="btn btn-accent mt-1">
+            <span className="flex items-center gap-2">
+              <i className="fas fa-plus"></i>
+              <span>Создать пост</span>
+            </span>
           </button>
-          <NavItem to="/profile">👤 Профиль</NavItem>
         </nav>
 
-        {/* Переключатель темы */}
+        {/* Тема */}
         <div className="flex justify-center pt-4 border-t border-base-300/50">
           <ThemeToggle />
         </div>

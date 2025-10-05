@@ -1,199 +1,122 @@
-// src/App.jsx (обновленная версия)
-import { useState } from 'react';
+// src/App.jsx
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
-
-// Компоненты
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
 import withAuth from '@/hocs/withAuth';
 import CreatePostModal from '@/components/CreatePostModal';
+import RealtimeMount from '@/components/RealtimeMount';
 
-// Ленивые страницы
+// Pages (lazy)
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
+const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
 const MyItemsPage = lazy(() => import('@/pages/MyItemsPage'));
 
-// Защищённые обёртки
-const ProtectedProfile = withAuth(ProfilePage);
+const MessagesPage = lazy(() => import('@/pages/MessagesPage'));
+const DialogPage = lazy(() => import('@/pages/DialogPage'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 
-// Спиннер
-const Spinner = () => (
-  <div className="flex justify-center items-center h-screen">
-    <span className="loading loading-spinner loading-lg text-primary"></span>
+const FollowersPage = lazy(() => import('@/pages/FollowersPage'));
+const FollowingPage = lazy(() => import('@/pages/FollowingPage'));
+const AppealPage = lazy(() => import('@/pages/AppealPage'));
+const MyBlocksPage = lazy(() => import('@/pages/MyBlocksPage'));
+
+// Not Found
+const NotFound = () => (
+  <div className="min-h-[60vh] grid place-items-center text-center">
+    <div>
+      <h2 className="text-3xl font-bold">Страница не найдена</h2>
+      <p className="opacity-60">Попробуйте вернуться на главную</p>
+      <a href="/" className="btn btn-primary mt-4">На главную</a>
+    </div>
   </div>
 );
 
-// Компонент MainLayoutWithModal
-const MainLayoutWithModal = ({ children, onOpenCreatePostModal, showCreatePostModal, setShowCreatePostModal }) => {
-  const queryClient = useQueryClient();
-
-  const handlePostCreated = () => {
-    setShowCreatePostModal(false);
-    queryClient.invalidateQueries({ queryKey: ['posts'] });
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5">
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <div className="flex gap-4 sm:gap-8 max-w-7xl mx-auto">
-          {/* Левая панель */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <Sidebar onOpenCreatePostModal={onOpenCreatePostModal} />
-          </div>
-
-          {/* Основной контент */}
-          <main className="flex-1 max-w-full lg:max-w-2xl">
-            {children}
-          </main>
-
-          {/* Правая панель */}
-          <div className="w-64 flex-shrink-0 hidden xl:block">
-            <div className="sticky top-6 bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300/50 p-6">
-              <h3 className="font-bold text-lg mb-4">Рекомендации</h3>
-              <p className="text-base-content/60 text-sm">
-                Здесь будут отображаться рекомендуемые пользователи и тренды
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <BottomNav onOpenCreatePost={onOpenCreatePostModal} />
-
-      {/* Модальное окно создания поста */}
-      {showCreatePostModal && (
-        <CreatePostModal
-          onClose={() => setShowCreatePostModal(false)}
-          onCreated={handlePostCreated}
-        />
-      )}
-    </div>
-  );
-};
+// Protected wrappers
+const ProtectedHome = withAuth(HomePage);
+const ProtectedProfile = withAuth(ProfilePage);
+const ProtectedUserProfile = withAuth(UserProfilePage);
+const ProtectedPostDetail = withAuth(PostDetailPage);
+const ProtectedMyItems = withAuth(MyItemsPage);
+const ProtectedMessages = withAuth(MessagesPage);
+const ProtectedDialog = withAuth(DialogPage);
+const ProtectedNotifications = withAuth(NotificationsPage);
+const ProtectedSettings = withAuth(SettingsPage);
+const ProtectedAdmin = withAuth(AdminDashboard);
+const ProtectedFollowers = withAuth(FollowersPage);
+const ProtectedFollowing = withAuth(FollowingPage);
+const ProtectedBlocks = withAuth(MyBlocksPage);
 
 export default function App() {
-  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-
-  const handleOpenCreatePostModal = () => {
-    setShowCreatePostModal(true);
-  };
-
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <Suspense fallback={<Spinner />}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            
-            <Route
-              path="/"
-              element={
-                <MainLayoutWithModal
-                  showCreatePostModal={showCreatePostModal}
-                  setShowCreatePostModal={setShowCreatePostModal}
-                  onOpenCreatePostModal={handleOpenCreatePostModal}
-                >
-                  <HomePage />
-                </MainLayoutWithModal>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <MainLayoutWithModal
-                  showCreatePostModal={showCreatePostModal}
-                  setShowCreatePostModal={setShowCreatePostModal}
-                  onOpenCreatePostModal={handleOpenCreatePostModal}
-                >
-                  <ProtectedProfile />
-                </MainLayoutWithModal>
-              }
-            />
-            <Route
-              path="/profile/:userId"
-              element={
-                <MainLayoutWithModal
-                  showCreatePostModal={showCreatePostModal}
-                  setShowCreatePostModal={setShowCreatePostModal}
-                  onOpenCreatePostModal={handleOpenCreatePostModal}
-                >
-                  <UserProfilePage />
-                </MainLayoutWithModal>
-              }
-            />
-            <Route path="/my-posts" element={
-              <MainLayoutWithModal
-                showCreatePostModal={showCreatePostModal}
-                setShowCreatePostModal={setShowCreatePostModal}
-                onOpenCreatePostModal={handleOpenCreatePostModal}
-              >
-                <MyItemsPage
-                  title="Мои посты"
-                  endpoint="posts/user/me"
-                />
-              </MainLayoutWithModal>
-            } />
-            <Route path="/my-likes" element={
-              <MainLayoutWithModal
-                showCreatePostModal={showCreatePostModal}
-                setShowCreatePostModal={setShowCreatePostModal}
-                onOpenCreatePostModal={handleOpenCreatePostModal}
-              >
-                <MyItemsPage
-                  title="Мои лайки"
-                  endpoint="likes/me"
-                />
-              </MainLayoutWithModal>
-            } />
-            <Route path="/my-comments" element={
-              <MainLayoutWithModal
-                showCreatePostModal={showCreatePostModal}
-                setShowCreatePostModal={setShowCreatePostModal}
-                onOpenCreatePostModal={handleOpenCreatePostModal}
-              >
-                <MyItemsPage
-                  title="Мои комментарии"
-                  endpoint="comments/me"
-                />
-              </MainLayoutWithModal>
-            } />
-            <Route
-              path="/post/:id"
-              element={
-                <MainLayoutWithModal
-                  showCreatePostModal={showCreatePostModal}
-                  setShowCreatePostModal={setShowCreatePostModal}
-                  onOpenCreatePostModal={handleOpenCreatePostModal}
-                >
-                  <PostDetailPage />
-                </MainLayoutWithModal>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <RealtimeMount />
+        <div className="min-h-screen bg-base-200">
+          <Toaster position="top-center" />
+          <div className="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-[280px,1fr] gap-4 pt-4">
+              <aside className="hidden md:block">
+                <Sidebar />
+              </aside>
+              <main>
+                <Suspense fallback={<PageSkeleton />}>
+                  <Routes>
+                    {/* Public */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/verify" element={<VerifyEmailPage />} />
+                    <Route path="/appeal" element={<AppealPage />} />
 
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: 'var(--fallback-b1,oklch(var(--b1)))',
-              color: 'var(--fallback-bc,oklch(var(--bc)))',
-              border: '1px solid var(--fallback-b3,oklch(var(--b3)))',
-            },
-          }}
-        />
+                    {/* Private */}
+                    <Route path="/" element={<ProtectedHome />} />
+                    <Route path="/profile" element={<ProtectedProfile />} />
+                    <Route path="/users/:id" element={<ProtectedUserProfile />} />
+                    <Route path="/users/:id/followers" element={<ProtectedFollowers />} />
+                    <Route path="/users/:id/following" element={<ProtectedFollowing />} />
+                    <Route path="/posts/:id" element={<ProtectedPostDetail />} />
+                    <Route path="/my" element={<ProtectedMyItems />} />
+
+                    <Route path="/messages" element={<ProtectedMessages />} />
+                    <Route path="/messages/:id" element={<ProtectedDialog />} />
+                    <Route path="/notifications" element={<ProtectedNotifications />} />
+                    <Route path="/settings" element={<ProtectedSettings />} />
+                    <Route path="/admin" element={<ProtectedAdmin />} />
+                    <Route path="/blocks" element={<ProtectedBlocks />} />
+
+                    {/* other */}
+                    <Route path="/404" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/404" />} />
+                  </Routes>
+                </Suspense>
+              </main>
+            </div>
+          </div>
+
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40">
+            <BottomNav />
+          </div>
+
+          <CreatePostModal />
+        </div>
       </BrowserRouter>
     </ThemeProvider>
+  );
+}
+
+function PageSkeleton() {
+  return (
+    <div className="min-h-[60vh] grid place-items-center">
+      <span className="loading loading-spinner loading-lg text-primary"></span>
+    </div>
   );
 }

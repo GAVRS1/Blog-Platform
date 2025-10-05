@@ -1,98 +1,51 @@
 // src/components/BottomNav.jsx
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import ThemeToggle from '@/components/ThemeToggle';
+import { messagesService } from '@/services/messages';
+import { notificationsService } from '@/services/notifications';
 
-const NavItem = ({ to, icon, children, onClick }) => {
-  const content = (
-    <motion.div
-      className="flex flex-col items-center gap-0.5 py-2 px-1"
-      whileTap={{ scale: 0.9 }}
-      whileHover={{ scale: 1.05 }}
-      transition={{ type: 'spring', stiffness: 400 }}
-    >
-      <span className="text-2xl">{icon}</span>
-      {children && <span className="text-xs font-medium leading-tight">{children}</span>}
-    </motion.div>
-  );
+export default function BottomNav() {
+  const [unreadNotif, setUnreadNotif] = useState(0);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
 
-  if (onClick) {
-    return (
-      <button
-        onClick={onClick}
-        className="flex-1 flex justify-center text-base-content/70 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
-      >
-        {content}
+  useEffect(() => {
+    (async () => {
+      try {
+        const n = await notificationsService.unreadCount();
+        setUnreadNotif(n.unread || 0);
+      } catch {}
+      try {
+        const inbox = await messagesService.getInbox();
+        const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
+        setUnreadMsgs(sum);
+      } catch {}
+    })();
+  }, []);
+
+  const linkClass = ({ isActive }) =>
+    `btn btn-ghost rounded-none flex-1 ${isActive ? 'text-primary' : 'text-base-content'}`;
+
+  const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
+
+  return (
+    <div className="btm-nav bg-base-100 border-t border-base-300">
+      <NavLink to="/" className={linkClass}><i className="fas fa-home"></i></NavLink>
+      <NavLink to="/messages" className={linkClass}>
+        <span className="relative">
+          <i className="fas fa-comments"></i>
+          {unreadMsgs > 0 && <span className="badge badge-xs badge-primary absolute -top-1 -right-2">{unreadMsgs}</span>}
+        </span>
+      </NavLink>
+      <button className="btn btn-primary rounded-full -mt-6" onClick={openComposer}>
+        <i className="fas fa-plus"></i>
       </button>
-    );
-  }
-
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `flex-1 flex justify-center transition-all duration-200 rounded-xl ` +
-        (isActive 
-          ? 'text-primary bg-primary/15 shadow-lg' 
-          : 'text-base-content/70 hover:text-primary hover:bg-primary/10')
-      }
-    >
-      {content}
-    </NavLink>
-  );
-};
-
-export default function BottomNav({ onOpenCreatePost }) {
-  return (
-    <>
-      {/* Основная панель навигации */}
-      <motion.nav 
-        className="lg:hidden fixed bottom-4 left-4 right-4 bg-base-100/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-base-300/50 h-18 flex items-center px-2 z-40"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      >
-        {/* Основные кнопки навигации */}
-        <div className="flex items-center justify-around flex-1">
-          <NavItem to="/" icon="🏠">
-            Главная
-          </NavItem>
-          
-          <NavItem 
-            icon="➕" 
-            onClick={onOpenCreatePost}
-          >
-            Создать
-          </NavItem>
-
-          <NavItem to="/profile" icon="👤">
-            Профиль
-          </NavItem>
-        </div>
-        {/* ThemeToggle удален из основной панели */}
-      </motion.nav>
-      
-      {/* Отдельная миниатюрная круглая кнопка смены темы */}
-      <motion.div
-        className="lg:hidden fixed bottom-24 right-4 z-30" // Позиционирование выше и правее панели, z-30 меньше чем у модалок (z-50) и панели (z-40)
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      >
-        <div className="flex items-center justify-center p-2 bg-base-100/95 backdrop-blur-xl rounded-full shadow-2xl border border-base-300/50">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400 }}
-          >
-            {/* Используем ThemeToggle с mobile=true и уменьшенным размером */}
-            <ThemeToggle mobile={true} />
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Отступ для основного контента под fixed nav */}
-      <div className="lg:hidden h-24" />
-    </>
+      <NavLink to="/notifications" className={linkClass}>
+        <span className="relative">
+          <i className="fas fa-bell"></i>
+          {unreadNotif > 0 && <span className="badge badge-xs badge-secondary absolute -top-1 -right-2">{unreadNotif}</span>}
+        </span>
+      </NavLink>
+      <NavLink to="/settings" className={linkClass}><i className="fas fa-cog"></i></NavLink>
+    </div>
   );
 }

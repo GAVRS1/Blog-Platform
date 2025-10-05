@@ -1,231 +1,127 @@
-// src/components/EditProfileModal.jsx (исправленная версия)
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import api from '@/api/axios';
-import AvatarUploader from './AvatarUploader';
-import { checkUniqueUsername } from '@/utils/uniqueCheck';
-import debounce from 'lodash.debounce';
+// src/components/EditProfileModal.jsx
+import { useEffect, useState } from 'react';
+import { usersService } from '@/services/users';
+import AvatarUploader from '@/components/AvatarUploader';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function EditProfileModal({ onClose, onSaved }) {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    username: '',
-    fullName: '',
-    bio: '',
-    birthDate: '',
-  });
-  const [avatarBlob, setAvatarBlob] = useState(null);
-  const [usernameError, setUsernameError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const debouncedCheck = debounce(async (value) => {
-    if (!value || value === form.originalUsername) return;
-    try {
-      const ok = await checkUniqueUsername(value);
-      setUsernameError(ok ? '' : 'Никнейм занят');
-    } catch (error) {
-      console.error('Ошибка проверки никнейма:', error);
-    }
-  }, 500);
+export default function EditProfileModal({ open, onClose, initial, onSaved }) {
+  const [model, setModel] = useState(() => ({
+    fullName: initial?.profile?.fullName || '',
+    bio: initial?.profile?.bio || '',
+    birthDate: initial?.profile?.birthDate ? initial.profile.birthDate.substring(0, 10) : '',
+    profilePictureUrl: initial?.profile?.profilePictureUrl || ''
+  }));
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/Auth/me').then(({ data }) => {
-      setForm({
-        username: data.username || '',
-        originalUsername: data.username || '',
-        fullName: data.profile?.fullName || '',
-        bio: data.profile?.bio || '',
-        birthDate: data.profile?.birthDate?.split('T')[0] || '',
-      });
-    }).catch(error => {
-      toast.error('Не удалось загрузить данные профиля');
+    setModel({
+      fullName: initial?.profile?.fullName || '',
+      bio: initial?.profile?.bio || '',
+      birthDate: initial?.profile?.birthDate ? initial.profile.birthDate.substring(0, 10) : '',
+      profilePictureUrl: initial?.profile?.profilePictureUrl || ''
     });
-  }, []);
+  }, [initial]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-    if (name === 'username') debouncedCheck(value);
+  const onAvatarUploaded = (url) => {
+    setModel((m) => ({ ...m, profilePictureUrl: url }));
   };
 
-  const handleSave = async () => {
-    if (usernameError) return;
-    setLoading(true);
+  const save = async (e) => {
+    e?.preventDefault();
+    setSaving(true);
     try {
-      await api.put('/Users/profile', {
-        username: form.username,
-        fullName: form.fullName,
-        bio: form.bio,
-        birthDate: form.birthDate,
-      });
-
-      if (avatarBlob) {
-        let fileExtension = 'jpg';
-        let mimeType = 'image/jpeg';
-        
-        if (avatarBlob.type) {
-          mimeType = avatarBlob.type;
-          if (avatarBlob.type === 'image/png') {
-            fileExtension = 'png';
-          } else if (avatarBlob.type === 'image/gif') {
-            fileExtension = 'gif';
-          } else if (avatarBlob.type === 'image/webp') {
-            fileExtension = 'webp';
-          }
-        }
-        
-        const fileName = `avatar_${Date.now()}.${fileExtension}`;
-        const fileWithProperName = new File([avatarBlob], fileName, { type: mimeType });
-        
-        const formData = new FormData();
-        formData.append('file', fileWithProperName);
-        
-        const { data: userData } = await api.get('/Auth/me');
-        
-        const uploadResponse = await api.post(
-          `/Media/upload?type=avatar&userId=${userData.id}`, 
-          formData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          }
-        );
-        
-        let avatarUrl = uploadResponse.data.url || uploadResponse.data.uploadResult?.publicUrl || uploadResponse.data.uploadResult?.url;
-        
-        if (avatarUrl) {
-          avatarUrl = avatarUrl
-            .replace(/\\/g, '/')
-            .replace(/\.tmp$/, `.${fileExtension}`);
-          
-          await api.put('/Users/profile/avatar', avatarUrl, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-        } else {
-          throw new Error('Не удалось получить URL аватара');
-        }
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['auth'] });
-      
-      toast.success('Профиль успешно обновлён!');
-      onSaved?.();
+      const payload = {
+        fullName: model.fullName?.trim(),
+        bio: model.bio?.trim(),
+        birthDate: model.birthDate || null,
+        profilePictureUrl: model.profilePictureUrl || null
+      };
+      const updated = await usersService.updateProfile(payload);
+      toast.success('Профиль обновлён');
+      onSaved?.(updated);
       onClose?.();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Ошибка при сохранении профиля');
+    } catch (e1) {
+      toast.error(e1.response?.data || 'Не удалось сохранить профиль');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-base-100 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="font-bold text-lg sm:text-xl">Редактировать профиль</h3>
-            <button 
-              className="btn btn-ghost btn-sm btn-circle"
-              onClick={onClose}
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div className="space-y-3 sm:space-y-4">
-            <label className="form-control">
-              <div className="label pb-1">
-                <span className="label-text text-sm sm:text-base">Никнейм</span>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-3"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.form
+            onSubmit={save}
+            className="card w-full max-w-2xl bg-base-100 shadow-xl"
+            initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="flex items-center justify-between">
+                <h3 className="card-title">Редактировать профиль</h3>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
               </div>
-              <input
-                type="text"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                className={`input input-bordered text-sm sm:text-base ${usernameError ? 'input-error' : ''}`}
-                placeholder="Введите никнейм"
-              />
-              {usernameError && (
-                <div className="label pt-1">
-                  <span className="label-text-alt text-error text-xs">{usernameError}</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-1">
+                  <div className="text-sm opacity-70 mb-2">Аватар</div>
+                  <AvatarUploader onUploaded={onAvatarUploaded} />
+                  {model.profilePictureUrl && (
+                    <div className="mt-2 text-xs opacity-70 break-all">
+                      {model.profilePictureUrl}
+                    </div>
+                  )}
                 </div>
-              )}
-            </label>
-            
-            <label className="form-control">
-              <div className="label pb-1">
-                <span className="label-text text-sm sm:text-base">Имя и фамилия</span>
-              </div>
-              <input
-                type="text"
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
-                className="input input-bordered text-sm sm:text-base"
-                placeholder="Введите имя и фамилию"
-              />
-            </label>
-            
-            <label className="form-control">
-              <div className="label pb-1">
-                <span className="label-text text-sm sm:text-base">Дата рождения</span>
-              </div>
-              <input
-                type="date"
-                name="birthDate"
-                value={form.birthDate}
-                onChange={handleChange}
-                className="input input-bordered text-sm sm:text-base"
-              />
-            </label>
-            
-            <label className="form-control">
-              <div className="label pb-1">
-                <span className="label-text text-sm sm:text-base">О себе</span>
-              </div>
-              <textarea
-                name="bio"
-                value={form.bio}
-                onChange={handleChange}
-                rows={2}
-                className="textarea textarea-bordered text-sm sm:text-base resize-none"
-                placeholder="Расскажите о себе"
-              />
-            </label>
-            
-            <div className="form-control">
-              <label className="label pb-1">
-                <span className="label-text text-sm sm:text-base">Аватар</span>
-              </label>
-              <AvatarUploader onCropped={setAvatarBlob} />
-              {avatarBlob && (
-                <div className="mt-2">
-                  <p className="text-xs sm:text-sm text-success">Аватар готов к загрузке</p>
+
+                <div className="md:col-span-2 space-y-3">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Полное имя</span></label>
+                    <input
+                      className="input input-bordered"
+                      value={model.fullName}
+                      onChange={(e) => setModel(m => ({ ...m, fullName: e.target.value }))}
+                      placeholder="Иван Иванов"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">О себе</span></label>
+                    <textarea
+                      className="textarea textarea-bordered"
+                      value={model.bio}
+                      onChange={(e) => setModel(m => ({ ...m, bio: e.target.value }))}
+                      placeholder="Пара слов о себе…"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Дата рождения</span></label>
+                    <input
+                      type="date"
+                      className="input input-bordered"
+                      value={model.birthDate}
+                      onChange={(e) => setModel(m => ({ ...m, birthDate: e.target.value }))}
+                    />
+                  </div>
                 </div>
-              )}
+              </div>
+
+              <div className="card-actions justify-end">
+                <button className={`btn btn-primary ${saving ? 'loading' : ''}`} disabled={saving}>
+                  Сохранить
+                </button>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
-            <button 
-              className="btn flex-1" 
-              onClick={onClose} 
-              disabled={loading}
-            >
-              Отмена
-            </button>
-            <button 
-              className={`btn btn-primary flex-1 ${loading ? 'loading' : ''}`}
-              onClick={handleSave}
-              disabled={loading || usernameError}
-            >
-              {loading ? 'Сохранение...' : 'Сохранить'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </motion.form>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

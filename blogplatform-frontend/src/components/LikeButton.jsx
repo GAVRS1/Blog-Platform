@@ -1,94 +1,57 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import api from '@/api/axios';
+// src/components/LikeButton.jsx
+import { useState } from 'react';
+import { likesService } from '@/services/likes';
 import toast from 'react-hot-toast';
-import { useState, useEffect } from 'react';
 
-export default function LikeButton({ postId, initialLiked, initialCount }) {
-  const queryClient = useQueryClient();
-  const [liked, setLiked] = useState(initialLiked);
+/**
+ * Универсальная кнопка лайка.
+ * type: 'post' | 'comment'
+ */
+export default function LikeButton({ type = 'post', targetId, initialLiked = false, initialCount = 0, className = '', onChange }) {
+  const [liked, setLiked] = useState(!!initialLiked);
   const [count, setCount] = useState(initialCount);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setLiked(initialLiked);
-    setCount(initialCount);
-  }, [initialLiked, initialCount]);
+  const onToggle = async () => {
+    if (loading) return;
+    setLoading(true);
+    const prevLiked = liked;
+    const prevCount = count;
+    // оптимистично
+    setLiked(!liked);
+    setCount((c) => (prevLiked ? Math.max(0, c - 1) : c + 1));
 
-  const likeMutation = useMutation({
-    mutationFn: () => api.post(`/Likes/post/${postId}`),
-    onMutate: () => {
-      const prevLiked = liked;
-      const prevCount = count;
-      // Оптимистичное обновление UI
-      setLiked(!prevLiked); 
-      // Предполагаем изменение счетчика (это может быть неточно, если одновременно лайкают несколько пользователей)
-      // Но оно будет исправлено в onSuccess
-      setCount(prev => prevLiked ? prev - 1 : prev + 1); 
-      setIsAnimating(true);
-      return { prevLiked, prevCount };
-    },
-    onSuccess: (response) => {
-      // Предполагаем, что API возвращает { liked: boolean, count: number }
-      const { liked: newLiked, count: newCount } = response.data;
-      
-      // Устанавливаем точные значения, полученные от сервера
-      setLiked(newLiked);
-      setCount(newCount); // <-- Ключевое изменение: берем счетчик напрямую
-
-      queryClient.invalidateQueries({ queryKey: ['posts'] }); // Можно использовать объект
-      queryClient.invalidateQueries({ queryKey: ['post', postId] });
-      
-      setTimeout(() => setIsAnimating(false), 300);
-    },
-    onError: (error, variables, context) => {
-      // Откат при ошибке
-      if (context) {
-        setLiked(context.prevLiked);
-        setCount(context.prevCount);
-      }
-      setIsAnimating(false);
-      const message = error.response?.data?.message || 'Не удалось обновить лайк';
-      toast.error(message);
-    },
-  });
-
-  const handleClick = () => {
-    if (!likeMutation.isPending) {
-      likeMutation.mutate();
+    try {
+      const res = type === 'post'
+        ? await likesService.togglePost(targetId)
+        : await likesService.toggleComment(targetId);
+      setLiked(!!res.liked);
+      setCount(res.count ?? prevCount);
+      onChange?.(res);
+    } catch (e) {
+      // откат
+      setLiked(prevLiked);
+      setCount(prevCount);
+      const status = e.response?.status;
+      if (status === 403) toast.error('Действие запрещено настройками приватности/блокировками');
+      else toast.error(e.response?.data || 'Не удалось поставить лайк');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <motion.button
-      className={`btn btn-ghost btn-sm gap-2 transition-all duration-200 ${
-        liked ? 'text-red-500 hover:text-red-600' : 'text-base-content/60 hover:text-red-500'
-      } ${likeMutation.isPending ? 'loading' : ''}`}
-      onClick={handleClick}
-      disabled={likeMutation.isPending}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`btn btn-sm ${liked ? 'btn-error' : 'btn-ghost'} ${className}`}
+      disabled={loading}
+      title={liked ? 'Убрать лайк' : 'Лайкнуть'}
     >
-      <motion.span
-        className="text-lg"
-        animate={isAnimating ? { 
-          scale: [1, 1.3, 1],
-          rotate: liked ? [0, -10, 10, 0] : [0, 10, -10, 0]
-        } : {}}
-        transition={{ duration: 0.3 }}
-      >
-        {liked ? '❤️' : '🤍'}
-      </motion.span>
-      
-      <motion.span 
-        className="font-medium"
-        key={count}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        {count}
-      </motion.span>
-    </motion.button>
+      <span className="flex items-center gap-2">
+        <i className={`fas ${liked ? 'fa-heart' : 'fa-heart'}`} />
+        <span>{count}</span>
+      </span>
+    </button>
   );
 }
