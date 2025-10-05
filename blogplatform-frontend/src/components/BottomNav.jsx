@@ -1,26 +1,41 @@
-// src/components/BottomNav.jsx
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { notificationsService } from '@/services/notifications';
+
+const PUBLIC = ['/login', '/register', '/verify', '/appeal', '/404'];
 
 export default function BottomNav() {
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadMsgs, setUnreadMsgs] = useState(0);
+  const loc = useLocation();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const isPublic = PUBLIC.some(p => loc.pathname.startsWith(p));
+    if (!token || isPublic) {
+      setUnreadNotif(0);
+      setUnreadMsgs(0);
+      return; // ← НИЧЕГО НЕ ЗАПРАШИВАЕМ до логина
+    }
+
+    let alive = true;
     (async () => {
       try {
         const n = await notificationsService.unreadCount();
-        setUnreadNotif(n.unread || 0);
+        if (alive) setUnreadNotif(n.unread || 0);
       } catch {}
       try {
         const inbox = await messagesService.getInbox();
-        const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
-        setUnreadMsgs(sum);
+        if (alive) {
+          const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
+          setUnreadMsgs(sum);
+        }
       } catch {}
     })();
-  }, []);
+
+    return () => { alive = false; };
+  }, [loc.pathname]);
 
   const linkClass = ({ isActive }) =>
     `btn btn-ghost rounded-none flex-1 ${isActive ? 'text-primary' : 'text-base-content'}`;
