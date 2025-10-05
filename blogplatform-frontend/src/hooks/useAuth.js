@@ -1,24 +1,25 @@
 // src/hooks/useAuth.js
 import { useEffect, useState } from 'react';
-import api from '@/api/axios';
+import { authService } from '@/services/auth';
 
 export function useAuth() {
-  const [user, setUser] = useState(undefined); // undefined = ещё не знаем
+  // undefined — загрузка; null — не залогинен; object — пользователь
+  const [user, setUser] = useState(undefined);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setUser(null);          // явно «не залогинен»
+      setUser(null);
       return;
     }
 
-    api.get('/auth/me')
-      .then(res => setUser(res.data))
+    authService.me()
+      .then(setUser)
       .catch(() => {
         localStorage.removeItem('token');
         setUser(null);
       });
   }, []);
 
-  return { user };   // undefined | null | User
+  return { user, setUser };
 }
