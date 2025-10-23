@@ -27,6 +27,7 @@ export default function RegisterPage() {
   });
   const [usernameOk, setUsernameOk] = useState(null);
 
+  // валидации (синхронно, без дебаунса — чтобы не усложнять UX)
   async function validateUsername(value) {
     if (!value) return setUsernameOk(null);
     try {
@@ -36,7 +37,6 @@ export default function RegisterPage() {
       setUsernameOk(null);
     }
   }
-
   async function validateEmail(value) {
     if (!value) return setEmailOk(null);
     try {
@@ -51,34 +51,47 @@ export default function RegisterPage() {
     setProfile((p) => ({ ...p, profilePictureUrl: url }));
   };
 
+  function buildPayload() {
+    // Собираем только непустые поля — это критично,
+    // чтобы бэкенд не падал на null/"" в необязательных свойствах
+    const p = {
+      email: email,
+      password: profile.password,
+      username: profile.username,
+    };
+    if (profile.fullName) p.fullName = profile.fullName;
+    if (profile.bio) p.bio = profile.bio;
+    if (profile.profilePictureUrl) p.profilePictureUrl = profile.profilePictureUrl;
+    if (profile.birthDate) {
+      // birthDate приходит в формате YYYY-MM-DD -> переводим к ISO
+      // OpenAPI ожидает "date-time" — допустим 00:00Z
+      try {
+        const iso = new Date(profile.birthDate).toISOString();
+        p.birthDate = iso;
+      } catch {
+        // игнорируем некорректную дату
+      }
+    }
+    return p;
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!email) return toast.error('Введите email');
     if (!profile.username || !profile.password) return toast.error('Укажите логин и пароль');
 
-    // финальная проверка uniq (без агрессивного дебаунса, синхронно)
     if (emailOk === false) return toast.error('Email уже занят');
     if (usernameOk === false) return toast.error('Имя пользователя занято');
 
     setLoading(true);
     try {
-      const payload = {
-        email,
-        password: profile.password,
-        username: profile.username,
-        fullName: profile.fullName || null,
-        birthDate: profile.birthDate ? new Date(profile.birthDate).toISOString() : null,
-        bio: profile.bio || null,
-        profilePictureUrl: profile.profilePictureUrl || null,
-      };
-
+      const payload = buildPayload();
       await authService.register(payload);
 
-      // Если на бэке включено подтверждение — письмо отправлено именно на шаге /register.
       toast.success('Регистрация выполнена. Проверьте почту и подтвердите email.');
       navigate('/login');
     } catch (err) {
-      const msg = err?.response?.data?.message || 'Ошибка регистрации';
+      const msg = err?.response?.data?.message || err?.response?.data || 'Ошибка регистрации';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -107,8 +120,9 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={async (e) => {
-                  setEmail(e.target.value.trim());
-                  await validateEmail(e.target.value.trim());
+                  const v = e.target.value.trim();
+                  setEmail(v);
+                  await validateEmail(v);
                 }}
                 placeholder="name@example.com"
                 className={`input input-bordered ${emailOk === false ? 'input-error' : ''}`}

@@ -3,30 +3,26 @@ import api from '@/api/axios';
 
 export const authService = {
   /**
-   * Регистрация. Бэкенд по OpenAPI ожидает RegisterRequest:
-   * { email, password, username, fullName?, birthDate?, bio?, profilePictureUrl? }
-   * Если на бэке включено письмо-подтверждение — оно уйдёт из /register.
+   * Регистрация по контракту OpenAPI:
+   *  POST /api/Auth/register  (RegisterRequest)
+   *  { email, password, username, fullName?, birthDate?, bio?, profilePictureUrl? }
    */
   async register(payload) {
     const { data } = await api.post('/Auth/register', payload);
-    // Бэкенд может вернуть пользователя, либо просто 200 — считаем успехом
     return data;
   },
 
   /**
-   * Логин
+   * Логин по паре email/password
    */
   async login(email, password) {
     const { data } = await api.post('/Auth/login', { email, password });
-    // Если бэкенд вернёт token — сохраним (в OpenAPI токен не описан, но на случай)
-    if (data?.token) {
-      localStorage.setItem('token', data.token);
-    }
+    if (data?.token) localStorage.setItem('token', data.token);
     return data;
   },
 
   /**
-   * Профиль текущего пользователя
+   * Текущий пользователь
    */
   async me() {
     const { data } = await api.get('/Auth/me');
