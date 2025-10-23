@@ -1,62 +1,47 @@
 // src/pages/VerifyEmailPage.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { authService } from '@/services/auth';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 
+/**
+ * В текущем WebAPI нет ручки /Auth/verify-email-code.
+ * Подтверждение выполняется по ссылке, которую обрабатывает БЭКЕНД.
+ * Эта страница — просто “мягкий” экран: если пользователь попал сюда,
+ * показываем статус и ведём на /login.
+ */
 export default function VerifyEmailPage() {
   const [sp] = useSearchParams();
-  const navigate = useNavigate();
-  const [status, setStatus] = useState('loading'); // loading | ok | fail
+  const [status, setStatus] = useState('ok'); // ok | info
 
   useEffect(() => {
-    const email = sp.get('email');
-    const code = sp.get('code');
-    if (!email || !code) {
-      setStatus('fail');
-      return;
+    // Если бэк добавит параметры ?email=&code= и редирект сюда — можно их использовать,
+    // но внешнего запроса делать не нужно (бэк уже подтвердил).
+    if (!sp.get('email') && !sp.get('code')) {
+      setStatus('info');
+    } else {
+      setStatus('ok');
     }
-    (async () => {
-      try {
-        const res = await authService.verifyEmailCode(email, code);
-        if (res?.verified) {
-          setStatus('ok');
-          toast.success('Email подтверждён');
-          // редирект в мастер регистрации на 3-й шаг
-          setTimeout(() => navigate(`/register?email=${encodeURIComponent(email)}&verified=true`), 800);
-        } else {
-          setStatus('fail');
-        }
-      } catch {
-        setStatus('fail');
-      }
-    })();
-  }, [sp, navigate]);
+  }, [sp]);
 
   return (
     <motion.div className="min-h-screen flex items-center justify-center bg-base-200 p-4"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="card w-full max-w-md bg-base-100 shadow-xl">
         <div className="card-body items-center text-center">
-          {status === 'loading' && (
-            <>
-              <span className="loading loading-spinner loading-lg text-primary"></span>
-              <h2 className="text-xl mt-4">Проверяем код...</h2>
-            </>
-          )}
           {status === 'ok' && (
             <>
               <div className="text-success text-4xl mb-2">✓</div>
-              <h2 className="text-xl">Готово! Перенаправляем...</h2>
+              <h2 className="text-xl">Email подтверждён</h2>
+              <p className="opacity-70 mt-2">Теперь вы можете войти в аккаунт.</p>
+              <Link to="/login" className="btn btn-primary mt-4">Перейти ко входу</Link>
             </>
           )}
-          {status === 'fail' && (
+          {status === 'info' && (
             <>
-              <div className="text-error text-4xl mb-2">⚠</div>
-              <h2 className="text-xl">Ссылка недействительна</h2>
-              <p className="opacity-70 mt-2">Попробуйте ещё раз из формы регистрации</p>
-              <Link to="/register" className="btn btn-primary mt-4">К регистрации</Link>
+              <div className="text-info text-4xl mb-2">ℹ</div>
+              <h2 className="text-xl">Подтверждение email</h2>
+              <p className="opacity-70 mt-2">Если вы перешли по ссылке из письма, email уже подтверждён.</p>
+              <Link to="/login" className="btn btn-primary mt-4">Перейти ко входу</Link>
             </>
           )}
         </div>
