@@ -1,6 +1,8 @@
-﻿using BlogContent.Core.Models;
+using BlogContent.Core.Models;
+using BlogContent.Core.Security;
 using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,22 +14,90 @@ using System.Text;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly UserService _userService;
     private readonly IConfiguration _config;
 
-    public AuthController(AuthService authService, IConfiguration config)
+    public AuthController(AuthService authService, UserService userService, IConfiguration config)
     {
         _authService = authService;
+        _userService = userService;
         _config = config;
+    }
+
+    [HttpPost("register")]
+    public IActionResult Register([FromBody] RegisterRequest request)
+    {
+        if (_authService.UserExists(request.Email))
+        {
+            return Conflict("Пользователь с таким email уже существует");
+        }
+
+        var profile = new Profile
+        {
+            Username = request.Username,
+            FullName = request.FullName ?? string.Empty,
+            Bio = request.Bio ?? string.Empty,
+            ProfilePictureUrl = request.ProfilePictureUrl ?? string.Empty
+        };
+
+        if (request.BirthDate.HasValue)
+        {
+            var birthDate = DateOnly.FromDateTime(request.BirthDate.Value.Date);
+            profile.BirthDate = birthDate;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var age = today.Year - birthDate.Year;
+            if (birthDate.AddYears(age) > today)
+            {
+                age--;
+            }
+
+            profile.Age = Math.Max(age, 0);
+        }
+
+        var user = new User
+        {
+            Email = request.Email,
+            Username = request.Username,
+            PasswordHash = PasswordHasher.HashPassword(request.Password),
+            Profile = profile
+        };
+
+        _userService.CreateUser(user);
+
+        var token = GenerateJwtToken(user);
+        return Ok(new { token, userId = user.Id });
     }
 
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
         var user = _authService.Login(request.Email, request.Password);
-        if (user == null) return Unauthorized("Неверный логин или пароль");
+        if (user == null)
+        {
+            return Unauthorized("Неверный логин или пароль");
+        }
 
         var token = GenerateJwtToken(user);
-        return Ok(new { Token = token, UserId = user.Id });
+        return Ok(new { token, userId = user.Id });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = _userService.GetUserById(userId);
+        return user == null ? NotFound() : Ok(user);
+    }
+
+    private bool TryGetUserId(out int userId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out userId);
     }
 
     private string GenerateJwtToken(User user)

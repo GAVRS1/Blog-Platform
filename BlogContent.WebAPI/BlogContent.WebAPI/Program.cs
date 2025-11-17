@@ -18,7 +18,7 @@ public class Program
         builder.Services.AddDbContext<BlogContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        // Services (без интерфейсов)
+        // Services (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
         builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<PostService>();
         builder.Services.AddScoped<CommentService>();
@@ -42,7 +42,11 @@ public class Program
                 };
             });
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
