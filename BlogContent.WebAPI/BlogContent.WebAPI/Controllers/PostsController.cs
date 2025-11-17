@@ -1,9 +1,10 @@
-﻿using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Security.Claims;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -12,12 +13,19 @@ namespace BlogContent.WebAPI.Controllers;
 [Authorize]
 public class PostsController : ControllerBase
 {
+    private const int DefaultPageSize = 10;
+    private const int MaxPageSize = 100;
+
     private readonly PostService _postService;
 
     public PostsController(PostService postService) => _postService = postService;
 
     [HttpGet]
-    public IActionResult GetAll() => Ok(_postService.GetAllPosts());
+    public IActionResult GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+    {
+        var posts = _postService.GetAllPosts().ToList();
+        return Ok(ToPagedResponse(posts, page, pageSize));
+    }
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
@@ -27,12 +35,19 @@ public class PostsController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    public IActionResult GetByUserId(int userId) => Ok(_postService.GetPostsByUser(userId));
+    public IActionResult GetByUserId(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+    {
+        var posts = _postService.GetPostsByUser(userId).ToList();
+        return Ok(ToPagedResponse(posts, page, pageSize));
+    }
 
     [HttpPost]
     public IActionResult Create([FromBody] PostDto dto)
     {
-        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
 
         var post = new Post
         {
@@ -55,5 +70,22 @@ public class PostsController : ControllerBase
     {
         _postService.DeletePost(id);
         return NoContent();
+    }
+
+    private static PagedResponse<T> ToPagedResponse<T>(IEnumerable<T> source, int page, int pageSize)
+    {
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var items = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var total = source.Count();
+
+        return new PagedResponse<T>(items, total, page, pageSize);
+    }
+
+    private bool TryGetUserId(out int userId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out userId);
     }
 }
