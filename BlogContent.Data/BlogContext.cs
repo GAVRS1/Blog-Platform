@@ -18,9 +18,6 @@ public class BlogContext : DbContext
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<CommentReply> CommentReplies { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=BlogContentDb;Username=timur;Password=1234"); 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
