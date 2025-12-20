@@ -6,6 +6,7 @@ using BlogContent.WebAPI.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 
 namespace BlogContent.WebAPI;
@@ -62,11 +63,18 @@ public class Program
                 };
             });
 
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-        if (allowedOrigins is null || allowedOrigins.Length == 0)
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+        if (allowedOrigins.Length == 0)
         {
-            throw new InvalidOperationException(
-                "CORS allowed origins are not configured. Provide them via appsettings or environment variables under 'Cors:AllowedOrigins'.");
+            allowedOrigins = new[]
+            {
+                "http://localhost:5173",
+                "https://blogplatform-frontend.netlify.app"
+            };
+
+            Console.WriteLine(
+                "WARNING: 'Cors:AllowedOrigins' configuration is missing. " +
+                "Using default origins for local development and Netlify preview.");
         }
 
         builder.Services.AddCors(options =>
