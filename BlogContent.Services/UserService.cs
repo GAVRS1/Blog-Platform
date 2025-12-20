@@ -2,34 +2,65 @@
 using BlogContent.Core.Exceptions;
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Data;
-using BlogContent.Data.Repositories;
 
 namespace BlogContent.Services;
 
 public class UserService : IUserService
 {
-    private readonly UserRepository _userRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserService(BlogContext context) => _userRepository = new UserRepository(context);
+    public UserService(IUserRepository userRepository)
+    {
+        _userRepository = userRepository;
+    }
 
     public IEnumerable<User> GetUsersByIds(IEnumerable<int> userIds) => _userRepository.GetUsersByIds(userIds);
 
-    public User GetUserById(int id) => _userRepository.GetUserById(id);
+    public User GetUserById(int id)
+    {
+        User user = _userRepository.GetUserById(id);
+        if (user == null)
+            throw new UserNotFoundException("Пользователь не найден.");
+        return user;
+    }
 
     public User GetUserByEmail(string email) => _userRepository.GetUserByEmail(email);
 
-    public void CreateUser(User user) => _userRepository.CreateUser(user);
+    public void CreateUser(User user)
+    {
+        if (_userRepository.GetUserByEmail(user.Email) != null)
+            throw new Exception("Пользователь с такой почтой уже существует.");
+
+        _userRepository.CreateUser(user);
+    }
 
     public void UpdateUser(User user) => _userRepository.UpdateUser(user);
 
-    public void DeleteUser(int id) => _userRepository.DeleteUser(id);
+    public void DeleteUser(int id)
+    {
+        User user = _userRepository.GetUserById(id);
+        if (user == null)
+            throw new UserNotFoundException("Пользователь не найден.");
+        _userRepository.DeleteUser(id);
+    }
 
-    public void BanUser(int userId) => _userRepository.BanUser(userId);
+    public void BanUser(int userId)
+    {
+        User user = GetUserById(userId);
+        _userRepository.BanUser(userId);
+    }
 
-    public void UnbanUser(int userId) => _userRepository.UnbanUser(userId);
+    public void UnbanUser(int userId)
+    {
+        User user = GetUserById(userId);
+        _userRepository.UnbanUser(userId);
+    }
 
-    public void MakeAdmin(int userId) => _userRepository.MakeAdmin(userId);
+    public void MakeAdmin(int userId)
+    {
+        User user = GetUserById(userId);
+        _userRepository.MakeAdmin(userId);
+    }
 
     public User? GetCurrentUser() => null;
 }

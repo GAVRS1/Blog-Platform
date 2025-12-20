@@ -1,8 +1,8 @@
-﻿using BlogContent.Core.Models;
+using BlogContent.Core.Models;
 
 namespace BlogContent.Core.Interfaces;
 
-public interface IUserService
+public interface IUserRepository
 {
     User GetUserById(int id);
     IEnumerable<User> GetUsersByIds(IEnumerable<int> userIds);
@@ -13,5 +13,4 @@ public interface IUserService
     void BanUser(int userId);
     void UnbanUser(int userId);
     void MakeAdmin(int userId);
-    User? GetCurrentUser();
 }

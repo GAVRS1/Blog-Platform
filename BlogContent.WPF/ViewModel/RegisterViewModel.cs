@@ -1,4 +1,4 @@
-﻿using BlogContent.Services;
+﻿using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
@@ -10,7 +10,7 @@ namespace BlogContent.WPF.ViewModel;
 public class RegisterViewModel : ViewModelBase
 {
     private readonly NavigationService _navigationService;
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
     private string _email;
     private string _password;
@@ -56,7 +56,7 @@ public class RegisterViewModel : ViewModelBase
     public ICommand NavigateToLoginCommand { get; }
     public ICommand NavigateToStartCommand { get; }
 
-    public RegisterViewModel(NavigationService navigationService, AuthService authService)
+    public RegisterViewModel(NavigationService navigationService, IAuthService authService)
     {
         _navigationService = navigationService;
         _authService = authService;

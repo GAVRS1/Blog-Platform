@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlogContent.Data.Repositories;
 
-public class CommentRepository(BlogContext context) : ICommentService
+public class CommentRepository(BlogContext context) : ICommentRepository
 {
     private readonly BlogContext _context = context;
 

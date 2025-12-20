@@ -1,5 +1,5 @@
+using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +15,9 @@ public class UsersController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly UserService _userService;
+    private readonly IUserService _userService;
 
-    public UsersController(UserService userService) => _userService = userService;
+    public UsersController(IUserService userService) => _userService = userService;
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)

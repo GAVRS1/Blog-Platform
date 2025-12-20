@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlogContent.Data.Repositories;
 
-public class PostRepository(BlogContext context) : IPostService
+public class PostRepository(BlogContext context) : IPostRepository
 {
     private readonly BlogContext _context = context;
 

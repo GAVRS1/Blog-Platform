@@ -1,6 +1,6 @@
 ﻿using BlogContent.Core.Enums;
 using BlogContent.Core.Models;
-using BlogContent.Services;
+using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using Microsoft.Win32;
@@ -12,9 +12,9 @@ namespace BlogContent.WPF.ViewModel;
 
 public class CreatePostViewModel : ViewModelBase
 {
-    private readonly PostService _postService;
+    private readonly IPostService _postService;
     private readonly User _currentUser;
-    private readonly FileService _fileService;
+    private readonly IFileService _fileService;
 
     private string _title;
     private string _content;
@@ -151,7 +151,7 @@ public class CreatePostViewModel : ViewModelBase
     // Делегат для закрытия окна
     public Action<bool> CloseAction { get; set; }
 
-    public CreatePostViewModel(PostService postService, FileService fileService, User currentUser)
+    public CreatePostViewModel(IPostService postService, IFileService fileService, User currentUser)
     {
         _postService = postService ?? throw new ArgumentNullException(nameof(postService));
         _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));

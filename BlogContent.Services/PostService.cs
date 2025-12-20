@@ -1,20 +1,19 @@
 ﻿using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Data.Repositories;
-using BlogContent.Data;
+
 namespace BlogContent.Services;
 
 public class PostService : IPostService
 {
-    private readonly PostRepository _postRepository;
-    private readonly LikeRepository _likeRepository;
-    private readonly CommentRepository _commentRepository;
+    private readonly IPostRepository _postRepository;
+    private readonly ILikeRepository _likeRepository;
+    private readonly ICommentRepository _commentRepository;
 
-    public PostService(BlogContext context)
+    public PostService(IPostRepository postRepository, ILikeRepository likeRepository, ICommentRepository commentRepository)
     {
-        _postRepository = new PostRepository(context);
-        _likeRepository = new LikeRepository(context);
-        _commentRepository = new CommentRepository(context);
+        _postRepository = postRepository;
+        _likeRepository = likeRepository;
+        _commentRepository = commentRepository;
     }
 
     public Post GetPostById(int id) => _postRepository.GetPostById(id);

@@ -1,5 +1,5 @@
 ﻿using BlogContent.Core.Models;
-using BlogContent.Services;
+using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using System.Collections.ObjectModel;
@@ -33,11 +33,11 @@ public class UserLikesViewModel : NavigationBaseViewModel
     public ICommand ViewUserProfileCommand { get; }
 
     public UserLikesViewModel(NavigationService navigationService,
-                             UserService userService,
-                             PostService postService,
-                             CommentService commentService,
-                             LikeService likeService,
-                             FileService fileService)
+                             IUserService userService,
+                             IPostService postService,
+                             ICommentService commentService,
+                             ILikeService likeService,
+                             IFileService fileService)
         : base(navigationService, userService, postService, commentService, likeService, fileService)
     {
         LikedPosts = new ObservableCollection<PostViewModel>();

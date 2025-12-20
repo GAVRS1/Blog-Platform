@@ -1,5 +1,5 @@
 ﻿using BlogContent.Core.Models;
-using BlogContent.Services;
+using BlogContent.Core.Interfaces;
 using BlogContent.WPF.ViewModel.Base;
 using BlogContent.WPF.ViewModel.InteractionPosts;
 using System.Collections.ObjectModel;
@@ -10,7 +10,7 @@ public class PostViewModel : ViewModelBase
 {
     private readonly Post _originalPost;
     private readonly User _currentUser;
-    private readonly CommentService _commentService;
+    private readonly ICommentService _commentService;
 
     // Базовые свойства поста
     public int Id => _originalPost.Id;
@@ -82,7 +82,7 @@ public class PostViewModel : ViewModelBase
 
     public Post OriginalPost => _originalPost;
 
-    public PostViewModel(Post post, User currentUser, CommentService commentService)
+    public PostViewModel(Post post, User currentUser, ICommentService commentService)
     {
         _originalPost = post ?? throw new ArgumentNullException(nameof(post));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));

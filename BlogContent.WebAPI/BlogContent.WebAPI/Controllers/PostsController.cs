@@ -1,5 +1,5 @@
+using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +16,9 @@ public class PostsController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly PostService _postService;
+    private readonly IPostService _postService;
 
-    public PostsController(PostService postService) => _postService = postService;
+    public PostsController(IPostService postService) => _postService = postService;
 
     [HttpGet]
     public IActionResult GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)

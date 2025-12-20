@@ -1,4 +1,6 @@
-﻿using BlogContent.Data;
+﻿using BlogContent.Core.Interfaces;
+using BlogContent.Data;
+using BlogContent.Data.Repositories;
 using BlogContent.Services;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.ViewModel;
@@ -51,24 +53,30 @@ namespace BlogContent.WPF
 
             services.AddTransient<MediaPlayerControl>();
             services.AddTransient<AudioPlayerControl>();
-            services.AddScoped<AuthService>();
-            services.AddScoped<UserService>();
-            services.AddScoped<PostService>();
-            services.AddScoped<CommentService>();
-            services.AddScoped<LikeService>();
+            services.AddScoped<IPostRepository, PostRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>();
+            services.AddScoped<ILikeRepository, LikeRepository>();
+
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IPostService, PostService>();
+            services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<ILikeService, LikeService>();
             services.AddTransient<UserPostsViewModel>();
             services.AddTransient<UserLikesViewModel>();
             services.AddSingleton<FileService>(provider =>
                 new FileService(@"C:\Users\begin\source\repos\SaveContentPlatform")); // поменять перед запуском
+            services.AddSingleton<IFileService>(provider => provider.GetRequiredService<FileService>());
         }
 
         private void RegisterViewModels()
         {
-            UserService userService = ServiceProvider.GetRequiredService<UserService>();
-            AuthService authService = ServiceProvider.GetRequiredService<AuthService>();
-            PostService postService = ServiceProvider.GetRequiredService<PostService>();
-            CommentService commentService = ServiceProvider.GetRequiredService<CommentService>();
-            LikeService likeService = ServiceProvider.GetRequiredService<LikeService>();
+            IUserService userService = ServiceProvider.GetRequiredService<IUserService>();
+            IAuthService authService = ServiceProvider.GetRequiredService<IAuthService>();
+            IPostService postService = ServiceProvider.GetRequiredService<IPostService>();
+            ICommentService commentService = ServiceProvider.GetRequiredService<ICommentService>();
+            ILikeService likeService = ServiceProvider.GetRequiredService<ILikeService>();
             FileService fileService = ServiceProvider.GetRequiredService<FileService>();
 
             Current.Resources["StartViewModel"] = new StartViewModel(NavigationService);
