@@ -1,11 +1,12 @@
-using System.Text;
 using BlogContent.Core.Interfaces;
 using BlogContent.Data;
 using BlogContent.Data.Repositories;
 using BlogContent.Services;
+using BlogContent.WebAPI.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace BlogContent.WebAPI;
 
@@ -16,8 +17,15 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // DB
-        builder.Services.AddDbContext<BlogContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string 'DefaultConnection' is not configured. " +
+                "Provide it in appsettings.json or via environment variable 'ConnectionStrings__DefaultConnection'.");
+        }
+
+        builder.Services.AddDbContext<BlogContext>(options => options.UseNpgsql(connectionString));
 
         // Repositories
         builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -33,7 +41,12 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
 
         // JWT
-        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+        var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
+        var jwtOptions = jwtSection.Get<JwtOptions>() ?? throw new InvalidOperationException("JWT configuration is missing.");
+        jwtOptions.Validate();
+        builder.Services.Configure<JwtOptions>(jwtSection);
+
+        var key = Encoding.UTF8.GetBytes(jwtOptions.Key);
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -43,8 +56,8 @@ public class Program
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });

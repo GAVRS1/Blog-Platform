@@ -2,12 +2,14 @@ using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using BlogContent.Core.Security;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.WebAPI.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -15,13 +17,13 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
-    private readonly IConfiguration _config;
+    private readonly JwtOptions _jwtOptions;
 
-    public AuthController(IAuthService authService, IUserService userService, IConfiguration config)
+    public AuthController(IAuthService authService, IUserService userService, IOptions<JwtOptions> jwtOptions)
     {
         _authService = authService;
         _userService = userService;
-        _config = config;
+        _jwtOptions = jwtOptions.Value;
     }
 
     [HttpPost("register")]
@@ -109,11 +111,11 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.Name, user.Username)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Key!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
+            issuer: _jwtOptions.Issuer,
+            audience: _jwtOptions.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(24),
             signingCredentials: creds);
