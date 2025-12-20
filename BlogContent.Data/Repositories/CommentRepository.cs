@@ -14,12 +14,22 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .FirstOrDefault(c => c.Id == id);
 
     // Получить комментарии по ID поста (с сортировкой)
-    public IEnumerable<Comment> GetCommentsByPostId(int postId) =>
-        _context.Comments
+    public PagedResult<Comment> GetCommentsByPostId(int postId, int page, int pageSize)
+    {
+        var query = _context.Comments
             .Include(c => c.User)
             .Where(c => c.PostId == postId)
             .OrderByDescending(c => c.CreatedAt)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        return new PagedResult<Comment>(items, totalCount);
+    }
 
     // Получить комментарии по ID поста с информацией о пользователях
     public IEnumerable<Comment> GetCommentsByPostIdWithUsers(int postId)
@@ -99,12 +109,21 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     }
 
     // Получить ответы на комментарий
-    public IEnumerable<CommentReply> GetRepliesByCommentId(int commentId)
+    public PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize)
     {
-        return _context.CommentReplies
+        var query = _context.CommentReplies
             .Include(r => r.User)
             .Where(r => r.CommentId == commentId)
+            .OrderBy(r => r.CreatedAt)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        return new PagedResult<CommentReply>(items, totalCount);
     }
 
     // Получить лайк пользователя для комментария

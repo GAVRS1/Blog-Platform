@@ -23,7 +23,8 @@ public class PostsController : ControllerBase
     [HttpGet]
     public IActionResult GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
-        var posts = _postService.GetAllPosts().ToList();
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        var posts = _postService.GetAllPosts(page, pageSize);
         return Ok(ToPagedResponse(posts, page, pageSize));
     }
 
@@ -37,7 +38,8 @@ public class PostsController : ControllerBase
     [HttpGet("user/{userId}")]
     public IActionResult GetByUserId(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
-        var posts = _postService.GetPostsByUser(userId).ToList();
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        var posts = _postService.GetPostsByUser(userId, page, pageSize);
         return Ok(ToPagedResponse(posts, page, pageSize));
     }
 
@@ -72,15 +74,17 @@ public class PostsController : ControllerBase
         return NoContent();
     }
 
-    private static PagedResponse<T> ToPagedResponse<T>(IEnumerable<T> source, int page, int pageSize)
+    private static PagedResponse<T> ToPagedResponse<T>(PagedResult<T> source, int page, int pageSize)
     {
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+        return new PagedResponse<T>(source.Items, source.TotalCount, page, pageSize);
+    }
 
-        var items = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        var total = source.Count();
+    private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)
+    {
+        var normalizedPage = Math.Max(page, 1);
+        var normalizedPageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        return new PagedResponse<T>(items, total, page, pageSize);
+        return (normalizedPage, normalizedPageSize);
     }
 
     private bool TryGetUserId(out int userId)

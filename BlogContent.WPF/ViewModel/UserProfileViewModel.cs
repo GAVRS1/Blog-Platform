@@ -155,7 +155,7 @@ public class UserProfileViewModel : NavigationBaseViewModel
             {
                 UserPosts.Clear();
 
-                IEnumerable<Post> userPosts = _postService.GetPostsByUser(_profileUser.Id);
+                IEnumerable<Post> userPosts = _postService.GetPostsByUser(_profileUser.Id, 1, int.MaxValue).Items;
 
                 if (userPosts == null || !userPosts.Any())
                 {

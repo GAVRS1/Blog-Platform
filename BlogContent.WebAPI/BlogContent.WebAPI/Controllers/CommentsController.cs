@@ -23,7 +23,8 @@ public class CommentsController : ControllerBase
     [HttpGet("post/{postId}")]
     public IActionResult GetByPostId(int postId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
-        var comments = _commentService.GetCommentsByPostId(postId).ToList();
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        var comments = _commentService.GetCommentsByPostId(postId, page, pageSize);
         return Ok(ToPagedResponse(comments, page, pageSize));
     }
 
@@ -70,7 +71,8 @@ public class CommentsController : ControllerBase
     [HttpGet("{commentId}/replies")]
     public IActionResult GetReplies(int commentId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
-        var replies = _commentService.GetRepliesByCommentId(commentId).ToList();
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        var replies = _commentService.GetRepliesByCommentId(commentId, page, pageSize);
         return Ok(ToPagedResponse(replies, page, pageSize));
     }
 
@@ -81,15 +83,17 @@ public class CommentsController : ControllerBase
         return NoContent();
     }
 
-    private static PagedResponse<T> ToPagedResponse<T>(IEnumerable<T> source, int page, int pageSize)
+    private static PagedResponse<T> ToPagedResponse<T>(PagedResult<T> source, int page, int pageSize)
     {
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+        return new PagedResponse<T>(source.Items, source.TotalCount, page, pageSize);
+    }
 
-        var items = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        var total = source.Count();
+    private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)
+    {
+        var normalizedPage = Math.Max(page, 1);
+        var normalizedPageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        return new PagedResponse<T>(items, total, page, pageSize);
+        return (normalizedPage, normalizedPageSize);
     }
 
     private bool TryGetUserId(out int userId)

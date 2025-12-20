@@ -77,9 +77,9 @@ public class UserLikesViewModel : NavigationBaseViewModel
 
                 if (post.Likes == null || !post.Likes.Any())
                     post.Likes = _likeService.GetLikesByPostId(post.Id).ToList();
-                
+
                 if (post.Comments == null || !post.Comments.Any())
-                    post.Comments = _commentService.GetCommentsByPostId(post.Id).ToList();
+                    post.Comments = _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList();
 
 
                 PostViewModel postViewModel = new PostViewModel(post, _currentUser, _commentService);
