@@ -1,6 +1,6 @@
 ﻿using BlogContent.Core.Models;
 using BlogContent.Core.Security;
-using BlogContent.Services;
+using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
@@ -14,8 +14,8 @@ namespace BlogContent.WPF.ViewModel;
 public class ProfileSetupViewModel : ViewModelBase
 {
     private readonly NavigationService _navigationService;
-    private readonly UserService _userService;
-    private readonly FileService _fileService;
+    private readonly IUserService _userService;
+    private readonly IFileService _fileService;
 
     private string _registerEmail;
     private string _registerPassword;
@@ -113,7 +113,7 @@ public class ProfileSetupViewModel : ViewModelBase
     public ICommand BackCommand { get; }
     public ICommand CompleteRegistrationCommand { get; }
 
-    public ProfileSetupViewModel(NavigationService navigationService, UserService userService, FileService fileService)
+    public ProfileSetupViewModel(NavigationService navigationService, IUserService userService, IFileService fileService)
     {
         _navigationService = navigationService;
         _userService = userService;

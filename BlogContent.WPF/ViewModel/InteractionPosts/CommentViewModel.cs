@@ -1,5 +1,5 @@
 ﻿using BlogContent.Core.Models;
-using BlogContent.Services;
+using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using System.Collections.ObjectModel;
@@ -11,7 +11,7 @@ public class CommentViewModel : ViewModelBase
 {
     private Comment _comment;
     private readonly User _currentUser;
-    private readonly CommentService _commentService;
+    private readonly ICommentService _commentService;
 
     public int Id => _comment.Id;
     public string Content => _comment.Content;
@@ -70,7 +70,7 @@ public class CommentViewModel : ViewModelBase
     public ICommand ToggleReplyInputCommand { get; }
     public ICommand SubmitReplyCommand { get; }
 
-    public CommentViewModel(Comment comment, User currentUser, CommentService commentService)
+    public CommentViewModel(Comment comment, User currentUser, ICommentService commentService)
     {
         _comment = comment;
         _currentUser = currentUser;

@@ -1,10 +1,11 @@
 using System.Text;
+using BlogContent.Core.Interfaces;
 using BlogContent.Data;
+using BlogContent.Data.Repositories;
 using BlogContent.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using BlogContent.Core.Interfaces;
 
 namespace BlogContent.WebAPI;
 
@@ -18,12 +19,18 @@ public class Program
         builder.Services.AddDbContext<BlogContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        // Services (��� �����������)
-        builder.Services.AddScoped<UserService>();
-        builder.Services.AddScoped<PostService>();
-        builder.Services.AddScoped<CommentService>();
-        builder.Services.AddScoped<LikeService>();
-        builder.Services.AddScoped<AuthService>();
+        // Repositories
+        builder.Services.AddScoped<IPostRepository, PostRepository>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+        builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+
+        // Services (через интерфейсы)
+        builder.Services.AddScoped<IPostService, PostService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<ICommentService, CommentService>();
+        builder.Services.AddScoped<ILikeService, LikeService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
 
         // JWT
         var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);

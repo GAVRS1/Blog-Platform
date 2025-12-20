@@ -1,6 +1,6 @@
+using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using BlogContent.Core.Security;
-using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +13,11 @@ using System.Text;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
-    private readonly UserService _userService;
+    private readonly IAuthService _authService;
+    private readonly IUserService _userService;
     private readonly IConfiguration _config;
 
-    public AuthController(AuthService authService, UserService userService, IConfiguration config)
+    public AuthController(IAuthService authService, IUserService userService, IConfiguration config)
     {
         _authService = authService;
         _userService = userService;

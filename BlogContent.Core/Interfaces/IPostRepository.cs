@@ -1,18 +1,15 @@
-﻿using BlogContent.Core.Models;
+using BlogContent.Core.Models;
 
 namespace BlogContent.Core.Interfaces;
 
-public interface IPostService
+public interface IPostRepository
 {
     Post GetPostById(int id);
-    IEnumerable<Post> GetAllPostsWithUsers();
     IEnumerable<Post> GetPostsById(IEnumerable<int> postIds);
+    IEnumerable<Post> GetAllPostsWithUsers();
     IEnumerable<Post> GetPostsByUser(int userId);
     IEnumerable<Post> GetAllPosts();
     void CreatePost(Post post);
     void UpdatePost(Post post);
     void DeletePost(int id);
-    void AddLike(int postId, int userId);
-    void RemoveLike(int postId, int userId);
-    void AddComment(Comment comment);
 }

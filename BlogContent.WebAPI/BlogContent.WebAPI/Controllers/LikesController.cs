@@ -1,5 +1,5 @@
+using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -12,10 +12,10 @@ namespace BlogContent.WebAPI.Controllers;
 [Authorize]
 public class LikesController : ControllerBase
 {
-    private readonly LikeService _likeService;
-    private readonly CommentService _commentService;
+    private readonly ILikeService _likeService;
+    private readonly ICommentService _commentService;
 
-    public LikesController(LikeService likeService, CommentService commentService)
+    public LikesController(ILikeService likeService, ICommentService commentService)
     {
         _likeService = likeService;
         _commentService = commentService;

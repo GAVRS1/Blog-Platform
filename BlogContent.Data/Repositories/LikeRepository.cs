@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlogContent.Data.Repositories;
 
-public class LikeRepository(BlogContext context) : ILikeService
+public class LikeRepository(BlogContext context) : ILikeRepository
 {
     private readonly BlogContext _context = context;
 

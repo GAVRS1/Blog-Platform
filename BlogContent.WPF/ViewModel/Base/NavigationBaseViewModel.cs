@@ -1,5 +1,5 @@
-﻿using BlogContent.Core.Models;
-using BlogContent.Services;
+﻿using BlogContent.Core.Interfaces;
+using BlogContent.Core.Models;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.Utilities;
 using System.Windows;
@@ -11,11 +11,11 @@ namespace BlogContent.WPF.ViewModel.Base;
 public class NavigationBaseViewModel : ViewModelBase
 {
     protected readonly NavigationService _navigationService;
-    protected readonly UserService _userService;
-    protected readonly PostService _postService;
-    protected readonly CommentService _commentService;
-    protected readonly LikeService _likeService;
-    protected readonly FileService _fileService;
+    protected readonly IUserService _userService;
+    protected readonly IPostService _postService;
+    protected readonly ICommentService _commentService;
+    protected readonly ILikeService _likeService;
+    protected readonly IFileService _fileService;
 
     protected User _currentUser;
     private BitmapImage _userProfilePicture;
@@ -97,11 +97,11 @@ public class NavigationBaseViewModel : ViewModelBase
 
     public NavigationBaseViewModel(
         NavigationService navigationService,
-        UserService userService,
-        PostService postService,
-        CommentService commentService,
-        LikeService likeService,
-        FileService fileService)
+        IUserService userService,
+        IPostService postService,
+        ICommentService commentService,
+        ILikeService likeService,
+        IFileService fileService)
     {
         _navigationService = navigationService;
         _userService = userService;
@@ -118,184 +118,102 @@ public class NavigationBaseViewModel : ViewModelBase
         CreatePostCommand = new RelayCommand(_ => ShowCreatePostDialog());
         LogoutCommand = new RelayCommand(_ => Logout());
 
-        // Загрузка данных пользователя
-        LoadCurrentUser();
+        // Инициализируем текущего пользователя
+        _currentUser = _userService.GetCurrentUser();
+
+        // Загружаем данные пользователя при инициализации
+        LoadCurrentUserData();
     }
 
-    public virtual void LoadCurrentUser()
+    protected virtual void LoadCurrentUserData()
     {
         try
         {
-            // Получаем текущего пользователя из сервиса навигации
-            _currentUser = _navigationService.GetParameter("CurrentUser") as User;
-
             if (_currentUser != null)
             {
-                // Убедимся, что профиль пользователя загружен полностью
-                if (_currentUser.Profile == null)
-                {
-                    _currentUser = _userService.GetUserById(_currentUser.Id);
-                }
-
-                // Установка данных пользователя
-                UserFullName = _currentUser.Profile?.FullName ?? "Пользователь";
-                UserProfilePictureUrl = _currentUser.Profile?.ProfilePictureUrl;
-
-                try
-                {
-                    // Получаем полный путь к файлу, проверяем его существование
-                    if (!string.IsNullOrEmpty(_currentUser.Profile?.ProfilePictureUrl))
-                    {
-                        string fullPath = _fileService.GetFullPath(_currentUser.Profile.ProfilePictureUrl);
-                        System.Diagnostics.Debug.WriteLine($"Full path to profile picture: {fullPath}");
-
-                        if (System.IO.File.Exists(fullPath))
-                        {
-                            var image = new BitmapImage();
-                            image.BeginInit();
-                            image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                            image.CacheOption = BitmapCacheOption.OnLoad;
-                            image.UriSource = new Uri(fullPath);
-                            image.EndInit();
-                            UserProfilePicture = image;
-                        }
-                        else
-                        {
-                            UserProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
-                        }
-                    }
-                    else
-                    {
-                        UserProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Если не удалось загрузить изображение, используем заглушку
-                    UserProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
-                }
-
-                // Проверяем, является ли пользователь администратором
+                // Обновляем информацию о пользователе
+                _currentUser = _userService.GetUserById(_currentUser.Id);
+                UserFullName = _currentUser.Profile?.FullName;
                 IsAdmin = _currentUser.Status == Core.Enums.UserStatus.Admin;
+
+                // Загружаем аватар
+                if (!string.IsNullOrEmpty(_currentUser.Profile?.ProfilePictureUrl))
+                {
+                    string fullPath = _fileService.GetFullPath(_currentUser.Profile.ProfilePictureUrl);
+                    if (_fileService.FileExists(fullPath))
+                    {
+                        UserProfilePictureUrl = fullPath;
+                        UserProfilePicture = new BitmapImage(new Uri(fullPath));
+                    }
+                }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            MessageBox.Show($"Ошибка при загрузке данных пользователя: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
-    protected virtual void NavigateToHome()
+    // Методы для навигации
+    protected void NavigateToHome()
     {
-        try
-        {
-            // Сбрасываем все флаги страниц
-            IsHomePage = false;
-            IsProfilePage = false;
-            UserPostsPage = false;
-            UserLikesPage = false;
-
-            // Устанавливаем флаг активной страницы
-            IsHomePage = true;
-
-            // Выполняем фактическую навигацию
-            _navigationService.Navigate("Home");
-        }
-        catch (Exception)
-        {
-        }
+        _navigationService.Navigate("Home");
+        ResetPageFlags();
+        IsHomePage = true;
     }
 
-    protected virtual void ViewProfile()
+    protected void ViewProfile()
     {
-        try
-        {
-            // Сбрасываем все флаги страниц
-            IsHomePage = false;
-            IsProfilePage = false;
-            UserPostsPage = false;
-            UserLikesPage = false;
-
-            // Устанавливаем флаг активной страницы
-            IsProfilePage = true;
-
-            // Устанавливаем параметр для просмотра профиля текущего пользователя
-            _navigationService.SetParameter("ProfileUser", _currentUser);
-
-            // Выполняем фактическую навигацию
-            _navigationService.Navigate("UserProfile");
-        }
-        catch (Exception)
-        {
-        }
+        _navigationService.Navigate("UserProfile");
+        ResetPageFlags();
+        IsProfilePage = true;
     }
 
-    protected virtual void NavigateToUserPosts()
+    protected void NavigateToUserPosts()
     {
-        try
-        {
-            // Сбрасываем все флаги страниц
-            IsHomePage = false;
-            IsProfilePage = false;
-            UserPostsPage = false;
-            UserLikesPage = false;
-
-            // Устанавливаем флаг активной страницы
-            UserPostsPage = true;
-
-            // Выполняем фактическую навигацию
-            _navigationService.Navigate("UserPosts");
-        }
-        catch (Exception)
-        {
-        }
+        _navigationService.Navigate("UserPosts");
+        ResetPageFlags();
+        UserPostsPage = true;
     }
 
-    protected virtual void NavigateUserLikes()
+    protected void NavigateUserLikes()
     {
-        try
-        {
-            // Сбрасываем все флаги страниц
-            IsHomePage = false;
-            IsProfilePage = false;
-            UserPostsPage = false;
-            UserLikesPage = false;
-
-            // Устанавливаем флаг активной страницы
-            UserLikesPage = true;
-
-            // Выполняем фактическую навигацию
-            _navigationService.Navigate("UserLikes");
-        }
-        catch (Exception)
-        {
-        }
+        _navigationService.Navigate("UserLikes");
+        ResetPageFlags();
+        UserLikesPage = true;
     }
 
-    protected virtual void ShowCreatePostDialog()
+    protected void ShowCreatePostDialog()
     {
-        // Показываем диалог создания поста
-        CreatePost dialog = new(_currentUser)
-        {
-            Owner = Application.Current.MainWindow
-        };
-
-        if (dialog.ShowDialog() == true)
-            ReloadContent();
-        
+        // Здесь будет логика показа диалога для создания нового поста
+        MessageBox.Show("Функционал создания поста пока не реализован", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-    protected virtual void Logout()
+    protected void Logout()
     {
-        // Выход из системы - сбрасываем данные текущего пользователя
-        _navigationService.CurrentUser = null;
+        // Сбрасываем текущего пользователя
+        _currentUser = null;
         _navigationService.SetParameter("CurrentUser", null);
-        _navigationService.SetParameter("ProfileUser", null);
 
-        // Переходим на стартовую страницу и очищаем историю навигации
-        _navigationService.NavigateTo("Start", false);
+        // Перенаправляем на страницу входа
+        _navigationService.Navigate("Login");
+
+        // Сбрасываем флаги страниц
+        ResetPageFlags();
     }
 
-    protected virtual void ReloadContent()
+    protected void ResetPageFlags()
     {
+        IsHomePage = false;
+        IsProfilePage = false;
+        UserPostsPage = false;
+        UserLikesPage = false;
+    }
+
+    protected void UpdateCurrentUser(User user)
+    {
+        _currentUser = user;
+        _navigationService.SetParameter("CurrentUser", user);
+        LoadCurrentUserData();
     }
 }

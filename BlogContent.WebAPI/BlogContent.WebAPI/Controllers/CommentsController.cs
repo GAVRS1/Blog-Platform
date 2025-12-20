@@ -1,5 +1,5 @@
+using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +16,9 @@ public class CommentsController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly CommentService _commentService;
+    private readonly ICommentService _commentService;
 
-    public CommentsController(CommentService commentService) => _commentService = commentService;
+    public CommentsController(ICommentService commentService) => _commentService = commentService;
 
     [HttpGet("post/{postId}")]
     public IActionResult GetByPostId(int postId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)

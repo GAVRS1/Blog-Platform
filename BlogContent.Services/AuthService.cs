@@ -1,12 +1,14 @@
-﻿using BlogContent.Core.Models;
+﻿using BlogContent.Core.Interfaces;
+using BlogContent.Core.Models;
 using BlogContent.Core.Security;
+
 namespace BlogContent.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
-    private readonly UserService _userService;
+    private readonly IUserService _userService;
 
-    public AuthService(UserService userService) => _userService = userService;
+    public AuthService(IUserService userService) => _userService = userService;
 
     public User? Login(string email, string password)
     {

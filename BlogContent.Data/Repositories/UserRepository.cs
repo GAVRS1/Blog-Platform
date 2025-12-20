@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlogContent.Data.Repositories;
 
-public class UserRepository(BlogContext context) : IUserService
+public class UserRepository(BlogContext context) : IUserRepository
 {
     private readonly BlogContext _context = context;
 

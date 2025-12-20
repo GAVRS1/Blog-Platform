@@ -1,13 +1,16 @@
-﻿using BlogContent.Core.Models;
-using BlogContent.Data.Repositories;
-using BlogContent.Data;
+﻿using BlogContent.Core.Interfaces;
+using BlogContent.Core.Models;
+
 namespace BlogContent.Services;
 
-public class LikeService
+public class LikeService : ILikeService
 {
-    private readonly LikeRepository _likeRepository;
+    private readonly ILikeRepository _likeRepository;
 
-    public LikeService(BlogContext context) => _likeRepository = new LikeRepository(context);
+    public LikeService(ILikeRepository likeRepository)
+    {
+        _likeRepository = likeRepository;
+    }
 
     public Like GetLikeById(int id) => _likeRepository.GetLikeById(id);
     public Like GetLikeByPostAndUser(int postId, int userId) => _likeRepository.GetLikeByPostAndUser(postId, userId);
