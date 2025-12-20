@@ -97,10 +97,19 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        // Enable routing so the CORS middleware can process preflight requests
+        // before they reach the controllers.
+        app.UseRouting();
         app.UseCors("FrontendPolicy");
+
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapControllers();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
         app.Run();
     }
 }
