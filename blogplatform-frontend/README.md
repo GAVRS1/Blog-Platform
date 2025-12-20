@@ -1,12 +1,19 @@
-# React + Vite
+# Blog Platform Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## API base URL
 
-Currently, two official plugins are available:
+- В продакшене фронту нужен origin бэкенда. Устанавливай переменную окружения **`VITE_API_BASE`** (без `/api` в конце, axios добавит его сам).
+- Для деплоя на Netlify задай переменную в настройках сайта или через `netlify.toml`/Dashboard. Минимально достаточно `VITE_API_BASE="https://blogcontent-webapi.onrender.com"`.
+- Если переменная не задана в прод-сборке, приложение продолжит ходить на относительный `/api`, но в консоли появится предупреждение. Чтобы это работало, должен быть настроен прокси (см. ниже).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Прокси для Netlify
 
-## Expanding the ESLint configuration
+- `netlify.toml` содержит redirect `from = "/api/*"` → `https://blogcontent-webapi.onrender.com/api/:splat` со статусом `200`, чтобы относительные запросы `/api` отправлялись на бэкенд.
+- При необходимости подставь свой origin бэкенда в этот redirect и синхронизируй его со значением `VITE_API_BASE`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Локальный запуск
+
+```bash
+npm install
+npm run dev
+```
