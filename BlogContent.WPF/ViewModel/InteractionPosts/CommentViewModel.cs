@@ -144,7 +144,8 @@ public class CommentViewModel : ViewModelBase
     private void LoadReplies()
     {
         Replies.Clear();
-        IOrderedEnumerable<CommentReply> replies = _commentService.GetRepliesByCommentId(_comment.Id)
+        IOrderedEnumerable<CommentReply> replies = _commentService.GetRepliesByCommentId(_comment.Id, 1, int.MaxValue)
+            .Items
             .OrderBy(r => r.CreatedAt);
 
         foreach (var reply in replies)

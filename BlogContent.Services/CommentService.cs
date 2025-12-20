@@ -12,13 +12,21 @@ public class CommentService : ICommentService
         _commentRepository = commentRepository;
     }
 
-    public IEnumerable<Comment> GetCommentsByPostId(int postId) => _commentRepository.GetCommentsByPostId(postId);
+    public PagedResult<Comment> GetCommentsByPostId(int postId, int page, int pageSize)
+    {
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        return _commentRepository.GetCommentsByPostId(postId, page, pageSize);
+    }
     public IEnumerable<Comment> GetCommentsByUserId(int userId) => _commentRepository.GetCommentsByUserId(userId);
     public IEnumerable<CommentLike> GetLikesByCommentId(int commentId) => _commentRepository.GetLikesByCommentId(commentId);
     public IEnumerable<Comment> GetCommentsByPostIdWithDetails(int postId) => _commentRepository.GetCommentsByPostIdWithDetails(postId);
     public IEnumerable<Comment> GetCommentsByPostIdWithUsers(int postId) => _commentRepository.GetCommentsByPostIdWithUsers(postId);
     public IEnumerable<CommentReply> GetCommentReplies(int commentId) => _commentRepository.GetCommentReplies(commentId);
-    public IEnumerable<CommentReply> GetRepliesByCommentId(int commentId) => _commentRepository.GetRepliesByCommentId(commentId);
+    public PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize)
+    {
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        return _commentRepository.GetRepliesByCommentId(commentId, page, pageSize);
+    }
 
     public void AddCommentLike(CommentLike like) => _commentRepository.AddCommentLike(like);
     public void RemoveCommentLike(int likeId) => _commentRepository.RemoveCommentLike(likeId);
@@ -75,5 +83,13 @@ public class CommentService : ICommentService
     {
         _commentRepository.AddReply(reply);
         return reply;
+    }
+
+    private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)
+    {
+        var normalizedPage = Math.Max(page, 1);
+        var normalizedPageSize = Math.Max(pageSize, 1);
+
+        return (normalizedPage, normalizedPageSize);
     }
 }

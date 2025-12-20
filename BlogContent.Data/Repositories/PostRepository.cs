@@ -45,16 +45,25 @@ public class PostRepository(BlogContext context) : IPostRepository
             .OrderByDescending(p => p.CreatedAt)
             .ToList();
     }
-    public IEnumerable<Post> GetPostsByUser(int userId)
+    public PagedResult<Post> GetPostsByUser(int userId, int page, int pageSize)
     {
-        return _context.Posts
+        var query = _context.Posts
             .Include(p => p.User)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
             .Include(p => p.Likes)
                 .ThenInclude(l => l.User)
             .Where(p => p.UserId == userId)
+            .OrderByDescending(p => p.CreatedAt)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        return new PagedResult<Post>(items, totalCount);
     }
 
     public void CreatePost(Post post)
@@ -85,15 +94,23 @@ public class PostRepository(BlogContext context) : IPostRepository
         }
     }
 
-    public IEnumerable<Post> GetAllPosts()
+    public PagedResult<Post> GetAllPosts(int page, int pageSize)
     {
-        return _context.Posts
+        var query = _context.Posts
             .Include(p => p.User)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
             .Include(p => p.Likes)
                 .ThenInclude(l => l.User)
             .OrderByDescending(p => p.CreatedAt)
+            .AsQueryable();
+
+        var totalCount = query.Count();
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        return new PagedResult<Post>(items, totalCount);
     }
 }

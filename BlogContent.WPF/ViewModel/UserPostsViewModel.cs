@@ -68,7 +68,8 @@ public class UserPostsViewModel : NavigationBaseViewModel
         try
         {
             // Получаем посты текущего пользователя
-            IOrderedEnumerable<Post> userPosts = _postService.GetPostsByUser(_currentUser.Id)
+            IOrderedEnumerable<Post> userPosts = _postService.GetPostsByUser(_currentUser.Id, 1, int.MaxValue)
+                                       .Items
                                        .OrderByDescending(p => p.CreatedAt);
 
             foreach (Post post in userPosts)
@@ -82,7 +83,7 @@ public class UserPostsViewModel : NavigationBaseViewModel
                 
 
                 if (post.Comments == null || !post.Comments.Any())
-                    post.Comments = _commentService.GetCommentsByPostId(post.Id).ToList();
+                    post.Comments = _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList();
 
 
                 PostViewModel postViewModel = new PostViewModel(post, _currentUser, _commentService);

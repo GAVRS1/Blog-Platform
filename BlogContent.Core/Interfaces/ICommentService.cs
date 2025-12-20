@@ -6,7 +6,7 @@ public interface ICommentService
 {
     Comment GetCommentById(int id);
     Comment GetCommentByIdWithDetails(int id);
-    IEnumerable<Comment> GetCommentsByPostId(int postId);
+    PagedResult<Comment> GetCommentsByPostId(int postId, int page, int pageSize);
     IEnumerable<Comment> GetCommentsByPostIdWithDetails(int postId);
     IEnumerable<Comment> GetCommentsByPostIdWithUsers(int postId);
     IEnumerable<Comment> GetCommentsByUserId(int userId);
@@ -14,7 +14,7 @@ public interface ICommentService
     void UpdateComment(Comment comment);
     void DeleteComment(int id);
     IEnumerable<CommentLike> GetLikesByCommentId(int commentId);
-    IEnumerable<CommentReply> GetRepliesByCommentId(int commentId);
+    PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize);
     IEnumerable<CommentReply> GetCommentReplies(int commentId);
     CommentLike GetCommentLike(int commentId, int userId);
     void AddCommentLike(CommentLike like);

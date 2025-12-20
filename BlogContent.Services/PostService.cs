@@ -20,8 +20,17 @@ public class PostService : IPostService
 
     public IEnumerable<Post> GetAllPostsWithUsers() => _postRepository.GetAllPostsWithUsers();
     public IEnumerable<Post> GetPostsById(IEnumerable<int> postIds) => _postRepository.GetPostsById(postIds);
-    public IEnumerable<Post> GetPostsByUser(int userId) => _postRepository.GetPostsByUser(userId);
-    public IEnumerable<Post> GetAllPosts() => _postRepository.GetAllPosts();
+    public PagedResult<Post> GetPostsByUser(int userId, int page, int pageSize)
+    {
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        return _postRepository.GetPostsByUser(userId, page, pageSize);
+    }
+
+    public PagedResult<Post> GetAllPosts(int page, int pageSize)
+    {
+        (page, pageSize) = NormalizePagination(page, pageSize);
+        return _postRepository.GetAllPosts(page, pageSize);
+    }
 
     public void CreatePost(Post post) => _postRepository.CreatePost(post);
     public void UpdatePost(Post post) => _postRepository.UpdatePost(post);
@@ -53,5 +62,13 @@ public class PostService : IPostService
             comment.CreatedAt = DateTime.Now;
 
         _commentRepository.CreateComment(comment);
+    }
+
+    private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)
+    {
+        var normalizedPage = Math.Max(page, 1);
+        var normalizedPageSize = Math.Max(pageSize, 1);
+
+        return (normalizedPage, normalizedPageSize);
     }
 }
