@@ -9,13 +9,16 @@ public class LikeRepository(BlogContext context) : ILikeRepository
     private readonly BlogContext _context = context;
 
     // Получить конкретный лайк по ID
-    public Like GetLikeById(int id) => _context.Likes.FirstOrDefault(l => l.Id == id);
+    public Like GetLikeById(int id) => _context.Likes
+        .AsNoTracking()
+        .FirstOrDefault(l => l.Id == id);
 
     // Получить все лайки пользователя
     public IEnumerable<Like> GetLikesByUserId(int userId) =>
         _context.Likes
             .Include(l => l.Post)
             .Where(l => l.UserId == userId)
+            .AsNoTracking()
             .ToList();
 
     // Получить все лайки для поста
@@ -23,11 +26,14 @@ public class LikeRepository(BlogContext context) : ILikeRepository
         _context.Likes
             .Include(l => l.User)
             .Where(l => l.PostId == postId)
+            .AsNoTracking()
             .ToList();
 
     // Получить лайк по посту и пользователю
     public Like GetLikeByPostAndUser(int postId, int userId) =>
-        _context.Likes.FirstOrDefault(l => l.PostId == postId && l.UserId == userId);
+        _context.Likes
+            .AsNoTracking()
+            .FirstOrDefault(l => l.PostId == postId && l.UserId == userId);
 
     public void CreateLike(Like like)
     {

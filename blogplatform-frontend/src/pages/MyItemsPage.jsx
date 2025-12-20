@@ -15,8 +15,8 @@ export default function MyItemsPage({ title, endpoint }) {
 
   const { ref, inView } = useInView({ threshold: 0.5 });
   useEffect(() => {
-    if (inView && hasNextPage) fetchNextPage();
-  }, [inView]);
+    if (inView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const items = data?.pages.flat() ?? [];
 

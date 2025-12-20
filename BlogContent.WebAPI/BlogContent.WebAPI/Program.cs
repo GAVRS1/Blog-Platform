@@ -5,6 +5,7 @@ using BlogContent.Services;
 using BlogContent.WebAPI.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
@@ -97,6 +98,15 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
+
+        // Ensure database schema is up-to-date before handling requests
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BlogContext>();
+
+            dbContext.Database.Migrate();
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE \"Posts\" ADD COLUMN IF NOT EXISTS \"AudioUrl\" text");
+        }
 
         if (app.Environment.IsDevelopment())
         {
