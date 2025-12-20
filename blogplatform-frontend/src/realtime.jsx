@@ -1,19 +1,20 @@
 // src/realtime.js
 import * as signalR from '@microsoft/signalr';
 import toast from 'react-hot-toast';
+import { API_BASE } from './api/config';
 
 export function connectRealtime(jwt, handlers = {}) {
   const { onMessage, onNotification } = handlers;
 
   const chat = new signalR.HubConnectionBuilder()
-    .withUrl(`${import.meta.env.VITE_API_BASE}/hubs/chat`, {
+    .withUrl(`${API_BASE}/hubs/chat`, {
       accessTokenFactory: () => jwt
     })
     .withAutomaticReconnect()
     .build();
 
   const notify = new signalR.HubConnectionBuilder()
-    .withUrl(`${import.meta.env.VITE_API_BASE}/hubs/notifications`, {
+    .withUrl(`${API_BASE}/hubs/notifications`, {
       accessTokenFactory: () => jwt
     })
     .withAutomaticReconnect()

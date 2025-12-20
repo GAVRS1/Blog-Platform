@@ -1,16 +1,8 @@
 // src/api/axios.js
 import axios from 'axios';
+import { API_BASE, API_PREFIX } from './config';
 
-const API_BASE = import.meta.env.VITE_API_BASE?.replace(/\/+$/, '') || '';
-
-if (!API_BASE && import.meta.env.PROD) {
-  console.warn(
-    '[API] VITE_API_BASE не задан. В прод-сборке используются относительные /api запросы; настрой backend proxy или переменную окружения.'
-  );
-}
-
-// Если в VITE_API_BASE уже есть /api, не добавляем повторно
-const baseURL = /\/api\/?$/i.test(API_BASE) ? API_BASE : `${API_BASE}/api`;
+const baseURL = API_BASE ? `${API_BASE}${API_PREFIX}` : API_PREFIX;
 
 const api = axios.create({
   baseURL,
