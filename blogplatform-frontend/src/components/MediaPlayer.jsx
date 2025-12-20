@@ -1,6 +1,7 @@
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useState } from 'react';
+import { API_BASE } from '../api/config';
 
 export default function MediaPlayer({ url, type, className = '' }) {
   const [error, setError] = useState(false);
@@ -16,7 +17,8 @@ export default function MediaPlayer({ url, type, className = '' }) {
     
     // Убираем лишние слеши и формируем правильный URL
     const cleaned = mediaUrl.replace(/^\/+/, '').replace(/\\/g, '/');
-    return `${import.meta.env.VITE_API_BASE}/uploads/${cleaned}`;
+    const base = API_BASE || '';
+    return `${base}/uploads/${cleaned}`;
   };
 
   const src = getMediaUrl(url);
