@@ -13,14 +13,16 @@ export function useMyData(endpoint) {
         `/${endpoint}?page=${pageParam}&limit=5`
       );
       // Обрабатываем разные структуры ответов
-      return response.data.posts || 
-             response.data.comments || 
-             response.data.likes || 
+      return response.data.posts ||
+             response.data.comments ||
+             response.data.likes ||
              response.data;
     },
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < 5 ? undefined : allPages.length + 1,
     staleTime: 1000 * 60 * 2, // 2 минуты
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Возвращаем queryInfo и функцию для принудительной инвалидации

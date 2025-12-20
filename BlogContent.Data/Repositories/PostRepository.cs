@@ -16,6 +16,7 @@ public class PostRepository(BlogContext context) : IPostRepository
                 .ThenInclude(c => c.User)
             .Include(p => p.Likes)
                 .ThenInclude(l => l.User)
+            .AsNoTracking()
             .FirstOrDefault(p => p.Id == id);
     }
 
@@ -29,6 +30,7 @@ public class PostRepository(BlogContext context) : IPostRepository
             .Include(p => p.Likes)
                 .ThenInclude(l => l.User)
             .Where(p => postIds.Contains(p.Id))
+            .AsNoTracking()
             .ToList();
     }
     public IEnumerable<Post> GetAllPostsWithUsers()
@@ -43,6 +45,7 @@ public class PostRepository(BlogContext context) : IPostRepository
                 .ThenInclude(l => l.User)
                     .ThenInclude(u => u.Profile)
             .OrderByDescending(p => p.CreatedAt)
+            .AsNoTracking()
             .ToList();
     }
     public PagedResult<Post> GetPostsByUser(int userId, int page, int pageSize)
@@ -55,6 +58,7 @@ public class PostRepository(BlogContext context) : IPostRepository
                 .ThenInclude(l => l.User)
             .Where(p => p.UserId == userId)
             .OrderByDescending(p => p.CreatedAt)
+            .AsNoTracking()
             .AsQueryable();
 
         var totalCount = query.Count();
@@ -103,6 +107,7 @@ public class PostRepository(BlogContext context) : IPostRepository
             .Include(p => p.Likes)
                 .ThenInclude(l => l.User)
             .OrderByDescending(p => p.CreatedAt)
+            .AsNoTracking()
             .AsQueryable();
 
         var totalCount = query.Count();

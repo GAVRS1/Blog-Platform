@@ -38,6 +38,8 @@ export default function HomePage() {
     getNextPageParam: (lastPage, allPages) =>
       (lastPage?.length || 0) < PAGE_SIZE ? undefined : allPages.length + 1,
     staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Догрузка, когда появляемся внизу

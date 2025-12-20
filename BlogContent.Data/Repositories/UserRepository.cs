@@ -14,6 +14,7 @@ public class UserRepository(BlogContext context) : IUserRepository
     {
         return _context.Users
             .Include(u => u.Profile)
+            .AsNoTracking()
             .FirstOrDefault(u => u.Id == id);
     }
 
@@ -23,13 +24,16 @@ public class UserRepository(BlogContext context) : IUserRepository
         return _context.Users
             .Include(u => u.Profile)
             .Where(u => userIds.Contains(u.Id))
+            .AsNoTracking()
             .ToList();
     }
 
     // Получить пользователя по email
     public User GetUserByEmail(string email)
     {
-        return _context.Users.FirstOrDefault(u => u.Email == email);
+        return _context.Users
+            .AsNoTracking()
+            .FirstOrDefault(u => u.Email == email);
     }
 
     // Создать нового пользователя

@@ -11,6 +11,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     // Получить комментарий по ID
     public Comment GetCommentById(int id) => _context.Comments
             .Include(c => c.User)
+            .AsNoTracking()
             .FirstOrDefault(c => c.Id == id);
 
     // Получить комментарии по ID поста (с сортировкой)
@@ -20,6 +21,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(c => c.User)
             .Where(c => c.PostId == postId)
             .OrderByDescending(c => c.CreatedAt)
+            .AsNoTracking()
             .AsQueryable();
 
         var totalCount = query.Count();
@@ -38,6 +40,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(c => c.User)
                 .ThenInclude(u => u.Profile)
             .Where(c => c.PostId == postId)
+            .AsNoTracking()
             .ToList();
     }
 
@@ -47,6 +50,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(c => c.Post)
             .Where(c => c.UserId == userId)
             .OrderByDescending(c => c.CreatedAt)
+            .AsNoTracking()
             .ToList();
 
     // Создать новый комментарий
@@ -80,6 +84,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         return _context.CommentLikes
             .Include(cl => cl.User)
             .Where(cl => cl.CommentId == commentId)
+            .AsNoTracking()
             .ToList();
     }
 
@@ -115,6 +120,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(r => r.User)
             .Where(r => r.CommentId == commentId)
             .OrderBy(r => r.CreatedAt)
+            .AsNoTracking()
             .AsQueryable();
 
         var totalCount = query.Count();
@@ -130,6 +136,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     public CommentLike GetCommentLike(int commentId, int userId)
     {
         return _context.CommentLikes
+            .AsNoTracking()
             .FirstOrDefault(cl => cl.CommentId == commentId && cl.UserId == userId);
     }
 
@@ -139,6 +146,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         return _context.CommentLikes
             .Include(cl => cl.User)
             .Where(cl => cl.CommentId == commentId)
+            .AsNoTracking()
             .ToList();
     }
 
@@ -149,6 +157,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(r => r.User)
             .Where(r => r.CommentId == commentId)
             .OrderBy(r => r.CreatedAt)
+            .AsNoTracking()
             .ToList();
     }
 
@@ -160,6 +169,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(c => c.Likes)
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)
+            .AsNoTracking()
             .FirstOrDefault(c => c.Id == id);
     }
 
@@ -172,6 +182,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)
             .Where(c => c.PostId == postId)
+            .AsNoTracking()
             .ToList();
     }
 
