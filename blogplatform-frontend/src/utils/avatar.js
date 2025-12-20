@@ -1,3 +1,5 @@
+import { API_BASE } from '../api/config';
+
 export const getAvatarUrl = (avatarPath) => {
   // Если путь пустой или null, возвращаем дефолтный аватар
   if (!avatarPath) {
@@ -10,8 +12,10 @@ export const getAvatarUrl = (avatarPath) => {
   }
 
   // Если это путь относительно uploads
+  const base = API_BASE || '';
+
   if (avatarPath.startsWith('/uploads/')) {
-    return `${import.meta.env.VITE_API_BASE}${avatarPath}`;
+    return `${base}${avatarPath}`;
   }
 
   // Очищаем путь от лишних символов и формируем правильный URL
@@ -20,7 +24,7 @@ export const getAvatarUrl = (avatarPath) => {
     .replace(/^\/+/, '') // убираем ведущие слеши
     .replace(/^uploads\//, ''); // убираем дублирующийся uploads
 
-  return `${import.meta.env.VITE_API_BASE}/uploads/${cleanPath}`;
+  return `${base}/uploads/${cleanPath}`;
 };
 
 // Дополнительная функция для проверки валидности аватара
