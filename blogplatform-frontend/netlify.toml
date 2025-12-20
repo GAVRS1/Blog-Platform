@@ -4,11 +4,11 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE = "https://blogcontent-webapi.onrender.com"
+  VITE_API_BASE = "https://localhost:7141"
 
 [[redirects]]
   from = "/api/*"
-  to = "https://blogcontent-webapi.onrender.com/api/:splat"
+  to = "https://localhost:7141/api/:splat"
   status = 200
 
 [[redirects]]
