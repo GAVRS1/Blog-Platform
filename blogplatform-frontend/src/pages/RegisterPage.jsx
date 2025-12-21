@@ -1,5 +1,5 @@
 // src/pages/RegisterPage.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '@/services/auth';
@@ -27,25 +27,50 @@ export default function RegisterPage() {
   });
   const [usernameOk, setUsernameOk] = useState(null);
 
-  // валидации (синхронно, без дебаунса — чтобы не усложнять UX)
+  // валидации с защитой от лишних запросов
   async function validateUsername(value) {
-    if (!value) return setUsernameOk(null);
+    const username = value?.trim();
+    if (!username) return setUsernameOk(null);
     try {
-      const ok = await checkUniqueUsername(value);
-      setUsernameOk(ok);
+      const ok = await checkUniqueUsername(username);
+      // Обновляем только если значение не поменялось за время запроса
+      if (profile.username.trim() === username) {
+        setUsernameOk(ok);
+      }
     } catch {
       setUsernameOk(null);
     }
   }
   async function validateEmail(value) {
-    if (!value) return setEmailOk(null);
+    const emailToCheck = value?.trim();
+    if (!emailToCheck) return setEmailOk(null);
     try {
-      const ok = await checkUniqueEmail(value);
-      setEmailOk(ok);
+      const ok = await checkUniqueEmail(emailToCheck);
+      if (email.trim() === emailToCheck) {
+        setEmailOk(ok);
+      }
     } catch {
       setEmailOk(null);
     }
   }
+
+  useEffect(() => {
+    if (!profile.username.trim()) {
+      setUsernameOk(null);
+      return;
+    }
+    const t = setTimeout(() => validateUsername(profile.username), 400);
+    return () => clearTimeout(t);
+  }, [profile.username]);
+
+  useEffect(() => {
+    if (!email.trim()) {
+      setEmailOk(null);
+      return;
+    }
+    const t = setTimeout(() => validateEmail(email), 400);
+    return () => clearTimeout(t);
+  }, [email]);
 
   const onAvatarUploaded = (url) => {
     setProfile((p) => ({ ...p, profilePictureUrl: url }));
@@ -54,10 +79,12 @@ export default function RegisterPage() {
   function buildPayload() {
     // Собираем только непустые поля — это критично,
     // чтобы бэкенд не падал на null/"" в необязательных свойствах
+    const trimmedEmail = email.trim();
+    const trimmedUsername = profile.username.trim();
     const p = {
-      email: email,
+      email: trimmedEmail,
       password: profile.password,
-      username: profile.username,
+      username: trimmedUsername,
     };
     if (profile.fullName) p.fullName = profile.fullName;
     if (profile.bio) p.bio = profile.bio;
@@ -119,11 +146,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 value={email}
-                onChange={async (e) => {
-                  const v = e.target.value.trim();
-                  setEmail(v);
-                  await validateEmail(v);
-                }}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 className={`input input-bordered ${emailOk === false ? 'input-error' : ''}`}
                 required
@@ -142,11 +165,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   value={profile.username}
-                  onChange={async (e) => {
-                    const v = e.target.value.trim();
-                    setProfile((p) => ({ ...p, username: v }));
-                    await validateUsername(v);
-                  }}
+                  onChange={(e) => setProfile((p) => ({ ...p, username: e.target.value }))}
                   className={`input input-bordered ${usernameOk === false ? 'input-error' : ''}`}
                   placeholder="username"
                   required
