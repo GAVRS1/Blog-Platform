@@ -70,7 +70,8 @@ public class Program
             allowedOrigins = new[]
             {
                 "http://localhost:5173",
-                "https://blogplatform-frontend.netlify.app"
+                "https://blogplatform-frontend.netlify.app",
+                "https://contentplatform.netlify.app"
             };
 
             Console.WriteLine(
