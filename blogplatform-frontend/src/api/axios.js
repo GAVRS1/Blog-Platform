@@ -25,10 +25,17 @@ api.interceptors.response.use(
   (r) => r,
   (error) => {
     const status = error?.response?.status;
-    if (status === 401) {
-      // Токен невалиден — почистим и отправим на логин
+    const token = localStorage.getItem('token');
+    const isPublicPath = ['/login', '/register', '/verify', '/appeal'].some((p) =>
+      location.pathname.startsWith(p)
+    );
+
+    // Если токена нет, не дергаем редирект (это важно для публичных страниц,
+    // вроде регистрации, где 401 на вспомогательных запросах не должен сбрасывать форму).
+    if (status === 401 && token) {
+      // Токен невалиден — почистим и отправим на логин, если мы не на публичном маршруте
       localStorage.removeItem('token');
-      if (!location.pathname.startsWith('/login')) {
+      if (!isPublicPath && !location.pathname.startsWith('/login')) {
         location.href = '/login';
       }
     }
