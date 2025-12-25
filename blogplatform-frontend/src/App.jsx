@@ -12,7 +12,7 @@ import RealtimeMount from '@/components/RealtimeMount';
 // Pages (lazy)
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const RegisterWizard = lazy(() => import('@/pages/RegisterWizard'));
 const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
@@ -73,7 +73,7 @@ export default function App() {
                   <Routes>
                     {/* Public */}
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/register/*" element={<RegisterWizard />} />
                     <Route path="/verify" element={<VerifyEmailPage />} />
                     <Route path="/appeal" element={<AppealPage />} />
 
