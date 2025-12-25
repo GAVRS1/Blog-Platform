@@ -17,6 +17,7 @@ public class BlogContext : DbContext
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<CommentReply> CommentReplies { get; set; }
+    public DbSet<EmailVerification> EmailVerifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,7 +36,11 @@ public class BlogContext : DbContext
         modelBuilder.Entity<User>()
             .Property(u => u.Status)
             .HasConversion<string>()
-            .HasMaxLength(10);
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.EmailConfirmed)
+            .HasDefaultValue(false);
 
         modelBuilder.Entity<Post>()
             .Property(p => p.CreatedAt)
@@ -114,5 +119,22 @@ public class BlogContext : DbContext
 
         modelBuilder.Entity<CommentReply>()
             .HasIndex(r => r.CommentId);
+
+        modelBuilder.Entity<EmailVerification>()
+            .Property(ev => ev.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<EmailVerification>()
+            .Property(ev => ev.Purpose)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<EmailVerification>()
+            .HasIndex(ev => ev.Email);
+
+        modelBuilder.Entity<EmailVerification>()
+            .HasIndex(ev => ev.TemporaryKey)
+            .IsUnique();
     }
 }

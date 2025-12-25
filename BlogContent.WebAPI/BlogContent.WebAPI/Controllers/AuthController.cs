@@ -26,48 +26,66 @@ public class AuthController : ControllerBase
         _jwtOptions = jwtOptions.Value;
     }
 
-    [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterRequest request)
+    [HttpPost("register/start")]
+    public async Task<IActionResult> RegisterStart([FromBody] RegisterStartRequest request, CancellationToken cancellationToken)
     {
         if (_authService.UserExists(request.Email))
         {
             return Conflict("Пользователь с таким email уже существует");
         }
 
-        var profile = new Profile
-        {
-            Username = request.Username,
-            FullName = request.FullName ?? string.Empty,
-            Bio = request.Bio ?? string.Empty,
-            ProfilePictureUrl = request.ProfilePictureUrl ?? string.Empty
-        };
+        var temporaryKey = await _authService.StartRegistrationAsync(request.Email, cancellationToken);
+        return Ok(new { temporaryKey });
+    }
 
-        if (request.BirthDate.HasValue)
+    [HttpPost("register/verify")]
+    public async Task<IActionResult> RegisterVerify([FromBody] RegisterVerifyRequest request, CancellationToken cancellationToken)
+    {
+        var success = await _authService.VerifyRegistrationAsync(request.TemporaryKey, request.Code, cancellationToken);
+        if (!success)
         {
-            var birthDate = DateOnly.FromDateTime(request.BirthDate.Value.Date);
-            profile.BirthDate = birthDate;
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var age = today.Year - birthDate.Year;
-            if (birthDate.AddYears(age) > today)
-            {
-                age--;
-            }
-
-            profile.Age = Math.Max(age, 0);
+            return BadRequest("Неверный или истекший код подтверждения");
         }
 
-        var user = new User
+        return Ok(new { request.TemporaryKey });
+    }
+
+    [HttpPost("register/resend")]
+    public async Task<IActionResult> RegisterResend([FromBody] RegisterResendRequest request, CancellationToken cancellationToken)
+    {
+        try
         {
-            Email = request.Email,
-            Username = request.Username,
-            PasswordHash = PasswordHasher.HashPassword(request.Password),
-            Profile = profile
-        };
+            await _authService.ResendCodeAsync(request.TemporaryKey, cancellationToken);
+            return Ok(new { request.TemporaryKey });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 
-        _userService.CreateUser(user);
+    [HttpPost("register/complete")]
+    public async Task<IActionResult> RegisterComplete([FromBody] RegisterCompleteRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await _authService.CompleteRegistrationAsync(
+                request.TemporaryKey,
+                request.Password,
+                request.Username,
+                request.FullName,
+                request.BirthDate,
+                request.Bio,
+                request.ProfilePictureUrl,
+                cancellationToken);
 
-        var token = GenerateJwtToken(user);
-        return Ok(new { token, userId = user.Id });
+            var token = GenerateJwtToken(user);
+            return Ok(new { token, userId = user.Id });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("login")]
