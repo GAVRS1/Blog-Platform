@@ -13,6 +13,39 @@ export const authService = {
   },
 
   /**
+   * Старт регистрации: отправляет код на email и возвращает временный ключ
+   */
+  async startRegister(email) {
+    const { data } = await api.post('/Auth/register/start', { email });
+    return data;
+  },
+
+  /**
+   * Подтверждение email кодом из письма
+   */
+  async verifyEmail({ temporaryKey, code }) {
+    const { data } = await api.post('/Auth/register/verify', { temporaryKey, code });
+    return data;
+  },
+
+  /**
+   * Завершение регистрации с профилем и паролем
+   */
+  async completeRegister(payload) {
+    const { data } = await api.post('/Auth/register/complete', payload);
+    if (data?.token) localStorage.setItem('token', data.token);
+    return data;
+  },
+
+  /**
+   * Повторная отправка кода подтверждения
+   */
+  async resendCode(temporaryKey) {
+    const { data } = await api.post('/Auth/register/resend', { temporaryKey });
+    return data;
+  },
+
+  /**
    * Логин по паре email/password
    */
   async login(email, password) {
