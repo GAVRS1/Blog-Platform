@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
+using BlogContent.Services.Options;
 
 namespace BlogContent.WebAPI;
 
@@ -34,12 +35,15 @@ public class Program
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<ICommentRepository, CommentRepository>();
         builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+        builder.Services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
 
         // Services (через интерфейсы)
         builder.Services.AddScoped<IPostService, PostService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<ICommentService, CommentService>();
         builder.Services.AddScoped<ILikeService, LikeService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
 
         // JWT
@@ -47,6 +51,10 @@ public class Program
         var jwtOptions = jwtSection.Get<JwtOptions>() ?? throw new InvalidOperationException("JWT configuration is missing.");
         jwtOptions.Validate();
         builder.Services.Configure<JwtOptions>(jwtSection);
+
+        builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+        builder.Services.Configure<EmailTemplateOptions>(builder.Configuration.GetSection("EmailTemplates"));
+        builder.Services.Configure<EmailVerificationOptions>(builder.Configuration.GetSection("EmailVerification"));
 
         var key = Encoding.UTF8.GetBytes(jwtOptions.Key);
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
