@@ -2,14 +2,19 @@ using BlogContent.Core.Interfaces;
 using BlogContent.Data;
 using BlogContent.Data.Repositories;
 using BlogContent.Services;
+using BlogContent.Services.Options;
 using BlogContent.WebAPI.Options;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.IO;
 using System.Text;
-using BlogContent.Services.Options;
 
 namespace BlogContent.WebAPI;
 
@@ -45,6 +50,7 @@ public class Program
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
 
         // JWT
         var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
@@ -55,6 +61,16 @@ public class Program
         builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
         builder.Services.Configure<EmailTemplateOptions>(builder.Configuration.GetSection("EmailTemplates"));
         builder.Services.Configure<EmailVerificationOptions>(builder.Configuration.GetSection("EmailVerification"));
+        builder.Services.Configure<MediaStorageOptions>(builder.Configuration.GetSection("MediaStorage"));
+        builder.Services.PostConfigure<MediaStorageOptions>(options => options.EnsureDefaults());
+
+        var mediaStorageOptions = new MediaStorageOptions();
+        builder.Configuration.GetSection("MediaStorage").Bind(mediaStorageOptions);
+        mediaStorageOptions.EnsureDefaults();
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = mediaStorageOptions.GetMaxAllowedSize();
+        });
 
         var key = Encoding.UTF8.GetBytes(jwtOptions.Key);
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -124,6 +140,18 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        var storageOptions = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
+        var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+        var uploadsRoot = Path.Combine(webRootPath, storageOptions.UploadsFolder);
+        Directory.CreateDirectory(uploadsRoot);
+
+        app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(uploadsRoot),
+            RequestPath = storageOptions.NormalizedRequestPath
+        });
 
         // Enable routing so the CORS middleware can process preflight requests
         // before they reach the controllers.
