@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -24,29 +24,6 @@ export default function StepEmail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailOk, setEmailOk] = useState(null);
-  const [checkingEmail, setCheckingEmail] = useState(false);
-
-  useEffect(() => {
-    if (!email?.trim()) {
-      setEmailOk(null);
-      return;
-    }
-    const value = email.trim();
-    const timer = setTimeout(async () => {
-      setCheckingEmail(true);
-      try {
-        const ok = await checkUniqueEmail(value);
-        if (email.trim() === value) {
-          setEmailOk(ok);
-        }
-      } catch {
-        setEmailOk(null);
-      } finally {
-        setCheckingEmail(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,9 +31,20 @@ export default function StepEmail() {
     if (!email?.trim()) return setError('Введите email');
     if (!password) return setError('Укажите пароль, чтобы завершить регистрацию');
 
+    const trimmedEmail = email.trim();
     setLoading(true);
     try {
-      const { temporaryKey } = await authService.startRegister(email.trim());
+      const unique = await checkUniqueEmail(trimmedEmail);
+      if (!unique) {
+        const msg = 'Такой email уже зарегистрирован. Попробуйте войти или использовать другой адрес.';
+        setEmailOk(false);
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      setEmailOk(true);
+      const { temporaryKey } = await authService.startRegister(trimmedEmail);
       setTemporaryKey(temporaryKey);
       setIsVerified(false);
       markSentNow();
@@ -100,15 +88,19 @@ export default function StepEmail() {
             className={`input input-bordered ${emailOk === false ? 'input-error' : ''}`}
             placeholder="name@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmailOk(null);
+              setError('');
+              setEmail(e.target.value);
+            }}
             required
           />
           <label className="label">
             <span className="label-text-alt text-base-content/60">
-              На этот адрес придёт письмо с кодом подтверждения
+              Проверим адрес перед отправкой кода. Если он занят, предложим войти или сменить email.
             </span>
             <span className="label-text-alt text-base-content/60">
-              {checkingEmail ? 'Проверяем...' : emailOk === false ? 'Email занят' : ''}
+              {emailOk === false ? 'Email занят' : ''}
             </span>
           </label>
         </div>
