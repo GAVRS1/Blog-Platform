@@ -67,7 +67,7 @@ public class PostRepository(BlogContext context) : IPostRepository
             .Take(pageSize)
             .ToList();
 
-        return new PagedResult<Post>(items, totalCount);
+        return new PagedResult<Post>(items, totalCount, page, pageSize);
     }
 
     public void CreatePost(Post post)
@@ -116,6 +116,6 @@ public class PostRepository(BlogContext context) : IPostRepository
             .Take(pageSize)
             .ToList();
 
-        return new PagedResult<Post>(items, totalCount);
+        return new PagedResult<Post>(items, totalCount, page, pageSize);
     }
 }

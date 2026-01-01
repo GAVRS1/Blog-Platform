@@ -81,6 +81,11 @@ public class AuthService : IAuthService
         string? profilePictureUrl,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(username))
+            throw new InvalidOperationException("Имя пользователя не указано.");
+
+        username = username.Trim();
+
         var verification = await _emailVerificationService.GetAsync(temporaryKey, cancellationToken)
                           ?? throw new InvalidOperationException("Сессия подтверждения не найдена.");
 
@@ -89,6 +94,9 @@ public class AuthService : IAuthService
 
         if (UserExists(verification.Email))
             throw new InvalidOperationException("Пользователь с таким email уже существует.");
+
+        if (_userService.GetUserByUsername(username) != null)
+            throw new InvalidOperationException("Пользователь с таким именем уже существует.");
 
         var profile = new Profile
         {

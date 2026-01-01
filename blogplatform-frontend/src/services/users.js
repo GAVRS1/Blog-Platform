@@ -32,4 +32,13 @@ export const usersService = {
     const { data } = await api.get('/Users/search', { params: { query, page, pageSize } });
     return data; // { items,total,page,pageSize } | массив (если бэк так возвращает)
   },
+
+  /**
+   * Проверка занятости username/email
+   * GET /api/Users/check?username=&email=
+   */
+  async checkAvailability({ username, email }) {
+    const { data } = await api.get('/Users/check', { params: { username, email } });
+    return data; // { usernameTaken, emailTaken }
+  },
 };

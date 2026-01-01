@@ -36,6 +36,7 @@ export default function StepProfile() {
       return;
     }
     const value = profile.username.trim();
+    setUsernameOk(null);
     const timer = setTimeout(async () => {
       try {
         const ok = await checkUniqueUsername(value);
@@ -75,6 +76,12 @@ export default function StepProfile() {
     e.preventDefault();
     setError('');
     if (!profile.username?.trim()) return setError('Введите имя пользователя');
+    if (usernameOk === false) {
+      const msg = 'Имя пользователя уже занято';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     if (!password) return setError('Пароль не найден, начните заново');
 
     setLoading(true);
@@ -124,13 +131,21 @@ export default function StepProfile() {
               type="text"
               value={profile.username}
               onChange={(e) => updateProfile({ username: e.target.value })}
-              className={`input input-bordered ${usernameOk === false ? 'input-error' : ''}`}
+              className={`input input-bordered ${usernameOk === false ? 'input-error' : ''} ${usernameOk ? 'input-success' : ''}`}
               placeholder="username"
               required
             />
             <label className="label">
-              <span className="label-text-alt text-base-content/60">
-                {usernameOk === false ? 'Имя занято' : 'Будет отображаться в ссылке профиля'}
+              <span
+                className={`label-text-alt ${
+                  usernameOk === false ? 'text-error' : usernameOk ? 'text-success' : 'text-base-content/60'
+                }`}
+              >
+                {usernameOk === false
+                  ? 'Имя занято'
+                  : usernameOk
+                    ? 'Имя свободно'
+                    : 'Будет отображаться в ссылке профиля'}
               </span>
             </label>
           </div>

@@ -26,10 +26,21 @@ public class UserService : IUserService
 
     public User GetUserByEmail(string email) => _userRepository.GetUserByEmail(email);
 
+    public User GetUserByUsername(string username) => _userRepository.GetUserByUsername(username);
+
+    public PagedResult<User> SearchUsers(string query, int page, int pageSize) =>
+        _userRepository.SearchUsers(query, page, pageSize);
+
     public void CreateUser(User user)
     {
+        user.Username = user.Username.Trim();
+        user.Email = user.Email.Trim();
+
         if (_userRepository.GetUserByEmail(user.Email) != null)
             throw new Exception("Пользователь с такой почтой уже существует.");
+
+        if (_userRepository.GetUserByUsername(user.Username) != null)
+            throw new Exception("Пользователь с таким именем уже существует.");
 
         _userRepository.CreateUser(user);
     }
