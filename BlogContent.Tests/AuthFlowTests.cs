@@ -144,9 +144,30 @@ public class AuthFlowTests
             return _users.FirstOrDefault(u => u.Email == email)!;
         }
 
+        public User GetUserByUsername(string username)
+        {
+            return _users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase))!;
+        }
+
         public User GetUserById(int id)
         {
             return _users.First(u => u.Id == id);
+        }
+
+        public PagedResult<User> SearchUsers(string query, int page, int pageSize)
+        {
+            var normalized = query?.Trim().ToLower() ?? string.Empty;
+            if (string.IsNullOrEmpty(normalized))
+            {
+                return new PagedResult<User>(Enumerable.Empty<User>(), 0, page, pageSize);
+            }
+
+            var users = _users.Where(u =>
+                u.Username.ToLower().Contains(normalized) ||
+                u.Email.ToLower().Contains(normalized));
+            var total = users.Count();
+            var items = users.Skip((page - 1) * pageSize).Take(pageSize);
+            return new PagedResult<User>(items, total, page, pageSize);
         }
 
         public IEnumerable<User> GetUsersByIds(IEnumerable<int> userIds) => _users.Where(u => userIds.Contains(u.Id));

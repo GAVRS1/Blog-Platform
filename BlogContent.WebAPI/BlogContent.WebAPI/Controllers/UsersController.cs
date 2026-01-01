@@ -3,7 +3,6 @@ using BlogContent.Core.Models;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -26,22 +25,29 @@ public class UsersController : ControllerBase
         return user == null ? NotFound() : Ok(user);
     }
 
+    [AllowAnonymous]
     [HttpGet("search")]
     public IActionResult Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
-    {
-        var user = _userService.GetUserByEmail(query);
-        var results = user != null ? new[] { user } : Array.Empty<User>();
-        return Ok(ToPagedResponse(results, page, pageSize));
-    }
-
-    private static PagedResponse<T> ToPagedResponse<T>(IEnumerable<T> source, int page, int pageSize)
     {
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        var items = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        var total = source.Count();
+        var result = _userService.SearchUsers(query, page, pageSize);
+        return Ok(new PagedResponse<User>(result.Items, result.Total, result.Page, result.PageSize));
+    }
 
-        return new PagedResponse<T>(items, total, page, pageSize);
+    [AllowAnonymous]
+    [HttpGet("check")]
+    public IActionResult Check([FromQuery] string? username, [FromQuery] string? email)
+    {
+        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest("Не указан username или email для проверки.");
+        }
+
+        var usernameTaken = !string.IsNullOrWhiteSpace(username) && _userService.GetUserByUsername(username) != null;
+        var emailTaken = !string.IsNullOrWhiteSpace(email) && _userService.GetUserByEmail(email) != null;
+
+        return Ok(new { usernameTaken, emailTaken });
     }
 }

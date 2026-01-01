@@ -30,7 +30,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Take(pageSize)
             .ToList();
 
-        return new PagedResult<Comment>(items, totalCount);
+        return new PagedResult<Comment>(items, totalCount, page, pageSize);
     }
 
     // Получить комментарии по ID поста с информацией о пользователях
@@ -129,7 +129,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .Take(pageSize)
             .ToList();
 
-        return new PagedResult<CommentReply>(items, totalCount);
+        return new PagedResult<CommentReply>(items, totalCount, page, pageSize);
     }
 
     // Получить лайк пользователя для комментария

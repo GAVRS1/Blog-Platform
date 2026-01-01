@@ -104,6 +104,10 @@ public class BlogContext : DbContext
             .HasMaxLength(20);
 
         modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
 

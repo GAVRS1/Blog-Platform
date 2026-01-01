@@ -7,6 +7,8 @@ public interface IUserRepository
     User GetUserById(int id);
     IEnumerable<User> GetUsersByIds(IEnumerable<int> userIds);
     User GetUserByEmail(string email);
+    User GetUserByUsername(string username);
+    PagedResult<User> SearchUsers(string query, int page, int pageSize);
     void CreateUser(User user);
     void UpdateUser(User user);
     void DeleteUser(int id);
