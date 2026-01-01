@@ -13,6 +13,8 @@ export default function PostCard({ post, onDeleted }) {
     isLiked: !!post.isLikedByCurrentUser
   }));
 
+  const attachments = useMemo(() => post.attachments || post.media || [], [post]);
+
   const author = useMemo(() => ({
     id: post.userId,
     name: post.username,
@@ -51,10 +53,10 @@ export default function PostCard({ post, onDeleted }) {
         )}
 
         {/* Media */}
-        {post.media?.length > 0 && (
+        {attachments.length > 0 && (
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {post.media.map((m) => (
-              <MediaPlayer key={m.id || m.url} media={m} />
+            {attachments.map((m) => (
+              <MediaPlayer key={m.id || m.url} media={m} type={m.type} url={m.url} />
             ))}
           </div>
         )}

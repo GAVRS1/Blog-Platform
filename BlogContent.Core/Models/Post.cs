@@ -16,6 +16,7 @@ public class Post
 
     public int UserId { get; set; }
     public User User { get; set; } = null!;
+    public ICollection<PostMedia> Media { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Like> Likes { get; set; } = [];
 }

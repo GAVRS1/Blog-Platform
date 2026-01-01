@@ -67,6 +67,8 @@ export default function PostDetailPage() {
     avatar: post.userAvatar
   }) : null, [post]);
 
+  const attachments = useMemo(() => post?.attachments || post?.media || [], [post]);
+
   const onLikeChange = (r) => {
     setPost((p) => p ? ({ ...p, isLikedByCurrentUser: !!r.liked, likeCount: r.count ?? p.likeCount }) : p);
   };
@@ -130,9 +132,11 @@ export default function PostDetailPage() {
                 <div className="mt-3 whitespace-pre-wrap break-words">{post.content}</div>
               )}
 
-              {post.media?.length > 0 && (
+              {attachments.length > 0 && (
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {post.media.map(m => <MediaPlayer key={m.id || m.url} media={m} />)}
+                  {attachments.map(m => (
+                    <MediaPlayer key={m.id || m.url} media={m} type={m.type} url={m.url} />
+                  ))}
                 </div>
               )}
 
