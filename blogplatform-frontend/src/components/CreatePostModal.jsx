@@ -11,7 +11,7 @@ export default function CreatePostModal() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]); // File[]
-  const [uploads, setUploads] = useState([]); // [{url, mediaType, mimeType, sizeBytes}]
+  const [attachments, setAttachments] = useState([]); // [{url, type, mimeType, sizeBytes}]
   const [loading, setLoading] = useState(false);
 
   // Открытие по глобальному событию
@@ -26,7 +26,7 @@ export default function CreatePostModal() {
     setOpen(false);
     setContent('');
     setFiles([]);
-    setUploads([]);
+    setAttachments([]);
   };
 
   const onPickFiles = (e) => {
@@ -46,7 +46,7 @@ export default function CreatePostModal() {
 
   const removeFile = (idx) => {
     setFiles((arr) => arr.filter((_, i) => i !== idx));
-    setUploads((arr) => arr.filter((_, i) => i !== idx));
+    setAttachments((arr) => arr.filter((_, i) => i !== idx));
   };
 
   const mediaTypeFromFile = (file) => {
@@ -67,23 +67,23 @@ export default function CreatePostModal() {
       const res = await mediaService.upload(f, type);
       results.push({
         url: res.url,
-        mediaType: type.includes('image') ? 'Image' :
-                   type.includes('video') ? 'Video' :
-                   type.includes('audio') ? 'Audio' : 'Other',
+        type: type.includes('image') ? 'Image' :
+              type.includes('video') ? 'Video' :
+              type.includes('audio') ? 'Audio' : 'Other',
         mimeType: f.type,
         sizeBytes: f.size
       });
     }
-    setUploads(results);
+    setAttachments(results);
     return results;
   };
 
   // Мэппинг под бэкендовый enum ContentType { Article, Photo, Video, Music }
-  const detectContentType = () => {
+  const detectContentType = (mediaList = attachments) => {
     const hasText = !!content.trim();
-    const hasImg = uploads.some(u => u.mediaType === 'Image');
-    const hasVid = uploads.some(u => u.mediaType === 'Video');
-    const hasAud = uploads.some(u => u.mediaType === 'Audio');
+    const hasImg = mediaList.some(u => u.type === 'Image');
+    const hasVid = mediaList.some(u => u.type === 'Video');
+    const hasAud = mediaList.some(u => u.type === 'Audio');
 
     // Если есть смешение типов или есть текст — это Article
     const mixed =
@@ -110,14 +110,14 @@ export default function CreatePostModal() {
     }
     setLoading(true);
     try {
-      let uploaded = uploads;
-      if (files.length > 0 && uploads.length !== files.length) {
+      let uploaded = attachments;
+      if (files.length > 0 && attachments.length !== files.length) {
         uploaded = await uploadAll();
       }
       const payload = {
         content: content || '',
-        contentType: detectContentType(), // Article/Photo/Video/Music
-        media: uploaded // [{ url, mediaType: Image|Video|Audio|Other, mimeType, sizeBytes }]
+        contentType: detectContentType(uploaded), // Article/Photo/Video/Music
+        attachments: uploaded // [{ url, type: Image|Video|Audio|Other, mimeType, sizeBytes }]
       };
       await postsService.create(payload);
       toast.success('Пост опубликован!');

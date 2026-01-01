@@ -1,35 +1,60 @@
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { API_BASE } from '../api/config';
 
-export default function MediaPlayer({ url, type, className = '' }) {
+export default function MediaPlayer({ media, url, type, className = '' }) {
   const [error, setError] = useState(false);
-  
-  if (!url || error) return null;
+
+  const resolved = useMemo(() => {
+    const source = media || {};
+    const rawUrl = url || source.url || source.thumbnailUrl;
+    const rawType = (type || source.type || source.mediaType || '').toString().toLowerCase();
+
+    const normalizedType = rawType.includes('image')
+      ? 'image'
+      : rawType.includes('video')
+      ? 'video'
+      : rawType.includes('audio')
+      ? 'audio'
+      : rawType.includes('other') || rawType.includes('file')
+      ? 'file'
+      : undefined;
+
+    return { rawUrl, normalizedType };
+  }, [media, type, url]);
+
+  if (!resolved.rawUrl || error) return null;
 
   // Правильная обработка URL
   const getMediaUrl = (mediaUrl) => {
     if (!mediaUrl) return null;
-    
+
     // Если URL уже полный, используем как есть
     if (mediaUrl.startsWith('http')) return mediaUrl;
-    
+
     // Убираем лишние слеши и формируем правильный URL
-    const cleaned = mediaUrl.replace(/^\/+/, '').replace(/\\/g, '/');
+    const cleaned = mediaUrl.replace(/\\/g, '/');
     const base = API_BASE || '';
-    return `${base}/uploads/${cleaned}`;
+    if (cleaned.startsWith('/uploads')) {
+      return `${base}${cleaned}`;
+    }
+    if (cleaned.startsWith('uploads/')) {
+      return `${base}/${cleaned}`;
+    }
+    const normalized = cleaned.replace(/^\/+/, '');
+    return `${base}/uploads/${normalized}`;
   };
 
-  const src = getMediaUrl(url);
-  
+  const src = getMediaUrl(resolved.rawUrl);
+
   if (!src) return null;
 
   const handleError = () => {
     setError(true);
   };
 
-  switch (type) {
+  switch (resolved.normalizedType) {
     case 'image':
       return (
         <LazyLoadImage
@@ -50,7 +75,7 @@ export default function MediaPlayer({ url, type, className = '' }) {
           onError={handleError}
           preload="metadata"
           playsInline
-          webkit-playsinline
+          webkit-playsinline="true"
         >
           Ваш браузер не поддерживает воспроизведение видео.
         </video>
@@ -70,6 +95,15 @@ export default function MediaPlayer({ url, type, className = '' }) {
         </div>
       );
     default:
-      return null;
+      return (
+        <a
+          href={src}
+          target="_blank"
+          rel="noreferrer"
+          className={`w-full p-4 bg-base-200 rounded-xl flex items-center gap-2 hover:bg-base-300 transition ${className}`}
+        >
+          📎 <span className="truncate">{media?.fileName || 'Вложение'}</span>
+        </a>
+      );
   }
 }

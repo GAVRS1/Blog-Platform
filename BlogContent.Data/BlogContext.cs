@@ -18,6 +18,7 @@ public class BlogContext : DbContext
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<CommentReply> CommentReplies { get; set; }
     public DbSet<EmailVerification> EmailVerifications { get; set; }
+    public DbSet<PostMedia> PostMedias { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +57,12 @@ public class BlogContext : DbContext
             .HasMany(p => p.Likes)
             .WithOne(l => l.Post)
             .HasForeignKey(l => l.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Media)
+            .WithOne(m => m.Post)
+            .HasForeignKey(m => m.PostId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Comment>()
@@ -103,6 +110,11 @@ public class BlogContext : DbContext
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        modelBuilder.Entity<PostMedia>()
+            .Property(m => m.Type)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
@@ -140,5 +152,8 @@ public class BlogContext : DbContext
         modelBuilder.Entity<EmailVerification>()
             .HasIndex(ev => ev.TemporaryKey)
             .IsUnique();
+
+        modelBuilder.Entity<PostMedia>()
+            .HasIndex(m => m.PostId);
     }
 }

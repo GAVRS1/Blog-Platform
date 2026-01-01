@@ -1,3 +1,4 @@
+using BlogContent.Core.Enums;
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using BlogContent.WebAPI.DTOs;
@@ -25,14 +26,19 @@ public class PostsController : ControllerBase
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
         var posts = _postService.GetAllPosts(page, pageSize);
-        return Ok(ToPagedResponse(posts, page, pageSize));
+        var currentUserId = TryGetUserId(out var userId) ? userId : (int?)null;
+        var mapped = posts.Items.Select(p => ToResponse(p, currentUserId)).ToList();
+
+        return Ok(ToPagedResponse(new PagedResult<PostResponseDto>(mapped, posts.TotalCount), page, pageSize));
     }
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
         var post = _postService.GetPostById(id);
-        return post == null ? NotFound() : Ok(post);
+        var currentUserId = TryGetUserId(out var userId) ? userId : (int?)null;
+
+        return post == null ? NotFound() : Ok(ToResponse(post, currentUserId));
     }
 
     [HttpGet("user/{userId}")]
@@ -40,7 +46,9 @@ public class PostsController : ControllerBase
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
         var posts = _postService.GetPostsByUser(userId, page, pageSize);
-        return Ok(ToPagedResponse(posts, page, pageSize));
+        var currentUserId = TryGetUserId(out var authUserId) ? authUserId : (int?)null;
+        var mapped = posts.Items.Select(p => ToResponse(p, currentUserId)).ToList();
+        return Ok(ToPagedResponse(new PagedResult<PostResponseDto>(mapped, posts.TotalCount), page, pageSize));
     }
 
     [HttpPost]
@@ -51,20 +59,41 @@ public class PostsController : ControllerBase
             return Unauthorized();
         }
 
+        var attachmentDtos = dto.Attachments ?? new List<PostMediaDto>();
+
+        var validAttachments = attachmentDtos
+            .Where(a => !string.IsNullOrWhiteSpace(a.Url))
+            .ToList();
+
+        if (validAttachments.Count > 10)
+        {
+            return BadRequest("Максимум 10 вложений на пост.");
+        }
+
+        var attachments = validAttachments
+            .Select(a => new PostMedia
+            {
+                Url = a.Url ?? string.Empty,
+                MimeType = a.MimeType ?? string.Empty,
+                SizeBytes = a.SizeBytes,
+                Type = Enum.IsDefined(typeof(PostMediaType), a.Type) ? a.Type : PostMediaType.Other
+            })
+            .ToList();
+
+        var contentType = DetermineContentType(dto.Content, attachments);
+
         var post = new Post
         {
-            Title = dto.Title,
-            Content = dto.Content,
-            ContentType = dto.ContentType,
-            ImageUrl = dto.ImageUrl,
-            VideoUrl = dto.VideoUrl,
-            AudioUrl = dto.AudioUrl,
+            Title = dto.Title ?? string.Empty,
+            Content = dto.Content ?? string.Empty,
+            ContentType = contentType,
+            Media = attachments,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
         };
 
         _postService.CreatePost(post);
-        return CreatedAtAction(nameof(GetById), new { id = post.Id }, post);
+        return CreatedAtAction(nameof(GetById), new { id = post.Id }, ToResponse(post, userId));
     }
 
     [HttpDelete("{id}")]
@@ -91,5 +120,73 @@ public class PostsController : ControllerBase
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out userId);
+    }
+
+    private static PostResponseDto ToResponse(Post post, int? currentUserId)
+    {
+        var likeCount = post.Likes?.Count ?? 0;
+        var commentCount = post.Comments?.Count ?? 0;
+        var isLiked = currentUserId.HasValue &&
+                      (post.Likes?.Any(l => l.UserId == currentUserId.Value) ?? false);
+
+        var attachments = post.Media?.Select(m => new PostMediaDto
+        {
+            Id = m.Id,
+            Url = m.Url,
+            MimeType = m.MimeType,
+            SizeBytes = m.SizeBytes,
+            Type = m.Type
+        }).ToList() ?? [];
+
+        return new PostResponseDto
+        {
+            Id = post.Id,
+            Title = post.Title,
+            Content = post.Content,
+            ContentType = post.ContentType,
+            CreatedAt = post.CreatedAt,
+            UserId = post.UserId,
+            Username = post.User?.Username ?? string.Empty,
+            UserAvatar = post.User?.Profile?.ProfilePictureUrl,
+            IsOwn = currentUserId.HasValue && post.UserId == currentUserId.Value,
+            IsLikedByCurrentUser = isLiked,
+            LikeCount = likeCount,
+            CommentCount = commentCount,
+            Attachments = attachments
+        };
+    }
+
+    private static ContentType DetermineContentType(string content, IReadOnlyCollection<PostMedia> attachments)
+    {
+        var hasText = !string.IsNullOrWhiteSpace(content);
+        var hasImages = attachments.Any(a => a.Type == PostMediaType.Image);
+        var hasVideos = attachments.Any(a => a.Type == PostMediaType.Video);
+        var hasAudio = attachments.Any(a => a.Type == PostMediaType.Audio);
+        var hasOther = attachments.Any(a => a.Type == PostMediaType.Other);
+
+        var mediaKinds = new[] { hasImages, hasVideos, hasAudio, hasOther }.Count(x => x);
+        var isMixedMedia = mediaKinds > 1;
+
+        if (hasText || isMixedMedia || hasOther)
+        {
+            return ContentType.Article;
+        }
+
+        if (hasImages)
+        {
+            return ContentType.Photo;
+        }
+
+        if (hasVideos)
+        {
+            return ContentType.Video;
+        }
+
+        if (hasAudio)
+        {
+            return ContentType.Music;
+        }
+
+        return ContentType.Article;
     }
 }
