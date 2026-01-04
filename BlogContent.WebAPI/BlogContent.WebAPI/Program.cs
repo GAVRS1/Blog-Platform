@@ -3,6 +3,7 @@ using BlogContent.Data;
 using BlogContent.Data.Repositories;
 using BlogContent.Services;
 using BlogContent.Services.Options;
+using BlogContent.WebAPI.Hubs;
 using BlogContent.WebAPI.Options;
 using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +17,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace BlogContent.WebAPI;
 
@@ -52,6 +54,7 @@ public class Program
         builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
+        builder.Services.AddSignalR();
 
         // JWT
         var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
@@ -86,6 +89,22 @@ public class Program
                     ValidIssuer = jwtOptions.Issuer,
                     ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
@@ -166,6 +185,8 @@ public class Program
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
+            endpoints.MapHub<ChatHub>("/hubs/chat");
+            endpoints.MapHub<NotificationsHub>("/hubs/notifications");
         });
         app.Run();
     }
