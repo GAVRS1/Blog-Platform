@@ -34,15 +34,16 @@ public class LocalMediaStorageService : IMediaStorageService
             throw new ArgumentNullException(nameof(file), "Файл не передан.");
         }
 
+        if (file.Length <= 0)
+        {
+            _logger.LogWarning("Попытка загрузить пустой файл {FileName}.", file.FileName);
+            throw new InvalidOperationException("Файл пустой.");
+        }
+
         var typeOptions = _options.GetTypeOptions(mediaType);
         if (typeOptions == null)
         {
             throw new ArgumentException("Указан неподдерживаемый тип медиа.", nameof(mediaType));
-        }
-
-        if (file.Length <= 0)
-        {
-            throw new InvalidOperationException("Файл пустой.");
         }
 
         var allowedMimeTypes = typeOptions.AllowedMimeTypes ?? Array.Empty<string>();
@@ -50,11 +51,21 @@ public class LocalMediaStorageService : IMediaStorageService
         if (allowedMimeTypes.Length > 0 &&
             !allowedMimeTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
         {
+            _logger.LogWarning(
+                "Отклонена загрузка файла с неподдерживаемым MIME-типом {MimeType} для {MediaType}.",
+                file.ContentType,
+                mediaType);
             throw new InvalidOperationException($"MIME-тип '{file.ContentType}' не поддерживается для типа '{mediaType}'.");
         }
 
         if (typeOptions.MaxSizeBytes > 0 && file.Length > typeOptions.MaxSizeBytes)
         {
+            _logger.LogWarning(
+                "Отклонена загрузка файла {FileName}: размер {Size} превышает лимит {Limit} байт для {MediaType}.",
+                file.FileName,
+                file.Length,
+                typeOptions.MaxSizeBytes,
+                mediaType);
             throw new InvalidOperationException($"Размер файла превышает максимально допустимый ({typeOptions.MaxSizeBytes} байт).");
         }
 
@@ -64,10 +75,10 @@ public class LocalMediaStorageService : IMediaStorageService
         Directory.CreateDirectory(targetDirectory);
 
         var extension = Path.GetExtension(file.FileName);
-        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var fileName = GenerateUniqueFileName(targetDirectory, extension);
         var filePath = Path.Combine(targetDirectory, fileName);
 
-        await using (var stream = File.Create(filePath))
+        await using (var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
         {
             await file.CopyToAsync(stream, cancellationToken);
         }
@@ -100,5 +111,24 @@ public class LocalMediaStorageService : IMediaStorageService
         }
 
         return uploadsRoot;
+    }
+
+    private string GenerateUniqueFileName(string targetDirectory, string extension)
+    {
+        const int maxAttempts = 5;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var filePath = Path.Combine(targetDirectory, fileName);
+
+            if (!File.Exists(filePath))
+            {
+                return fileName;
+            }
+
+            _logger.LogWarning("Коллизия имени файла {FileName}, пробуем другое имя.", fileName);
+        }
+
+        throw new InvalidOperationException("Не удалось сгенерировать уникальное имя файла для загрузки.");
     }
 }

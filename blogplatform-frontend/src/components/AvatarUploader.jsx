@@ -8,8 +8,9 @@ import toast from 'react-hot-toast';
  * Пропсы:
  *  - onUploaded(url: string): коллбэк с полученным от сервера абсолютным/относительным URL
  *  - initialUrl?: string — стартовая картинка (если есть)
+ *  - usePublicUpload?: boolean — использовать публичный эндпоинт (для регистрации)
  */
-export default function AvatarUploader({ onUploaded, initialUrl }) {
+export default function AvatarUploader({ onUploaded, initialUrl, usePublicUpload = false }) {
   const inputRef = useRef(null);
   const [preview, setPreview] = useState(initialUrl || '');
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,8 @@ export default function AvatarUploader({ onUploaded, initialUrl }) {
     setLoading(true);
     try {
       // stricto: type=image как требует твой /api/Media/upload
-      const res = await mediaService.upload(file, 'image');
+      const uploader = usePublicUpload ? mediaService.uploadPublic : mediaService.upload;
+      const res = await uploader(file, 'image');
 
       // Сервер должен вернуть { url, ... }
       const url = res.url;
