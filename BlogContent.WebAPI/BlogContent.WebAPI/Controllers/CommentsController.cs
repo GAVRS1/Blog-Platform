@@ -23,9 +23,14 @@ public class CommentsController : ControllerBase
     [HttpGet("post/{postId}")]
     public IActionResult GetByPostId(int postId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         (page, pageSize) = NormalizePagination(page, pageSize);
         var comments = _commentService.GetCommentsByPostId(postId, page, pageSize);
-        return Ok(ToPagedResponse(comments, page, pageSize));
+        return Ok(ToPagedResponse(comments, page, pageSize, userId));
     }
 
     [HttpPost]
@@ -45,7 +50,8 @@ public class CommentsController : ControllerBase
         };
 
         _commentService.CreateComment(comment);
-        return CreatedAtAction(nameof(GetByPostId), new { postId = dto.PostId }, comment);
+        var saved = _commentService.GetCommentByIdWithDetails(comment.Id) ?? comment;
+        return CreatedAtAction(nameof(GetByPostId), new { postId = dto.PostId }, saved.ToResponseDto(userId));
     }
 
     [HttpPost("{commentId}/reply")]
@@ -65,7 +71,7 @@ public class CommentsController : ControllerBase
         };
 
         var saved = _commentService.AddReplyWithReturn(reply);
-        return Ok(saved);
+        return Ok(saved.ToResponseDto());
     }
 
     [HttpGet("{commentId}/replies")]
@@ -83,10 +89,11 @@ public class CommentsController : ControllerBase
         return NoContent();
     }
 
-    private static PagedResponse<T> ToPagedResponse<T>(PagedResult<T> source, int page, int pageSize)
-    {
-        return new PagedResponse<T>(source.Items, source.TotalCount, page, pageSize);
-    }
+    private static PagedResponse<CommentReplyResponseDto> ToPagedResponse(PagedResult<CommentReply> source, int page, int pageSize) =>
+        new(source.Items.Select(r => r.ToResponseDto()), source.TotalCount, page, pageSize);
+
+    private static PagedResponse<CommentResponseDto> ToPagedResponse(PagedResult<Comment> source, int page, int pageSize, int currentUserId) =>
+        new(source.Items.Select(c => c.ToResponseDto(currentUserId)), source.TotalCount, page, pageSize);
 
     private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)
     {

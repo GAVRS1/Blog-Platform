@@ -19,6 +19,9 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         var query = _context.Comments
             .Include(c => c.User)
+                .ThenInclude(u => u.Profile)
+            .Include(c => c.Likes)
+            .Include(c => c.Replies)
             .Where(c => c.PostId == postId)
             .OrderByDescending(c => c.CreatedAt)
             .AsNoTracking()
@@ -118,6 +121,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         var query = _context.CommentReplies
             .Include(r => r.User)
+                .ThenInclude(u => u.Profile)
             .Where(r => r.CommentId == commentId)
             .OrderBy(r => r.CreatedAt)
             .AsNoTracking()
@@ -155,6 +159,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         return _context.CommentReplies
             .Include(r => r.User)
+                .ThenInclude(u => u.Profile)
             .Where(r => r.CommentId == commentId)
             .OrderBy(r => r.CreatedAt)
             .AsNoTracking()
@@ -166,9 +171,11 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         return _context.Comments
             .Include(c => c.User)
+                .ThenInclude(u => u.Profile)
             .Include(c => c.Likes)
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.Profile)
             .AsNoTracking()
             .FirstOrDefault(c => c.Id == id);
     }
@@ -178,9 +185,11 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         return _context.Comments
             .Include(c => c.User)
+                .ThenInclude(u => u.Profile)
             .Include(c => c.Likes)
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.Profile)
             .Where(c => c.PostId == postId)
             .AsNoTracking()
             .ToList();
@@ -199,6 +208,10 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     {
         _context.CommentReplies.Add(reply);
         _context.SaveChanges();
-        return reply;
+        return _context.CommentReplies
+            .Include(r => r.User)
+                .ThenInclude(u => u.Profile)
+            .AsNoTracking()
+            .First(r => r.Id == reply.Id);
     }
 }
