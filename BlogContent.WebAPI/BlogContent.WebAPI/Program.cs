@@ -55,6 +55,9 @@ public class Program
         builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
+        builder.Services.AddSingleton<IFollowService, InMemoryFollowService>();
+        builder.Services.AddSingleton<IMessageService, InMemoryMessageService>();
+        builder.Services.AddSingleton<INotificationService, InMemoryNotificationService>();
         builder.Services.AddSignalR();
 
         // JWT
