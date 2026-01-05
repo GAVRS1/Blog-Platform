@@ -3,6 +3,7 @@ using BlogContent.Core.Models;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -22,7 +23,7 @@ public class UsersController : ControllerBase
     public IActionResult GetById(int id)
     {
         var user = _userService.GetUserById(id);
-        return user == null ? NotFound() : Ok(user);
+        return user == null ? NotFound() : Ok(ToResponse(user));
     }
 
     [AllowAnonymous]
@@ -33,7 +34,7 @@ public class UsersController : ControllerBase
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
         var result = _userService.SearchUsers(query, page, pageSize);
-        return Ok(new PagedResponse<User>(result.Items, result.Total, result.Page, result.PageSize));
+        return Ok(ToPagedResponse(result));
     }
 
     [AllowAnonymous]
@@ -49,5 +50,13 @@ public class UsersController : ControllerBase
         var emailTaken = !string.IsNullOrWhiteSpace(email) && _userService.GetUserByEmail(email) != null;
 
         return Ok(new { usernameTaken, emailTaken });
+    }
+
+    private static UserResponseDto ToResponse(User user) => user.ToDto();
+
+    private static PagedResponse<UserResponseDto> ToPagedResponse(PagedResult<User> source)
+    {
+        var items = source.Items.Select(ToResponse);
+        return new PagedResponse<UserResponseDto>(items, source.Total, source.Page, source.PageSize);
     }
 }
