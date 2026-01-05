@@ -81,8 +81,7 @@ public class CommentService : ICommentService
 
     public CommentReply AddReplyWithReturn(CommentReply reply)
     {
-        _commentRepository.AddReply(reply);
-        return reply;
+        return _commentRepository.AddReplyWithReturn(reply);
     }
 
     private static (int Page, int PageSize) NormalizePagination(int page, int pageSize)

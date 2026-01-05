@@ -3,7 +3,9 @@ using BlogContent.Core.Models;
 using BlogContent.WebAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
+using System.Security.Claims;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -52,11 +54,54 @@ public class UsersController : ControllerBase
         return Ok(new { usernameTaken, emailTaken });
     }
 
+    [HttpPut("profile")]
+    public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = _userService.GetUserById(userId);
+        user.Profile ??= new Profile { UserId = userId };
+
+        user.Profile.FullName = request.FullName?.Trim() ?? string.Empty;
+        user.Profile.Bio = request.Bio?.Trim() ?? string.Empty;
+        user.Profile.ProfilePictureUrl = request.ProfilePictureUrl?.Trim() ?? string.Empty;
+
+        if (request.BirthDate.HasValue)
+        {
+            var birth = request.BirthDate.Value;
+            user.Profile.BirthDate = birth;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var age = today.Year - birth.Year;
+            if (birth.AddYears(age) > today)
+            {
+                age--;
+            }
+            user.Profile.Age = Math.Max(age, 0);
+        }
+        else
+        {
+            user.Profile.BirthDate = default;
+            user.Profile.Age = 0;
+        }
+
+        _userService.UpdateUser(user);
+        return Ok(ToResponse(user));
+    }
+
     private static UserResponseDto ToResponse(User user) => user.ToDto();
 
     private static PagedResponse<UserResponseDto> ToPagedResponse(PagedResult<User> source)
     {
         var items = source.Items.Select(ToResponse);
         return new PagedResponse<UserResponseDto>(items, source.Total, source.Page, source.PageSize);
+    }
+
+    private bool TryGetUserId(out int userId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out userId);
     }
 }
