@@ -1,42 +1,16 @@
-import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { messagesService } from '@/services/messages';
-import { notificationsService } from '@/services/notifications';
-
-const PUBLIC = ['/login', '/register', '/verify', '/appeal', '/404'];
+import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
+import { useUnreadBadges } from '@/hooks/useUnreadBadges';
 
 export default function BottomNav() {
-  const [unreadNotif, setUnreadNotif] = useState(0);
-  const [unreadMsgs, setUnreadMsgs] = useState(0);
   const { user } = useAuth();
   const loc = useLocation();
-  const isPublicRoute = PUBLIC.some(p => loc.pathname.startsWith(p));
-
-  useEffect(() => {
-    if (!user || isPublicRoute) {
-      setUnreadNotif(0);
-      setUnreadMsgs(0);
-      return; // ← НИЧЕГО НЕ ЗАПРАШИВАЕМ до логина
-    }
-
-    let alive = true;
-    (async () => {
-      try {
-        const n = await notificationsService.unreadCount();
-        if (alive) setUnreadNotif(n.unread || 0);
-      } catch {}
-      try {
-        const inbox = await messagesService.getInbox();
-        if (alive) {
-          const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
-          setUnreadMsgs(sum);
-        }
-      } catch {}
-    })();
-
-    return () => { alive = false; };
-  }, [isPublicRoute, loc.pathname, user]);
+  const isPublicRoute = isPublicNavPath(loc.pathname);
+  const { messages: unreadMsgs, notifications: unreadNotif } = useUnreadBadges({
+    user,
+    enabled: !!user && !isPublicRoute,
+  });
 
   const linkClass = ({ isActive }) =>
     `btn btn-ghost rounded-none flex-1 flex items-center justify-center ${isActive ? 'text-primary' : 'text-base-content'}`;
@@ -72,30 +46,35 @@ export default function BottomNav() {
 
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
 
+  if (isPublicRoute) return null;
+
+  const mobileItems = NAV_ITEMS.filter(item => item.placements.includes('mobile')).filter(item => {
+    if (!item.roles?.length) return true;
+    return !!user && item.roles.includes(user.status);
+  });
+
+  const badges = {
+    messages: unreadMsgs,
+    notifications: unreadNotif,
+  };
+
   return (
     <div className="relative">
       <div className="btm-nav bg-base-100 border-t border-base-300">
-        <NavLink to="/" className={linkClass}><i className="fas fa-home"></i></NavLink>
-        <NavLink to="/messages" className={linkClass}>
-          <span className="relative">
-            <i className="fas fa-comments"></i>
-            {unreadMsgs > 0 && <span className="badge badge-xs badge-primary absolute -top-1 -right-2">{unreadMsgs}</span>}
-          </span>
-        </NavLink>
-        <NavLink to="/notifications" className={linkClass}>
-          <span className="relative">
-            <i className="fas fa-bell"></i>
-            {unreadNotif > 0 && <span className="badge badge-xs badge-secondary absolute -top-1 -right-2">{unreadNotif}</span>}
-          </span>
-        </NavLink>
-        <NavLink to="/profile" className={linkClass}>
-          {({ isActive }) => (
-            <span className="flex items-center gap-2">
-              {renderProfileIcon(isActive)}
-            </span>
-          )}
-        </NavLink>
-        <NavLink to="/settings" className={linkClass}><i className="fas fa-cog"></i></NavLink>
+        {mobileItems.map(item => (
+          <NavLink key={item.key} to={item.to} className={linkClass}>
+            {({ isActive }) => (
+              <span className="relative flex items-center gap-2">
+                {item.key === 'profile' ? renderProfileIcon(isActive) : <i className={`fas ${item.icon}`}></i>}
+                {item.badgeKey && badges[item.badgeKey] > 0 && (
+                  <span className={`badge badge-xs ${item.badgeClass || 'badge-primary'} absolute -top-1 -right-2`}>
+                    {badges[item.badgeKey]}
+                  </span>
+                )}
+              </span>
+            )}
+          </NavLink>
+        ))}
       </div>
 
       <button
