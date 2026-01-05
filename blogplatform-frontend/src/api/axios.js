@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { API_BASE, API_PREFIX } from './config';
 import { AUTH_TOKEN_COOKIE, getCookie, removeCookie } from '@/utils/cookies';
+import { getConsentState } from '@/hooks/useCookieConsent';
 
 const baseURL = API_BASE ? `${API_BASE}${API_PREFIX}` : API_PREFIX;
 
@@ -15,6 +16,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (getConsentState() === 'declined') {
+    return Promise.reject(new Error('Cookie consent declined'));
+  }
   const token = getCookie(AUTH_TOKEN_COOKIE);
   if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;

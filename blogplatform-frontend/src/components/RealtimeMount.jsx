@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { connectRealtime } from '@/realtime';
 import { useAuth } from '@/hooks/useAuth';
 import { AUTH_TOKEN_COOKIE, getCookie } from '@/utils/cookies';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 const PUBLIC = ['/login', '/register', '/verify', '/appeal', '/404'];
 
@@ -10,9 +11,16 @@ export default function RealtimeMount() {
   const ref = useRef(null);
   const loc = useLocation();
   const { user } = useAuth();
+  const { status } = useCookieConsent();
 
   useEffect(() => {
-    if (user === undefined) return;
+    if (user === undefined || status !== 'accepted') {
+      if (ref.current) {
+        ref.current.stop();
+        ref.current = null;
+      }
+      return;
+    }
 
     const token = getCookie(AUTH_TOKEN_COOKIE);
     const isPublic = PUBLIC.some(p => loc.pathname.startsWith(p));
@@ -43,7 +51,7 @@ export default function RealtimeMount() {
         ref.current = null;
       }
     };
-  }, [loc.pathname, user]);
+  }, [loc.pathname, status, user]);
 
   return null;
 }
