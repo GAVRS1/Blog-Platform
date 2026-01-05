@@ -1,18 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { connectRealtime } from '@/realtime';
+import { useAuth } from '@/hooks/useAuth';
+import { AUTH_TOKEN_COOKIE, getCookie } from '@/utils/cookies';
 
 const PUBLIC = ['/login', '/register', '/verify', '/appeal', '/404'];
 
 export default function RealtimeMount() {
   const ref = useRef(null);
   const loc = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const isPublic = PUBLIC.some(p => loc.pathname.startsWith(p));
+    if (user === undefined) return;
 
-    if (!token || isPublic) {
+    const token = getCookie(AUTH_TOKEN_COOKIE);
+    const isPublic = PUBLIC.some(p => loc.pathname.startsWith(p));
+    const hasSession = Boolean(token || user);
+
+    if (!hasSession || isPublic) {
       // если уже было соединение — останавливаем при уходе на публичную страницу
       if (ref.current) {
         ref.current.stop();
@@ -37,7 +43,7 @@ export default function RealtimeMount() {
         ref.current = null;
       }
     };
-  }, [loc.pathname]);
+  }, [loc.pathname, user]);
 
   return null;
 }

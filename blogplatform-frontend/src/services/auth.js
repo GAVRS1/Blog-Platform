@@ -1,5 +1,15 @@
 // src/services/auth.js
 import api from '@/api/axios';
+import { AUTH_TOKEN_COOKIE, removeCookie, setCookie } from '@/utils/cookies';
+
+function persistToken(token) {
+  if (!token) return;
+  setCookie(AUTH_TOKEN_COOKIE, token, {
+    sameSite: 'Lax',
+    secure: undefined, // falls back to protocol check in cookies helper
+    path: '/',
+  });
+}
 
 export const authService = {
   /**
@@ -33,7 +43,7 @@ export const authService = {
    */
   async completeRegister(payload) {
     const { data } = await api.post('/Auth/register/complete', payload);
-    if (data?.token) localStorage.setItem('token', data.token);
+    if (data?.token) persistToken(data.token);
     return data;
   },
 
@@ -50,7 +60,7 @@ export const authService = {
    */
   async login(email, password) {
     const { data } = await api.post('/Auth/login', { email, password });
-    if (data?.token) localStorage.setItem('token', data.token);
+    if (data?.token) persistToken(data.token);
     return data;
   },
 
@@ -63,7 +73,7 @@ export const authService = {
   },
 
   logout() {
-    localStorage.removeItem('token');
+    removeCookie(AUTH_TOKEN_COOKIE, { path: '/' });
     window.location.href = '/login';
   },
 };

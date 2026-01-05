@@ -14,8 +14,7 @@ export default function BottomNav() {
   const isPublicRoute = PUBLIC.some(p => loc.pathname.startsWith(p));
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || isPublicRoute) {
+    if (!user || isPublicRoute) {
       setUnreadNotif(0);
       setUnreadMsgs(0);
       return; // ← НИЧЕГО НЕ ЗАПРАШИВАЕМ до логина
@@ -37,7 +36,7 @@ export default function BottomNav() {
     })();
 
     return () => { alive = false; };
-  }, [isPublicRoute, loc.pathname]);
+  }, [isPublicRoute, loc.pathname, user]);
 
   const linkClass = ({ isActive }) =>
     `btn btn-ghost rounded-none flex-1 flex items-center justify-center ${isActive ? 'text-primary' : 'text-base-content'}`;
