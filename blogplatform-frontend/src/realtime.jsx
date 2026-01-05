@@ -5,18 +5,20 @@ import { API_BASE } from './api/config';
 
 export function connectRealtime(jwt, handlers = {}) {
   const { onMessage, onNotification } = handlers;
+  const baseOptions = {
+    withCredentials: true,
+  };
+  const buildOptions = () => (jwt
+    ? { ...baseOptions, accessTokenFactory: () => jwt }
+    : { ...baseOptions });
 
   const chat = new signalR.HubConnectionBuilder()
-    .withUrl(`${API_BASE}/hubs/chat`, {
-      accessTokenFactory: () => jwt
-    })
+    .withUrl(`${API_BASE}/hubs/chat`, buildOptions())
     .withAutomaticReconnect()
     .build();
 
   const notify = new signalR.HubConnectionBuilder()
-    .withUrl(`${API_BASE}/hubs/notifications`, {
-      accessTokenFactory: () => jwt
-    })
+    .withUrl(`${API_BASE}/hubs/notifications`, buildOptions())
     .withAutomaticReconnect()
     .build();
 
