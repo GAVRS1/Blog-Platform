@@ -111,7 +111,7 @@ public class AuthController : ControllerBase
         }
 
         var user = _userService.GetUserById(userId);
-        return user == null ? NotFound() : Ok(user);
+        return user == null ? NotFound() : Ok(user.ToDto());
     }
 
     private bool TryGetUserId(out int userId)
