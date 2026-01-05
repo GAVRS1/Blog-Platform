@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { mediaService } from '@/services/media';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 /**
  * Простой загрузчик аватара.
@@ -12,7 +13,7 @@ import toast from 'react-hot-toast';
  */
 export default function AvatarUploader({ onUploaded, initialUrl, usePublicUpload = false }) {
   const inputRef = useRef(null);
-  const [preview, setPreview] = useState(initialUrl || '');
+  const [preview, setPreview] = useState(getAvatarUrl(initialUrl));
   const [loading, setLoading] = useState(false);
 
   const onPick = () => inputRef.current?.click();
@@ -50,12 +51,13 @@ export default function AvatarUploader({ onUploaded, initialUrl, usePublicUpload
       // Прокидываем наверх
       onUploaded?.(url);
 
+      setPreview(getAvatarUrl(url));
       toast.success('Аватар загружен');
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data || err?.message || 'Не удалось загрузить аватар');
       // если аплоад не удался — откатываем превью
-      setPreview(initialUrl || '');
+      setPreview(getAvatarUrl(initialUrl));
     } finally {
       setLoading(false);
     }

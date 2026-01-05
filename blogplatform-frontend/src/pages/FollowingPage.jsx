@@ -5,6 +5,7 @@ import { followsService } from '@/services/follows';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import FollowButton from '@/components/FollowButton';
+import { getAvatarUrl } from '@/utils/avatar';
 
 export default function FollowingPage() {
   const { id } = useParams();
@@ -49,7 +50,7 @@ export default function FollowingPage() {
               <div className="card-body flex-row items-center gap-4">
                 <div className="avatar">
                   <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                    <img src={u.profile?.profilePictureUrl || '/avatar.png'} alt="" />
+                    <img src={getAvatarUrl(u.profile?.profilePictureUrl)} alt="" />
                   </div>
                 </div>
                 <div className="flex-1">

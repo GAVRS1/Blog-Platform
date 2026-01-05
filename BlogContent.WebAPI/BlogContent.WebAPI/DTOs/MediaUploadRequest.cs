@@ -15,9 +15,7 @@ public class MediaUploadRequest
     public IFormFile File { get; set; } = default!;
 
     /// <summary>
-    /// The media category: image, video, audio or file.
+    /// The media category: image, video, audio, file or other. Optional for auto-detection.
     /// </summary>
-    [Required]
-    [RegularExpression("^(image|video|audio|file)$", ErrorMessage = "Тип файла должен быть image, video, audio или file.")]
-    public string Type { get; set; } = string.Empty;
+    public string? Type { get; set; }
 }

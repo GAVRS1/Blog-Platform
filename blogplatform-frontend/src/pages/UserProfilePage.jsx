@@ -9,6 +9,7 @@ import { usersService } from '@/services/users';
 import { followsService } from '@/services/follows';
 import { blocksService } from '@/services/blocks';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 export default function UserProfilePage() {
   const { id } = useParams();
@@ -76,7 +77,7 @@ export default function UserProfilePage() {
           <div className="flex items-start gap-4">
             <div className="avatar">
               <div className="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-                <img src={user?.profile?.profilePictureUrl || '/avatar.png'} alt={user.username} />
+                <img src={getAvatarUrl(user?.profile?.profilePictureUrl)} alt={user.username} />
               </div>
             </div>
             <div className="flex-1">

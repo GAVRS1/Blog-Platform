@@ -72,6 +72,31 @@ public class PostControllerTests
         Assert.Equal(ContentType.Photo, service.LastCreatedPost?.ContentType);
     }
 
+    [Fact]
+    public void Create_ShouldReturnArticle_ForMixedMediaAttachments()
+    {
+        var service = new FakePostService();
+        var controller = BuildController(service);
+
+        var dto = new PostDto
+        {
+            Title = "Mixed",
+            Content = "",
+            Attachments =
+            [
+                new PostMediaDto { Type = PostMediaType.Image, Url = "https://cdn/img.png", MimeType = "image/png" },
+                new PostMediaDto { Type = PostMediaType.Video, Url = "https://cdn/clip.mp4", MimeType = "video/mp4" }
+            ]
+        };
+
+        var result = controller.Create(dto) as CreatedAtActionResult;
+
+        Assert.NotNull(result);
+        var response = Assert.IsType<PostResponseDto>(result!.Value);
+        Assert.Equal(ContentType.Article, response.ContentType);
+        Assert.Equal(2, response.Attachments.Count);
+    }
+
     private static PostsController BuildController(FakePostService service)
     {
         var controller = new PostsController(service);

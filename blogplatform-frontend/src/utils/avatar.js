@@ -7,23 +7,26 @@ export const getAvatarUrl = (avatarPath) => {
   }
 
   // Если это уже полный URL, возвращаем как есть
-  if (avatarPath.startsWith('http')) {
+  if (/^https?:\/\//i.test(avatarPath) || avatarPath.startsWith('//')) {
     return avatarPath;
   }
 
   // Если это путь относительно uploads
   const base = API_BASE || '';
 
-  if (avatarPath.startsWith('/uploads/')) {
-    return `${base}${avatarPath}`;
+  const cleaned = (avatarPath || '')
+    .replace(/\\/g, '/') // заменяем обратные слеши на прямые
+    .trim();
+
+  if (cleaned.startsWith('/uploads/')) {
+    return `${base}${cleaned}`;
   }
 
-  // Очищаем путь от лишних символов и формируем правильный URL
-  const cleanPath = avatarPath
-    .replace(/\\/g, '/') // заменяем обратные слеши на прямые
-    .replace(/^\/+/, '') // убираем ведущие слеши
-    .replace(/^uploads\//, ''); // убираем дублирующийся uploads
+  if (cleaned.startsWith('/')) {
+    return `${base}${cleaned}`;
+  }
 
+  const cleanPath = cleaned.replace(/^\/+/, '').replace(/^uploads\//, '');
   return `${base}/uploads/${cleanPath}`;
 };
 

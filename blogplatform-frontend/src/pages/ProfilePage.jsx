@@ -6,6 +6,7 @@ import EditProfileModal from '@/components/EditProfileModal';
 import { useAuth } from '@/hooks/useAuth';
 import { usersService } from '@/services/users';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 export default function ProfilePage() {
   const { user: me, setUser } = useAuth();
@@ -50,10 +51,10 @@ export default function ProfilePage() {
       <div className="card bg-base-100 shadow">
         <div className="card-body">
           <div className="flex items-start gap-4">
-            <div className="avatar">
-              <div className="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-                <img src={u?.profile?.profilePictureUrl || '/avatar.png'} alt={u.username} />
-              </div>
+              <div className="avatar">
+                <div className="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
+                  <img src={getAvatarUrl(u?.profile?.profilePictureUrl)} alt={u.username} />
+                </div>
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">

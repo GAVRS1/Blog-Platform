@@ -7,6 +7,27 @@ import { postsService } from '@/services/posts';
 
 const MAX_ATTACH = 10;
 
+const inferTypeFromMime = (file) => {
+  const t = (file?.type || '').toLowerCase();
+  if (t.startsWith('image/')) return 'image';
+  if (t.startsWith('video/')) return 'video';
+  if (t.startsWith('audio/')) return 'audio';
+  return 'other';
+};
+
+const toPostMediaType = (type) => {
+  switch ((type || '').toLowerCase()) {
+    case 'image':
+      return 'Image';
+    case 'video':
+      return 'Video';
+    case 'audio':
+      return 'Audio';
+    default:
+      return 'Other';
+  }
+};
+
 export default function CreatePostModal() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState('');
@@ -49,33 +70,25 @@ export default function CreatePostModal() {
     setAttachments((arr) => arr.filter((_, i) => i !== idx));
   };
 
-  const mediaTypeFromFile = (file) => {
-    const t = file.type.toLowerCase();
-    if (t.startsWith('image/')) return 'post_image';
-    if (t.startsWith('video/')) return 'post_video';
-    if (t.startsWith('audio/')) return 'post_audio';
-    return 'post_file';
-  };
-
   const preview = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
 
   const uploadAll = async () => {
-    const results = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const type = mediaTypeFromFile(f);
-      const res = await mediaService.upload(f, type);
-      results.push({
+    const typeHints = files.map(inferTypeFromMime);
+    const responses = await mediaService.uploadBatch(files, typeHints);
+
+    const mapped = responses.map((res, idx) => {
+      const effectiveType = res?.type || typeHints[idx];
+      return {
         url: res.url,
-        type: type.includes('image') ? 'Image' :
-              type.includes('video') ? 'Video' :
-              type.includes('audio') ? 'Audio' : 'Other',
-        mimeType: f.type,
-        sizeBytes: f.size
-      });
-    }
-    setAttachments(results);
-    return results;
+        type: toPostMediaType(effectiveType),
+        mimeType: res.mimeType || files[idx]?.type,
+        sizeBytes: res.sizeBytes ?? files[idx]?.size ?? 0,
+        thumbnailUrl: res.thumbnailUrl,
+      };
+    });
+
+    setAttachments(mapped);
+    return mapped;
   };
 
   const onSubmit = async (e) => {
@@ -144,7 +157,7 @@ export default function CreatePostModal() {
                 <div className="flex items-center justify-between">
                   <label className="btn btn-outline btn-sm">
                     Прикрепить файлы
-                    <input type="file" hidden multiple onChange={onPickFiles} accept="image/*,video/*,audio/*" />
+                    <input type="file" hidden multiple onChange={onPickFiles} accept="image/*,video/*,audio/*,*/*" />
                   </label>
                   <div className="text-xs opacity-70">Выбрано: {files.length}/{MAX_ATTACH}</div>
                 </div>

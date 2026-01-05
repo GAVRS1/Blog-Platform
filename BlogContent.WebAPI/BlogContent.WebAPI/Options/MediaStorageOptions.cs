@@ -9,6 +9,11 @@ public class MediaTypeOptions
     public long MaxSizeBytes { get; set; }
 
     public string[] AllowedMimeTypes { get; set; } = [];
+
+    /// <summary>
+    /// If true, MIME validation is advisory only and mismatches will be allowed.
+    /// </summary>
+    public bool AllowAnyMime => AllowedMimeTypes.Length == 0;
 }
 
 public class MediaStorageOptions
@@ -19,9 +24,11 @@ public class MediaStorageOptions
 
     public Dictionary<string, MediaTypeOptions> Types { get; set; } = CreateDefaultTypes();
 
+    public string DefaultType { get; set; } = "other";
+
     public string NormalizedRequestPath => RequestPath?.StartsWith('/') == true ? RequestPath : $"/{RequestPath}";
 
-    public MediaTypeOptions? GetTypeOptions(string type)
+    public MediaTypeOptions? GetTypeOptions(string? type)
     {
         EnsureDefaults();
         if (string.IsNullOrWhiteSpace(type))
@@ -45,12 +52,23 @@ public class MediaStorageOptions
             ? new Dictionary<string, MediaTypeOptions>(Types, StringComparer.OrdinalIgnoreCase)
             : CreateDefaultTypes();
 
+        DefaultType = string.IsNullOrWhiteSpace(DefaultType) ? "other" : DefaultType.Trim();
+
         foreach (var (key, value) in CreateDefaultTypes())
         {
             if (!Types.ContainsKey(key))
             {
                 Types[key] = value;
             }
+        }
+
+        if (!Types.ContainsKey(DefaultType))
+        {
+            Types[DefaultType] = new MediaTypeOptions
+            {
+                MaxSizeBytes = GetMaxAllowedSize(),
+                AllowedMimeTypes = []
+            };
         }
     }
 
@@ -77,6 +95,11 @@ public class MediaStorageOptions
             {
                 MaxSizeBytes = 15 * 1024 * 1024,
                 AllowedMimeTypes = new[] { "application/pdf", "text/plain", "application/zip", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }
+            },
+            ["other"] = new()
+            {
+                MaxSizeBytes = 50 * 1024 * 1024,
+                AllowedMimeTypes = []
             }
         };
     }

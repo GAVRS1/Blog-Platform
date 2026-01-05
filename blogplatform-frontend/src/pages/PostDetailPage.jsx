@@ -8,6 +8,7 @@ import LikeButton from '@/components/LikeButton';
 import Comment from '@/components/Comment';
 import ReportModal from '@/components/ReportModal';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 const PAGE_SIZE = 10;
 
@@ -64,7 +65,7 @@ export default function PostDetailPage() {
   const author = useMemo(() => post ? ({
     id: post.userId,
     name: post.username,
-    avatar: post.userAvatar
+    avatar: getAvatarUrl(post.userAvatar)
   }) : null, [post]);
 
   const attachments = useMemo(() => post?.attachments || post?.media || [], [post]);
@@ -110,7 +111,7 @@ export default function PostDetailPage() {
                 <div className="flex items-center gap-3">
                   <Link to={`/users/${author.id}`} className="avatar">
                     <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-                      <img src={author.avatar || '/avatar.png'} alt={author.name} />
+                      <img src={author.avatar} alt={author.name} />
                     </div>
                   </Link>
                   <div className="min-w-0">

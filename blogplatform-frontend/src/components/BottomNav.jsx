@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
 import { useUnreadBadges } from '@/hooks/useUnreadBadges';
+import { getAvatarUrl } from '@/utils/avatar';
 
 export default function BottomNav() {
   const { user } = useAuth();
@@ -29,7 +30,7 @@ export default function BottomNav() {
       return (
         <span className="avatar">
           <div className={`w-8 rounded-full ${isActive ? 'ring ring-primary ring-offset-base-100 ring-offset-2' : ''}`}>
-            <img src={user.profile.profilePictureUrl} alt={user.username} />
+            <img src={getAvatarUrl(user.profile.profilePictureUrl)} alt={user.username} />
           </div>
         </span>
       );

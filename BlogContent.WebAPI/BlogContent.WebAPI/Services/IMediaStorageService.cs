@@ -5,5 +5,5 @@ namespace BlogContent.WebAPI.Services;
 
 public interface IMediaStorageService
 {
-    Task<MediaUploadResponse> SaveAsync(IFormFile file, string mediaType, CancellationToken cancellationToken = default);
+    Task<MediaUploadResponse> SaveAsync(IFormFile file, string? mediaType, CancellationToken cancellationToken = default);
 }

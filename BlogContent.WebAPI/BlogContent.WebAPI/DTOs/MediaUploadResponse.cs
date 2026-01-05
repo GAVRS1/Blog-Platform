@@ -9,4 +9,6 @@ public class MediaUploadResponse
     public required string MimeType { get; init; }
 
     public long SizeBytes { get; init; }
+
+    public required string Type { get; init; }
 }
