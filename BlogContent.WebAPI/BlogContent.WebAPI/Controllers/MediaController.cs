@@ -25,14 +25,12 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Загружает медиа-файл и возвращает публичную ссылку.
     /// </summary>
-    /// <param name="file">Загружаемый файл.</param>
-    /// <param name="type">Тип файла: image, video, audio или file.</param>
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(MediaUploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Upload([FromForm] IFormFile? file, [FromForm] string? type, CancellationToken cancellationToken)
-        => await HandleUploadAsync(file, type, cancellationToken, isAnonymous: false);
+    public async Task<IActionResult> Upload([FromForm] MediaUploadRequest request, CancellationToken cancellationToken)
+        => await HandleUploadAsync(request.File, request.Type, cancellationToken, isAnonymous: false);
 
     /// <summary>
     /// Публичная загрузка без аутентификации (используется при регистрации).
@@ -42,8 +40,8 @@ public class MediaController : ControllerBase
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(MediaUploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UploadPublic([FromForm] IFormFile? file, [FromForm] string? type, CancellationToken cancellationToken)
-        => await HandleUploadAsync(file, type, cancellationToken, isAnonymous: true);
+    public async Task<IActionResult> UploadPublic([FromForm] MediaUploadRequest request, CancellationToken cancellationToken)
+        => await HandleUploadAsync(request.File, request.Type, cancellationToken, isAnonymous: true);
 
     private async Task<IActionResult> HandleUploadAsync(
         IFormFile? file,

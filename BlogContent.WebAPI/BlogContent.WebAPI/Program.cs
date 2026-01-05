@@ -6,6 +6,7 @@ using BlogContent.Services.Options;
 using BlogContent.WebAPI.Hubs;
 using BlogContent.WebAPI.Options;
 using BlogContent.WebAPI.Services;
+using BlogContent.WebAPI.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -141,7 +142,10 @@ public class Program
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.OperationFilter<FileUploadOperationFilter>();
+        });
 
         var app = builder.Build();
 
