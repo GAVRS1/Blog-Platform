@@ -1,13 +1,12 @@
 // src/components/Sidebar.jsx
-import { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { messagesService } from '@/services/messages';
-import { notificationsService } from '@/services/notifications';
+import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
+import { useUnreadBadges } from '@/hooks/useUnreadBadges';
 
-const NavItem = ({ to, children, badge }) => (
+const NavItem = ({ to, label, icon, badge, badgeClass }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
@@ -16,8 +15,9 @@ const NavItem = ({ to, children, badge }) => (
         ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
         : 'bg-base-100 hover:bg-base-200')}>
     <span className="flex items-center gap-3 w-full">
-      <span className="truncate">{children}</span>
-      {badge ? <span className="badge badge-primary ml-auto">{badge}</span> : null}
+      <i className={`fas ${icon}`} aria-hidden></i>
+      <span className="truncate">{label}</span>
+      {badge ? <span className={`badge ${badgeClass || 'badge-primary'} ml-auto`}>{badge}</span> : null}
     </span>
   </NavLink>
 );
@@ -25,25 +25,21 @@ const NavItem = ({ to, children, badge }) => (
 export default function Sidebar() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [unreadNotif, setUnreadNotif] = useState(0);
-  const [unreadMsgs, setUnreadMsgs] = useState(0);
-
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const n = await notificationsService.unreadCount();
-        setUnreadNotif(n.unread || 0);
-      } catch {}
-      try {
-        const inbox = await messagesService.getInbox();
-        const sum = (inbox || []).reduce((acc, x) => acc + (x.unreadCount || 0), 0);
-        setUnreadMsgs(sum);
-      } catch {}
-    })();
-  }, [user]);
+  const location = useLocation();
+  const isPublic = isPublicNavPath(location.pathname);
+  const { messages: unreadMsgs, notifications: unreadNotif } = useUnreadBadges({
+    user,
+    enabled: !!user && !isPublic,
+  });
 
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
+  if (isPublic) return null;
+
+  const navItems = NAV_ITEMS.filter(item => item.placements.includes('desktop')).filter(item => {
+    if (!item.roles?.length) return true;
+    return !!user && item.roles.includes(user.status);
+  });
+  const navBadges = { messages: unreadMsgs, notifications: unreadNotif };
 
   return (
     <aside className="sticky top-4">
@@ -79,12 +75,16 @@ export default function Sidebar() {
 
         {/* Навигация */}
         <nav className="grid gap-2">
-          <NavItem to="/">🏠 Лента</NavItem>
-          <NavItem to="/messages" badge={unreadMsgs || undefined}>💬 Сообщения</NavItem>
-          <NavItem to="/notifications" badge={unreadNotif || undefined}>🔔 Уведомления</NavItem>
-          <NavItem to="/settings">⚙️ Настройки</NavItem>
-          <NavItem to="/blocks">🚫 Блокировки</NavItem>
-          {user?.status === 'Admin' && <NavItem to="/admin">🛡️ Админ-панель</NavItem>}
+          {navItems.map(item => (
+            <NavItem
+              key={item.key}
+              to={item.to}
+              label={item.label}
+              icon={item.icon}
+              badgeClass={item.badgeClass}
+              badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
+            />
+          ))}
 
           <button onClick={openComposer} className="btn btn-accent mt-1">
             <span className="flex items-center gap-2">
