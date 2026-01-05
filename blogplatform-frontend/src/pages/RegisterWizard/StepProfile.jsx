@@ -173,7 +173,7 @@ export default function StepProfile() {
 
           <div className="form-control">
             <label className="label"><span className="label-text">Аватар</span></label>
-            <AvatarUploader onUploaded={onAvatarUploaded} />
+            <AvatarUploader onUploaded={onAvatarUploaded} usePublicUpload />
             {profile.profilePictureUrl && (
               <span className="label-text-alt text-success mt-1">
                 Загружено: {profile.profilePictureUrl}

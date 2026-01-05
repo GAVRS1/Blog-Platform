@@ -4,6 +4,7 @@ using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -13,10 +14,12 @@ namespace BlogContent.WebAPI.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly IMediaStorageService _mediaStorageService;
+    private readonly ILogger<MediaController> _logger;
 
-    public MediaController(IMediaStorageService mediaStorageService)
+    public MediaController(IMediaStorageService mediaStorageService, ILogger<MediaController> logger)
     {
         _mediaStorageService = mediaStorageService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -29,6 +32,24 @@ public class MediaController : ControllerBase
     [ProducesResponseType(typeof(MediaUploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Upload([FromForm] IFormFile? file, [FromForm] string? type, CancellationToken cancellationToken)
+        => await HandleUploadAsync(file, type, cancellationToken, isAnonymous: false);
+
+    /// <summary>
+    /// Публичная загрузка без аутентификации (используется при регистрации).
+    /// </summary>
+    [HttpPost("upload/public")]
+    [AllowAnonymous]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(MediaUploadResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadPublic([FromForm] IFormFile? file, [FromForm] string? type, CancellationToken cancellationToken)
+        => await HandleUploadAsync(file, type, cancellationToken, isAnonymous: true);
+
+    private async Task<IActionResult> HandleUploadAsync(
+        IFormFile? file,
+        string? type,
+        CancellationToken cancellationToken,
+        bool isAnonymous)
     {
         if (file == null)
         {
@@ -51,14 +72,26 @@ public class MediaController : ControllerBase
                 SizeBytes = result.SizeBytes
             };
 
+            if (isAnonymous)
+            {
+                _logger.LogInformation(
+                    "Анонимная загрузка файла {FileName} ({MimeType}, {Size} байт) как {MediaType}.",
+                    file.FileName,
+                    file.ContentType,
+                    file.Length,
+                    type);
+            }
+
             return Ok(response);
         }
         catch (ArgumentException ex)
         {
+            _logger.LogWarning(ex, "Неверные параметры загрузки файла {FileName} для типа {MediaType}.", file.FileName, type);
             return BadRequest(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(ex, "Ошибка при сохранении файла {FileName} для типа {MediaType}.", file.FileName, type);
             return BadRequest(ex.Message);
         }
     }

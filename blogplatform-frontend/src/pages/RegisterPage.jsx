@@ -227,7 +227,7 @@ export default function RegisterPage() {
             {/* Avatar */}
             <div className="form-control">
               <label className="label"><span className="label-text">Аватар</span></label>
-              <AvatarUploader onUploaded={onAvatarUploaded} />
+              <AvatarUploader onUploaded={onAvatarUploaded} usePublicUpload />
               {profile.profilePictureUrl && (
                 <div className="mt-2 text-sm opacity-70">
                   Загружено: <span className="link">{profile.profilePictureUrl}</span>
