@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BlogContent.Core\BlogContent.Core.csproj" />
     <ProjectReference Include="..\BlogContent.Services\BlogContent.Services.csproj" />
+    <ProjectReference Include="..\BlogContent.WebAPI\BlogContent.WebAPI\BlogContent.WebAPI.csproj" />
   </ItemGroup>
 
 </Project>
