@@ -78,26 +78,6 @@ export default function CreatePostModal() {
     return results;
   };
 
-  // Мэппинг под бэкендовый enum ContentType { Article, Photo, Video, Music }
-  const detectContentType = (mediaList = attachments) => {
-    const hasText = !!content.trim();
-    const hasImg = mediaList.some(u => u.type === 'Image');
-    const hasVid = mediaList.some(u => u.type === 'Video');
-    const hasAud = mediaList.some(u => u.type === 'Audio');
-
-    // Если есть смешение типов или есть текст — это Article
-    const mixed =
-      (hasImg && hasVid) || (hasImg && hasAud) || (hasVid && hasAud);
-
-    if (hasText || mixed) return 'Article';
-    if (hasImg && !hasVid && !hasAud && !hasText) return 'Photo';
-    if (hasVid && !hasImg && !hasAud && !hasText) return 'Video';
-    if (hasAud && !hasImg && !hasVid && !hasText) return 'Music';
-
-    // Пусто/неопределённо — считаем Article
-    return 'Article';
-  };
-
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim() && files.length === 0) {
@@ -116,7 +96,6 @@ export default function CreatePostModal() {
       }
       const payload = {
         content: content || '',
-        contentType: detectContentType(uploaded), // Article/Photo/Video/Music
         attachments: uploaded // [{ url, type: Image|Video|Audio|Other, mimeType, sizeBytes }]
       };
       await postsService.create(payload);

@@ -21,7 +21,7 @@ export const postsService = {
   },
 
   create: async (payload) => {
-    // { content, contentType, attachments:[{url,type,mimeType,sizeBytes}] }
+    // { content, attachments:[{url,type,mimeType,sizeBytes}] } — contentType вычисляется на сервере
     const { data } = await api.post('/posts', payload);
     return data;
   },
