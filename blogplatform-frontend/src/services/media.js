@@ -9,16 +9,16 @@ import api from '@/api/axios';
 export const mediaService = {
   /**
    * @param {File} file
-   * @param {'image'|'video'|'audio'|'file'} type
-   * @returns {{ url: string, thumbnailUrl?: string, mediaType?: number, sizeBytes?: number, mimeType?: string }}
+   * @param {'image'|'video'|'audio'|'file'|'other'} type
+   * @returns {{ url: string, thumbnailUrl?: string, mediaType?: number, sizeBytes?: number, mimeType?: string, type?: string }}
    */
   async upload(file, type = 'image', options = {}) {
     if (!(file instanceof File)) {
       throw new Error('mediaService.upload: "file" должен быть File');
     }
     // Строго нормализуем тип под API
-    const t = (type || 'image').toLowerCase();
-    const safeType = ['image', 'video', 'audio', 'file'].includes(t) ? t : 'image';
+    const t = (type || '').toLowerCase();
+    const safeType = ['image', 'video', 'audio', 'file', 'other'].includes(t) ? t : undefined;
 
     const { isPublic = false } = options;
     const endpoint = isPublic ? '/Media/upload/public' : '/Media/upload';
@@ -27,7 +27,7 @@ export const mediaService = {
     form.append('file', file);
 
     const { data } = await api.post(endpoint, form, {
-      params: { type: safeType },
+      params: safeType ? { type: safeType } : {},
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
@@ -40,9 +40,38 @@ export const mediaService = {
   /**
    * Публичная загрузка (без обязательного токена) — используется на экранах регистрации.
    * @param {File} file
-   * @param {'image'|'video'|'audio'|'file'} type
+   * @param {'image'|'video'|'audio'|'file'|'other'} type
    */
   async uploadPublic(file, type = 'image') {
     return this.upload(file, type, { isPublic: true });
+  },
+
+  /**
+   * Пакетная загрузка до 10 файлов.
+   * @param {File[]} files
+   * @param {('image'|'video'|'audio'|'file'|'other')[]|undefined} types
+   * @param {{ isPublic?: boolean }} options
+   */
+  async uploadBatch(files, types = [], options = {}) {
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new Error('mediaService.uploadBatch: передайте файлы');
+    }
+    if (files.length > 10) {
+      throw new Error('Можно загрузить не более 10 файлов за раз');
+    }
+
+    const { isPublic = false } = options;
+    const endpoint = isPublic ? '/Media/upload/public/batch' : '/Media/upload/batch';
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    types.forEach((t) => {
+      if (t) form.append('types', t);
+    });
+
+    const { data } = await api.post(endpoint, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return data;
   },
 };

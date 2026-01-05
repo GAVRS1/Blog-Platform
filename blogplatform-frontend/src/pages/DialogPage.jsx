@@ -45,11 +45,11 @@ export default function DialogPage() {
   }
 
   function mimeToType(file) {
-    const t = file.type.toLowerCase();
-    if (t.startsWith('image/')) return 'chat_image';
-    if (t.startsWith('video/')) return 'chat_video';
-    if (t.startsWith('audio/')) return 'chat_audio';
-    return 'chat_file';
+    const t = (file.type || '').toLowerCase();
+    if (t.startsWith('image/')) return 'image';
+    if (t.startsWith('video/')) return 'video';
+    if (t.startsWith('audio/')) return 'audio';
+    return 'other';
   }
 
   async function onFilesPicked(e) {
@@ -67,22 +67,31 @@ export default function DialogPage() {
   }
 
   async function uploadFiles(files) {
-    for (const file of files) {
-      try {
-        const type = mimeToType(file);
-        const res = await mediaService.upload(file, type);
-        setUploads((u) => [...u, {
-          url: res.url,
-          mediaType: type.includes('image') ? 'Image' : type.includes('video') ? 'Video' : type.includes('audio') ? 'Audio' : 'Other',
-          mimeType: file.type,
-          sizeBytes: file.size,
-          thumbnailUrl: null
-        }]);
-      } catch (e1) {
-        toast.error(e1.response?.data || 'Ошибка загрузки файла');
-      }
+    const typeHints = files.map(mimeToType);
+    try {
+      const results = await mediaService.uploadBatch(files, typeHints);
+      setUploads((u) => [
+        ...u,
+        ...results.map((res, idx) => {
+          const t = typeHints[idx];
+          const normalized = (res?.type || t || '').toLowerCase();
+          const mediaType = normalized === 'image' ? 'Image'
+            : normalized === 'video' ? 'Video'
+              : normalized === 'audio' ? 'Audio'
+                : 'Other';
+          return {
+            url: res.url,
+            mediaType,
+            mimeType: res.mimeType || files[idx].type,
+            sizeBytes: res.sizeBytes ?? files[idx].size,
+            thumbnailUrl: res.thumbnailUrl || null
+          };
+        })
+      ]);
+      toast.success('Файлы загружены');
+    } catch (e1) {
+      toast.error(e1.response?.data || 'Ошибка загрузки файла');
     }
-    toast.success('Файлы загружены');
   }
 
   async function onSend(e) {

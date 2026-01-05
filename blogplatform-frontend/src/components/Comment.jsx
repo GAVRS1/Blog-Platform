@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import LikeButton from '@/components/LikeButton';
 import { commentsService } from '@/services/comments';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 /**
  * Компонент комментария с возможностью:
@@ -17,7 +18,7 @@ export default function Comment({ comment, enableLike = false }) {
     createdAt: comment.createdAt,
     userId: comment.userId,
     username: comment.username,
-    userAvatar: comment.userAvatar,
+    userAvatar: getAvatarUrl(comment.userAvatar),
     likeCount: comment.likeCount ?? 0,
     replyCount: comment.replyCount ?? 0,
     isLiked: !!comment.isLikedByCurrentUser
@@ -93,7 +94,7 @@ export default function Comment({ comment, enableLike = false }) {
         <div className="flex items-center gap-3">
           <div className="avatar">
             <div className="w-9 h-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-              <img src={local.userAvatar || '/avatar.png'} alt={local.username} />
+              <img src={local.userAvatar} alt={local.username} />
             </div>
           </div>
           <div className="min-w-0">
@@ -165,7 +166,7 @@ function ReplyItem({ reply }) {
     <div className="flex items-start gap-3">
       <div className="avatar">
         <div className="w-8 h-8 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2 overflow-hidden">
-          <img src={reply.userAvatar || '/avatar.png'} alt={reply.username} />
+          <img src={getAvatarUrl(reply.userAvatar)} alt={reply.username} />
         </div>
       </div>
       <div>

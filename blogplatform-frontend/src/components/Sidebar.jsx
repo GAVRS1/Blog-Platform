@@ -5,6 +5,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
 import { useUnreadBadges } from '@/hooks/useUnreadBadges';
+import { getAvatarUrl } from '@/utils/avatar';
 
 const NavItem = ({ to, label, icon, badge, badgeClass }) => (
   <NavLink
@@ -51,7 +52,7 @@ export default function Sidebar() {
               <div className="flex items-center gap-3">
                 <div className="avatar">
                   <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                    <img src={user?.profile?.profilePictureUrl || '/avatar.png'} alt="" />
+                    <img src={getAvatarUrl(user?.profile?.profilePictureUrl)} alt="" />
                   </div>
                 </div>
                 <div className="min-w-0">

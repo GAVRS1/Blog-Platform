@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import LikeButton from '@/components/LikeButton';
 import MediaPlayer from '@/components/MediaPlayer';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 export default function PostCard({ post, onDeleted }) {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function PostCard({ post, onDeleted }) {
   const author = useMemo(() => ({
     id: post.userId,
     name: post.username,
-    avatar: post.userAvatar
+    avatar: getAvatarUrl(post.userAvatar)
   }), [post]);
 
   const onLikeChange = (res) => {
@@ -34,7 +35,7 @@ export default function PostCard({ post, onDeleted }) {
         <div className="flex items-center gap-3">
           <Link to={`/users/${author.id}`} className="avatar">
             <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-              <img src={author.avatar || '/avatar.png'} alt={author.name} />
+              <img src={author.avatar} alt={author.name} />
             </div>
           </Link>
           <div className="min-w-0">

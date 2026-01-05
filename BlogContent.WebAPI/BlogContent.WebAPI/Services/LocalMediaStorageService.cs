@@ -27,7 +27,7 @@ public class LocalMediaStorageService : IMediaStorageService
         _options.EnsureDefaults();
     }
 
-    public async Task<MediaUploadResponse> SaveAsync(IFormFile file, string mediaType, CancellationToken cancellationToken = default)
+    public async Task<MediaUploadResponse> SaveAsync(IFormFile file, string? mediaType, CancellationToken cancellationToken = default)
     {
         if (file == null)
         {
@@ -40,23 +40,10 @@ public class LocalMediaStorageService : IMediaStorageService
             throw new InvalidOperationException("Файл пустой.");
         }
 
-        var typeOptions = _options.GetTypeOptions(mediaType);
-        if (typeOptions == null)
-        {
-            throw new ArgumentException("Указан неподдерживаемый тип медиа.", nameof(mediaType));
-        }
-
-        var allowedMimeTypes = typeOptions.AllowedMimeTypes ?? Array.Empty<string>();
-
-        if (allowedMimeTypes.Length > 0 &&
-            !allowedMimeTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
-        {
-            _logger.LogWarning(
-                "Отклонена загрузка файла с неподдерживаемым MIME-типом {MimeType} для {MediaType}.",
-                file.ContentType,
-                mediaType);
-            throw new InvalidOperationException($"MIME-тип '{file.ContentType}' не поддерживается для типа '{mediaType}'.");
-        }
+        var resolvedType = ResolveType(mediaType, file.ContentType);
+        var typeOptions = _options.GetTypeOptions(resolvedType)
+                          ?? _options.GetTypeOptions(_options.DefaultType)
+                          ?? new MediaTypeOptions();
 
         if (typeOptions.MaxSizeBytes > 0 && file.Length > typeOptions.MaxSizeBytes)
         {
@@ -65,12 +52,23 @@ public class LocalMediaStorageService : IMediaStorageService
                 file.FileName,
                 file.Length,
                 typeOptions.MaxSizeBytes,
-                mediaType);
+                resolvedType);
             throw new InvalidOperationException($"Размер файла превышает максимально допустимый ({typeOptions.MaxSizeBytes} байт).");
         }
 
+        var allowedMimeTypes = typeOptions.AllowedMimeTypes ?? Array.Empty<string>();
+        if (allowedMimeTypes.Length > 0 &&
+            !allowedMimeTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation(
+                "Загрузка файла с нестрогим MIME-типом {MimeType} для {MediaType} разрешена (разрешённые: {Allowed}).",
+                file.ContentType,
+                resolvedType,
+                string.Join(", ", allowedMimeTypes));
+        }
+
         var uploadsRoot = EnsureUploadsRoot();
-        var normalizedType = mediaType.Trim().ToLowerInvariant();
+        var normalizedType = resolvedType.Trim().ToLowerInvariant();
         var targetDirectory = Path.Combine(uploadsRoot, normalizedType);
         Directory.CreateDirectory(targetDirectory);
 
@@ -91,8 +89,47 @@ public class LocalMediaStorageService : IMediaStorageService
             Url = url,
             ThumbnailUrl = normalizedType == "image" ? url : null,
             MimeType = file.ContentType,
-            SizeBytes = file.Length
+            SizeBytes = file.Length,
+            Type = normalizedType
         };
+    }
+
+    private string ResolveType(string? type, string mimeType)
+    {
+        var normalizedProvided = type?.Trim().ToLowerInvariant();
+        var inferred = InferTypeFromMime(mimeType);
+
+        var isGeneric = string.IsNullOrWhiteSpace(normalizedProvided)
+                        || normalizedProvided.Equals("other", StringComparison.OrdinalIgnoreCase)
+                        || normalizedProvided.Equals("raw", StringComparison.OrdinalIgnoreCase)
+                        || _options.GetTypeOptions(normalizedProvided) == null;
+
+        if (!isGeneric && _options.GetTypeOptions(normalizedProvided) != null)
+        {
+            return normalizedProvided!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(inferred) && _options.GetTypeOptions(inferred) != null)
+        {
+            return inferred!;
+        }
+
+        return _options.DefaultType;
+    }
+
+    private static string? InferTypeFromMime(string mimeType)
+    {
+        if (string.IsNullOrWhiteSpace(mimeType))
+        {
+            return null;
+        }
+
+        var lower = mimeType.ToLowerInvariant();
+        if (lower.StartsWith("image/")) return "image";
+        if (lower.StartsWith("video/")) return "video";
+        if (lower.StartsWith("audio/")) return "audio";
+
+        return null;
     }
 
     private string EnsureUploadsRoot()
