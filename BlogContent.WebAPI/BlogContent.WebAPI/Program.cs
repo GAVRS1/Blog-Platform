@@ -6,11 +6,9 @@ using BlogContent.Services.Options;
 using BlogContent.WebAPI.Hubs;
 using BlogContent.WebAPI.Options;
 using BlogContent.WebAPI.Services;
-using BlogContent.WebAPI.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -144,11 +142,6 @@ public class Program
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(options =>
-        {
-            options.OperationFilter<FileUploadOperationFilter>();
-        });
 
         var app = builder.Build();
 
@@ -161,11 +154,7 @@ public class Program
             dbContext.Database.ExecuteSqlRaw("ALTER TABLE \"Posts\" ADD COLUMN IF NOT EXISTS \"AudioUrl\" text");
         }
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+        // ✅ Swagger удалён полностью
 
         app.UseHttpsRedirection();
 
@@ -181,20 +170,17 @@ public class Program
             RequestPath = storageOptions.NormalizedRequestPath
         });
 
-        // Enable routing so the CORS middleware can process preflight requests
-        // before they reach the controllers.
         app.UseRouting();
         app.UseCors("FrontendPolicy");
 
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-            endpoints.MapHub<ChatHub>("/hubs/chat");
-            endpoints.MapHub<NotificationsHub>("/hubs/notifications");
-        });
+        // ✅ Современный маппинг вместо UseEndpoints
+        app.MapControllers();
+        app.MapHub<ChatHub>("/hubs/chat");
+        app.MapHub<NotificationsHub>("/hubs/notifications");
+
         app.Run();
     }
 }
