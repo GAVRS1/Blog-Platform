@@ -14,6 +14,7 @@ public class UserRepository(BlogContext context) : IUserRepository
     {
         return _context.Users
             .Include(u => u.Profile)
+            .Include(u => u.PrivacySettings)
             .AsNoTracking()
             .FirstOrDefault(u => u.Id == id);
     }
@@ -23,6 +24,7 @@ public class UserRepository(BlogContext context) : IUserRepository
     {
         return _context.Users
             .Include(u => u.Profile)
+            .Include(u => u.PrivacySettings)
             .Where(u => userIds.Contains(u.Id))
             .AsNoTracking()
             .ToList();
@@ -42,6 +44,7 @@ public class UserRepository(BlogContext context) : IUserRepository
         var normalized = username?.Trim().ToLower();
         return _context.Users
             .Include(u => u.Profile)
+            .Include(u => u.PrivacySettings)
             .AsNoTracking()
             .FirstOrDefault(u => u.Username.Trim().ToLower() == normalized);
     }
@@ -58,6 +61,7 @@ public class UserRepository(BlogContext context) : IUserRepository
         var normalized = query.Trim().ToLower();
         var usersQuery = _context.Users
             .Include(u => u.Profile)
+            .Include(u => u.PrivacySettings)
             .AsNoTracking()
             .Where(u => u.Username.Trim().ToLower().Contains(normalized) || u.Email.Trim().ToLower().Contains(normalized));
 

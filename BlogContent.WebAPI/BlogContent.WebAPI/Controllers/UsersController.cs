@@ -1,6 +1,9 @@
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
+using BlogContent.Core.Enums;
+using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -17,15 +20,37 @@ public class UsersController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly IUserService _userService;
+    private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
 
-    public UsersController(IUserService userService) => _userService = userService;
+    private readonly IUserService _userService;
+    private readonly IFollowService _followService;
+
+    public UsersController(IUserService userService, IFollowService followService)
+    {
+        _userService = userService;
+        _followService = followService;
+    }
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
         var user = _userService.GetUserById(id);
-        return user == null ? NotFound() : Ok(ToResponse(user));
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (TryGetUserId(out var currentUserId) && currentUserId != id)
+        {
+            var relation = _followService.GetRelationship(currentUserId, id);
+            var audience = user.PrivacySettings?.ProfileVisibility ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
+            }
+        }
+
+        return Ok(ToResponse(user));
     }
 
     [AllowAnonymous]

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.Core.Enums;
+using BlogContent.Core.Interfaces;
+using BlogContent.Services;
 using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +19,17 @@ public class MessagesController : ControllerBase
     private const int DefaultPageSize = 30;
     private const int MaxPageSize = 100;
 
-    private readonly IMessageService _messageService;
+    private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
 
-    public MessagesController(IMessageService messageService)
+    private readonly IMessageService _messageService;
+    private readonly IUserService _userService;
+    private readonly IFollowService _followService;
+
+    public MessagesController(IMessageService messageService, IUserService userService, IFollowService followService)
     {
         _messageService = messageService;
+        _userService = userService;
+        _followService = followService;
     }
 
     [HttpGet("inbox")]
@@ -60,6 +69,22 @@ public class MessagesController : ControllerBase
         if (request == null || request.RecipientId <= 0 || string.IsNullOrWhiteSpace(request.Content) && (request.Attachments == null || request.Attachments.Count == 0))
         {
             return BadRequest("Recipient and message content are required.");
+        }
+
+        var recipient = _userService.GetUserById(request.RecipientId);
+        if (recipient == null)
+        {
+            return NotFound();
+        }
+
+        if (recipient.Id != userId)
+        {
+            var relation = _followService.GetRelationship(userId, recipient.Id);
+            var audience = recipient.PrivacySettings?.CanMessageFrom ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
+            }
         }
 
         var saved = _messageService.SendMessage(userId, request.RecipientId, request.Content ?? string.Empty, request.Attachments);
