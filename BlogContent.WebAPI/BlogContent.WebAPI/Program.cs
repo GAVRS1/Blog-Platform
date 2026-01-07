@@ -43,6 +43,7 @@ public class Program
         builder.Services.AddScoped<ICommentRepository, CommentRepository>();
         builder.Services.AddScoped<ILikeRepository, LikeRepository>();
         builder.Services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
+        builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
         // Services (через интерфейсы)
         builder.Services.AddScoped<IPostService, PostService>();
@@ -52,6 +53,7 @@ public class Program
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ISettingsService, SettingsService>();
         builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
         builder.Services.AddSingleton<IFollowService, InMemoryFollowService>();
         builder.Services.AddSingleton<IMessageService, InMemoryMessageService>();

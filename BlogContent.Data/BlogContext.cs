@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using BlogContent.Core.Enums;
 using BlogContent.Core.Models;
 namespace BlogContent.Data;
 
@@ -19,6 +20,8 @@ public class BlogContext : DbContext
     public DbSet<CommentReply> CommentReplies { get; set; }
     public DbSet<EmailVerification> EmailVerifications { get; set; }
     public DbSet<PostMedia> PostMedias { get; set; }
+    public DbSet<PrivacySettings> PrivacySettings { get; set; }
+    public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +35,18 @@ public class BlogContext : DbContext
             .HasOne(u => u.Profile)
             .WithOne(p => p.User)
             .HasForeignKey<Profile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.PrivacySettings)
+            .WithOne(ps => ps.User)
+            .HasForeignKey<PrivacySettings>(ps => ps.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.NotificationSettings)
+            .WithOne(ns => ns.User)
+            .HasForeignKey<NotificationSettings>(ns => ns.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
@@ -115,6 +130,42 @@ public class BlogContext : DbContext
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        modelBuilder.Entity<PrivacySettings>()
+            .Property(ps => ps.CanMessageFrom)
+            .HasDefaultValue(Audience.Everyone);
+
+        modelBuilder.Entity<PrivacySettings>()
+            .Property(ps => ps.CanCommentFrom)
+            .HasDefaultValue(Audience.Everyone);
+
+        modelBuilder.Entity<PrivacySettings>()
+            .Property(ps => ps.ProfileVisibility)
+            .HasDefaultValue(Audience.Everyone);
+
+        modelBuilder.Entity<PrivacySettings>()
+            .Property(ps => ps.ShowActivity)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<PrivacySettings>()
+            .Property(ps => ps.ShowEmail)
+            .HasDefaultValue(false);
+
+        modelBuilder.Entity<NotificationSettings>()
+            .Property(ns => ns.OnLikes)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<NotificationSettings>()
+            .Property(ns => ns.OnComments)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<NotificationSettings>()
+            .Property(ns => ns.OnFollows)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<NotificationSettings>()
+            .Property(ns => ns.OnMessages)
+            .HasDefaultValue(true);
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
@@ -155,5 +206,13 @@ public class BlogContext : DbContext
 
         modelBuilder.Entity<PostMedia>()
             .HasIndex(m => m.PostId);
+
+        modelBuilder.Entity<PrivacySettings>()
+            .HasIndex(ps => ps.UserId)
+            .IsUnique();
+
+        modelBuilder.Entity<NotificationSettings>()
+            .HasIndex(ns => ns.UserId)
+            .IsUnique();
     }
 }
