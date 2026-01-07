@@ -11,6 +11,8 @@ public class User
     public bool EmailConfirmed { get; set; }
     public UserStatus Status { get; set; } = UserStatus.PendingEmailConfirmation;
     public Profile Profile { get; set; } = new Profile();
+    public PrivacySettings PrivacySettings { get; set; } = null!;
+    public NotificationSettings NotificationSettings { get; set; } = null!;
     public ICollection<Post> Posts { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Like> Likes { get; set; } = [];
