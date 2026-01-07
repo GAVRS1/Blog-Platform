@@ -11,6 +11,7 @@ public class CommentRepository(BlogContext context) : ICommentRepository
     // Получить комментарий по ID
     public Comment GetCommentById(int id) => _context.Comments
             .Include(c => c.User)
+                .ThenInclude(u => u.PrivacySettings)
             .AsNoTracking()
             .FirstOrDefault(c => c.Id == id);
 
@@ -20,6 +21,8 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         var query = _context.Comments
             .Include(c => c.User)
                 .ThenInclude(u => u.Profile)
+            .Include(c => c.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(c => c.Likes)
             .Include(c => c.Replies)
             .Where(c => c.PostId == postId)
@@ -42,6 +45,8 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         return _context.Comments
             .Include(c => c.User)
                 .ThenInclude(u => u.Profile)
+            .Include(c => c.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Where(c => c.PostId == postId)
             .AsNoTracking()
             .ToList();
@@ -172,6 +177,8 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         return _context.Comments
             .Include(c => c.User)
                 .ThenInclude(u => u.Profile)
+            .Include(c => c.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(c => c.Likes)
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)
@@ -186,6 +193,8 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         return _context.Comments
             .Include(c => c.User)
                 .ThenInclude(u => u.Profile)
+            .Include(c => c.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(c => c.Likes)
             .Include(c => c.Replies)
                 .ThenInclude(r => r.User)

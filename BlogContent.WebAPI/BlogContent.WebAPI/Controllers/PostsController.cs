@@ -1,7 +1,9 @@
 using BlogContent.Core.Enums;
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
+using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -17,9 +19,18 @@ public class PostsController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly IPostService _postService;
+    private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
 
-    public PostsController(IPostService postService) => _postService = postService;
+    private readonly IPostService _postService;
+    private readonly IUserService _userService;
+    private readonly IFollowService _followService;
+
+    public PostsController(IPostService postService, IUserService userService, IFollowService followService)
+    {
+        _postService = postService;
+        _userService = userService;
+        _followService = followService;
+    }
 
     [HttpGet]
     public IActionResult GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
@@ -44,6 +55,22 @@ public class PostsController : ControllerBase
     [HttpGet("user/{userId}")]
     public IActionResult GetByUserId(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
+        var user = _userService.GetUserById(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (TryGetUserId(out var currentUserId) && currentUserId != userId)
+        {
+            var relation = _followService.GetRelationship(currentUserId, userId);
+            var audience = user.PrivacySettings?.ProfileVisibility ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
+            }
+        }
+
         (page, pageSize) = NormalizePagination(page, pageSize);
         var posts = _postService.GetPostsByUser(userId, page, pageSize);
         var currentUserId = TryGetUserId(out var authUserId) ? authUserId : (int?)null;

@@ -1,6 +1,9 @@
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
+using BlogContent.Core.Enums;
+using BlogContent.Services;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -16,9 +19,18 @@ public class CommentsController : ControllerBase
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 100;
 
-    private readonly ICommentService _commentService;
+    private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
 
-    public CommentsController(ICommentService commentService) => _commentService = commentService;
+    private readonly ICommentService _commentService;
+    private readonly IPostService _postService;
+    private readonly IFollowService _followService;
+
+    public CommentsController(ICommentService commentService, IPostService postService, IFollowService followService)
+    {
+        _commentService = commentService;
+        _postService = postService;
+        _followService = followService;
+    }
 
     [HttpGet("post/{postId}")]
     public IActionResult GetByPostId(int postId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
@@ -41,6 +53,22 @@ public class CommentsController : ControllerBase
             return Unauthorized();
         }
 
+        var post = _postService.GetPostById(dto.PostId);
+        if (post == null)
+        {
+            return NotFound();
+        }
+
+        if (post.UserId != userId)
+        {
+            var relation = _followService.GetRelationship(userId, post.UserId);
+            var audience = post.User?.PrivacySettings?.CanCommentFrom ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
+            }
+        }
+
         var comment = new Comment
         {
             Content = dto.Content,
@@ -60,6 +88,22 @@ public class CommentsController : ControllerBase
         if (!TryGetUserId(out var userId))
         {
             return Unauthorized();
+        }
+
+        var comment = _commentService.GetCommentById(commentId);
+        if (comment == null)
+        {
+            return NotFound();
+        }
+
+        if (comment.UserId != userId)
+        {
+            var relation = _followService.GetRelationship(userId, comment.UserId);
+            var audience = comment.User?.PrivacySettings?.CanCommentFrom ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
+            }
         }
 
         var reply = new CommentReply

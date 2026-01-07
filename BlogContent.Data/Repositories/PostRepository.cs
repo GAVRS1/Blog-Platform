@@ -13,6 +13,8 @@ public class PostRepository(BlogContext context) : IPostRepository
         return _context.Posts
             .Include(p => p.User)
                 .ThenInclude(u => u.Profile)
+            .Include(p => p.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(p => p.Media)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
@@ -28,6 +30,8 @@ public class PostRepository(BlogContext context) : IPostRepository
         return _context.Posts
             .Include(p => p.User)
                 .ThenInclude(u => u.Profile)
+            .Include(p => p.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(p => p.Media)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
@@ -42,6 +46,8 @@ public class PostRepository(BlogContext context) : IPostRepository
         return _context.Posts
             .Include(p => p.User)
                 .ThenInclude(u => u.Profile)
+            .Include(p => p.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(p => p.Media)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
@@ -58,6 +64,8 @@ public class PostRepository(BlogContext context) : IPostRepository
         var query = _context.Posts
             .Include(p => p.User)
                 .ThenInclude(u => u.Profile)
+            .Include(p => p.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(p => p.Media)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
@@ -110,6 +118,8 @@ public class PostRepository(BlogContext context) : IPostRepository
         var query = _context.Posts
             .Include(p => p.User)
                 .ThenInclude(u => u.Profile)
+            .Include(p => p.User)
+                .ThenInclude(u => u.PrivacySettings)
             .Include(p => p.Media)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
