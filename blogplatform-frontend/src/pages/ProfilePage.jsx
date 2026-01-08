@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usersService } from '@/services/users';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { getUserStatusLabel, isUserBanned } from '@/utils/userStatus';
 
 export default function ProfilePage() {
   const { user: me, setUser } = useAuth();
@@ -50,6 +51,11 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="card bg-base-100 shadow">
         <div className="card-body">
+          {isUserBanned(u?.status) && (
+            <div className="alert alert-error mb-4">
+              <span>Профиль заблокирован. Доступ к функциям ограничен.</span>
+            </div>
+          )}
           <div className="flex items-start gap-4">
               <div className="avatar">
                 <div className="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
@@ -59,7 +65,7 @@ export default function ProfilePage() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-2xl font-bold">@{u.username}</div>
-                <div className="badge">{u.status}</div>
+                <div className="badge">{getUserStatusLabel(u.status)}</div>
               </div>
               <div className="mt-1 opacity-80">{u?.profile?.fullName}</div>
               <div className="mt-2 text-sm opacity-70">{u?.profile?.bio}</div>

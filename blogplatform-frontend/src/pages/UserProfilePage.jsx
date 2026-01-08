@@ -10,6 +10,7 @@ import { followsService } from '@/services/follows';
 import { blocksService } from '@/services/blocks';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { getUserStatusLabel, isUserBanned } from '@/utils/userStatus';
 
 export default function UserProfilePage() {
   const { id } = useParams();
@@ -96,6 +97,11 @@ export default function UserProfilePage() {
     <div className="space-y-6">
       <div className="card bg-base-100 shadow">
         <div className="card-body">
+          {isUserBanned(user?.status) && (
+            <div className="alert alert-error mb-4">
+              <span>Профиль заблокирован. Контент недоступен.</span>
+            </div>
+          )}
           <div className="flex items-start gap-4">
             <div className="avatar">
               <div className="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
@@ -105,7 +111,7 @@ export default function UserProfilePage() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-2xl font-bold">@{user.username}</div>
-                {!isRestricted && <div className="badge">{user.status}</div>}
+                {!isRestricted && <div className="badge">{getUserStatusLabel(user.status)}</div>}
 
                 {/* Если есть блокировки — скрываем follow/message */}
                 {!isRestricted && !blockedByMe && !blockedMe && (
