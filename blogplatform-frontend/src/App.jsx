@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
+import TopBar from '@/components/TopBar';
 import withAuth from '@/hocs/withAuth';
 import CreatePostModal from '@/components/CreatePostModal';
 import RealtimeMount from '@/components/RealtimeMount';
@@ -118,6 +119,7 @@ function AppLayout() {
       <RealtimeMount />
       <div className="min-h-screen bg-base-200">
         <Toaster position="top-center" />
+        <TopBar />
         <div className="md:hidden sticky top-0 z-40 border-b border-base-300 bg-base-200/95 backdrop-blur">
           <div className="flex items-center justify-between px-3 py-2">
             <button
