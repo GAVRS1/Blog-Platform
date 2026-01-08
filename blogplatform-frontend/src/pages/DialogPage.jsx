@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { mediaService } from '@/services/media';
+import { usersService } from '@/services/users';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeToRealtimeMessages, subscribeToRealtimeStatus } from '@/realtimeEvents';
+import { subscribeToRealtimeMessages, subscribeToRealtimePresence, subscribeToRealtimeStatus } from '@/realtimeEvents';
+import { sendTyping } from '@/realtime';
 
 const MAX_ATTACH = 10;
 
@@ -20,12 +22,17 @@ export default function DialogPage() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [uploads, setUploads] = useState([]); // [{ url, mediaType, mimeType, sizeBytes, thumbnailUrl }]
+  const [profile, setProfile] = useState(null);
+  const [presence, setPresence] = useState(null);
 
   const containerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const typingStateRef = useRef(false);
 
   useEffect(() => {
     loadPage(1, true);
     markReadAndSync();
+    loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUserId]);
 
@@ -62,11 +69,46 @@ export default function DialogPage() {
       }
     });
 
+    const unsubscribePresence = subscribeToRealtimePresence((event) => {
+      if (event?.userId !== otherUserId) return;
+      if (event.type === 'online') {
+        setPresence({ status: 'online', lastSeenUtc: null, isTyping: false });
+        return;
+      }
+      if (event.type === 'offline') {
+        setPresence((prev) => ({
+          status: 'offline',
+          lastSeenUtc: event.lastSeenUtc || prev?.lastSeenUtc || null,
+          isTyping: false
+        }));
+        return;
+      }
+      if (event.type === 'typing') {
+        setPresence((prev) => ({
+          ...(prev || {}),
+          isTyping: Boolean(event.isTyping)
+        }));
+      }
+    });
+
     return () => {
       unsubscribeMessages();
       unsubscribeStatus();
+      unsubscribePresence();
     };
   }, [otherUserId, user?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (typingStateRef.current) {
+        sendTyping(otherUserId, false);
+        typingStateRef.current = false;
+      }
+    };
+  }, [otherUserId]);
 
   async function loadPage(p, replace = false) {
     try {
@@ -101,6 +143,15 @@ export default function DialogPage() {
       });
     } catch {
       // ignore
+    }
+  }
+
+  async function loadProfile() {
+    try {
+      const data = await usersService.getById(otherUserId);
+      setProfile(data);
+    } catch {
+      setProfile(null);
     }
   }
 
@@ -167,6 +218,10 @@ export default function DialogPage() {
       setList((prev) => [...(prev || []), saved]);
       setMessage('');
       setUploads([]);
+      if (typingStateRef.current) {
+        sendTyping(otherUserId, false);
+        typingStateRef.current = false;
+      }
       setTimeout(() => containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior: 'smooth' }), 50);
     } catch (e2) {
       const status = e2.response?.status;
@@ -178,10 +233,29 @@ export default function DialogPage() {
     }
   }
 
+  const resolveDisplayName = () => {
+    if (!profile) return `Пользователь #${otherUserId}`;
+    const fullName = profile.profile?.fullName?.trim();
+    const username = profile.profile?.username?.trim() || profile.username?.trim();
+    return fullName || username || `Пользователь #${otherUserId}`;
+  };
+
+  const resolveStatus = () => {
+    if (presence?.isTyping) return 'пишет...';
+    if (presence?.status === 'online') return 'онлайн';
+    if (presence?.lastSeenUtc) {
+      return `был(а) в ${new Date(presence.lastSeenUtc).toLocaleString()}`;
+    }
+    return 'офлайн';
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold">Диалог с #{otherUserId}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
+          <div className="text-xs opacity-70">{resolveStatus()}</div>
+        </div>
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto bg-base-100 rounded-lg p-4 space-y-2">
@@ -234,7 +308,23 @@ export default function DialogPage() {
             rows={2}
             placeholder="Напишите сообщение..."
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setMessage(value);
+              if (!typingStateRef.current) {
+                typingStateRef.current = true;
+                sendTyping(otherUserId, true);
+              }
+              if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+              }
+              typingTimeoutRef.current = setTimeout(() => {
+                if (typingStateRef.current) {
+                  typingStateRef.current = false;
+                  sendTyping(otherUserId, false);
+                }
+              }, 2000);
+            }}
           />
           {uploads.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2 items-center">
