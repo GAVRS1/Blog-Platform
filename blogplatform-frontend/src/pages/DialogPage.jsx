@@ -25,7 +25,7 @@ export default function DialogPage() {
 
   useEffect(() => {
     loadPage(1, true);
-    messagesService.markRead(otherUserId).catch(() => {});
+    markReadAndSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUserId]);
 
@@ -51,14 +51,14 @@ export default function DialogPage() {
       }, 50);
 
       if (!isOwn && incoming.senderId === otherUserId) {
-        messagesService.markRead(otherUserId).catch(() => {});
+        markReadAndSync();
       }
     });
 
     const unsubscribeStatus = subscribeToRealtimeStatus((status) => {
       if (status?.type === 'reconnected') {
         loadPage(1, true);
-        messagesService.markRead(otherUserId).catch(() => {});
+        markReadAndSync();
       }
     });
 
@@ -83,6 +83,24 @@ export default function DialogPage() {
       }
     } catch (e) {
       toast.error(e.response?.data || 'Не удалось загрузить сообщения');
+    }
+  }
+
+  async function markReadAndSync() {
+    try {
+      const result = await messagesService.markRead(otherUserId);
+      if (!result?.updatedMessages?.length) return;
+      setList((prev) => {
+        if (!prev) return prev;
+        const updates = new Map(result.updatedMessages.map((item) => [item.id, item]));
+        return prev.map((item) => {
+          const update = updates.get(item.id);
+          if (!update) return item;
+          return { ...item, isRead: update.isRead, readAt: update.readAt };
+        });
+      });
+    } catch {
+      // ignore
     }
   }
 
@@ -195,6 +213,11 @@ export default function DialogPage() {
                 </div>
               )}
             </div>
+            {m.isOwn && (
+              <div className="chat-footer text-xs opacity-60">
+                {m.isRead ? `Прочитано${m.readAt ? ` · ${new Date(m.readAt).toLocaleString()}` : ''}` : 'Не прочитано'}
+              </div>
+            )}
           </div>
         ))}
       </div>

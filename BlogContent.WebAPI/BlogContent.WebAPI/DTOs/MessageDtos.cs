@@ -19,8 +19,23 @@ public class MessageDto
     public int RecipientId { get; set; }
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
     public List<MessageAttachmentDto> Attachments { get; set; } = [];
     public bool IsOwn { get; set; }
+}
+
+public class MessageReadUpdateDto
+{
+    public Guid Id { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+}
+
+public class MarkReadResultDto
+{
+    public int Marked { get; set; }
+    public List<MessageReadUpdateDto> UpdatedMessages { get; set; } = [];
 }
 
 public class InboxItemDto

@@ -8,5 +8,5 @@ public interface IMessageService
     IEnumerable<InboxItemDto> GetInbox(int userId);
     IEnumerable<MessageDto> GetDialog(int userId, int otherUserId, int page, int pageSize);
     MessageDto SendMessage(int senderId, int recipientId, string content, IEnumerable<MessageAttachmentDto>? attachments);
-    int MarkRead(int userId, int otherUserId);
+    MarkReadResultDto MarkRead(int userId, int otherUserId);
 }

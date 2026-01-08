@@ -76,6 +76,8 @@ public class InMemoryMessageService : IMessageService
             RecipientId = recipientId,
             Content = content ?? string.Empty,
             CreatedAt = DateTime.UtcNow,
+            IsRead = false,
+            ReadAt = null,
             Attachments = attachments?.Select(CloneAttachment).ToList() ?? []
         };
 
@@ -89,15 +91,42 @@ public class InMemoryMessageService : IMessageService
         return CloneForViewer(message, senderId);
     }
 
-    public int MarkRead(int userId, int otherUserId)
+    public MarkReadResultDto MarkRead(int userId, int otherUserId)
     {
-        var key = (userId, otherUserId);
-        if (_unread.TryRemove(key, out var removed))
+        var updated = new List<MessageReadUpdateDto>();
+        var key = BuildKey(userId, otherUserId);
+
+        lock (_lock)
         {
-            return removed;
+            if (_conversations.TryGetValue(key, out var messages))
+            {
+                var now = DateTime.UtcNow;
+                foreach (var message in messages)
+                {
+                    if (message.RecipientId != userId || message.SenderId != otherUserId || message.IsRead)
+                    {
+                        continue;
+                    }
+
+                    message.IsRead = true;
+                    message.ReadAt = now;
+                    updated.Add(new MessageReadUpdateDto
+                    {
+                        Id = message.Id,
+                        IsRead = true,
+                        ReadAt = message.ReadAt
+                    });
+                }
+            }
+
+            _unread.TryRemove((userId, otherUserId), out _);
         }
 
-        return 0;
+        return new MarkReadResultDto
+        {
+            Marked = updated.Count,
+            UpdatedMessages = updated
+        };
     }
 
     private static string BuildKey(int a, int b) => a < b ? $"{a}:{b}" : $"{b}:{a}";
@@ -117,6 +146,8 @@ public class InMemoryMessageService : IMessageService
             RecipientId = source.RecipientId,
             Content = source.Content,
             CreatedAt = source.CreatedAt,
+            IsRead = source.IsRead,
+            ReadAt = source.ReadAt,
             Attachments = source.Attachments.Select(CloneAttachment).ToList(),
             IsOwn = source.SenderId == viewerId
         };

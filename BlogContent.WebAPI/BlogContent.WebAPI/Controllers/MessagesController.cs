@@ -101,8 +101,8 @@ public class MessagesController : ControllerBase
             return Unauthorized();
         }
 
-        var marked = _messageService.MarkRead(userId, id);
-        return Ok(new { marked });
+        var result = _messageService.MarkRead(userId, id);
+        return Ok(result);
     }
 
     private bool TryGetUserId(out int userId)
