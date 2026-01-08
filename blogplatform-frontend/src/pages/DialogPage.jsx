@@ -313,11 +313,11 @@ export default function DialogPage() {
           <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
           <div className="text-xs opacity-70">{resolveStatus()}</div>
         </div>
-        <div className="dropdown dropdown-end">
+        <div className="dropdown dropdown-end relative">
           <label tabIndex={0} className="btn btn-ghost btn-sm btn-square" title="Меню">
             ☰
           </label>
-          <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+          <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 absolute z-50">
             <li>
               <Link to={`/users/${otherUserId}`}>Открыть профиль</Link>
             </li>
