@@ -147,7 +147,7 @@ function AppLayout() {
               <div className="px-3 pb-3">
                 <label className="input input-bordered flex items-center gap-2">
                   <i className="fas fa-search opacity-60"></i>
-                  <input type="text" className="grow" placeholder="Поиск по постам и авторам" />
+                  <input type="text" className="grow" placeholder="Поиск авторов" />
                 </label>
               </div>
             )}

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usersService } from '@/services/users';
+import { getAvatarUrl } from '@/utils/avatar';
 
 const normalizeItems = data => {
   if (Array.isArray(data)) return data;
@@ -62,11 +63,11 @@ export default function TopBar() {
             <input
               type="text"
               className="grow"
-              placeholder="Поиск пользователей"
+              placeholder="Поиск авторов"
               value={query}
               onChange={event => setQuery(event.target.value)}
               onFocus={() => trimmedQuery && setIsOpen(true)}
-              aria-label="Поиск пользователей"
+              aria-label="Поиск авторов"
             />
             {loading && <span className="loading loading-spinner loading-xs"></span>}
           </label>
@@ -77,13 +78,22 @@ export default function TopBar() {
                   {results.map(user => {
                     const name = user?.profile?.fullName?.trim() || user?.fullName || user?.username || 'Пользователь';
                     const username = user?.username ? `@${user.username}` : '';
+                    const avatarUrl = getAvatarUrl(user?.profile?.profilePictureUrl);
                     return (
                       <li key={user.id || user.userId || name}>
                         <Link
                           to={`/users/${user.id || user.userId}`}
                           className="flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-base-200"
                           onClick={() => setIsOpen(false)}>
-                          <span className="font-medium truncate">{name}</span>
+                          <span className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={avatarUrl}
+                              alt=""
+                              className="h-8 w-8 shrink-0 rounded-full object-cover"
+                              loading="lazy"
+                            />
+                            <span className="font-medium truncate">{name}</span>
+                          </span>
                           {username && <span className="text-xs opacity-60">{username}</span>}
                         </Link>
                       </li>
