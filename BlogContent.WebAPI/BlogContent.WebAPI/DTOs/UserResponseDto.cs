@@ -14,6 +14,20 @@ public class UserResponseDto
     public UserProfileDto? Profile { get; set; }
 }
 
+public class PublicUserResponseDto
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public UserStatus Status { get; set; }
+    public PublicUserProfileDto? Profile { get; set; }
+}
+
+public class PublicUserProfileDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string ProfilePictureUrl { get; set; } = string.Empty;
+}
+
 public class UserProfileDto
 {
     public string Username { get; set; } = string.Empty;
@@ -49,6 +63,28 @@ public static class UserMappingExtensions
                     BirthDate = user.Profile.BirthDate == default ? null : user.Profile.BirthDate,
                     Age = user.Profile.Age,
                     Bio = user.Profile.Bio,
+                    ProfilePictureUrl = user.Profile.ProfilePictureUrl
+                }
+        };
+    }
+
+    public static PublicUserResponseDto ToPublicDto(this User user)
+    {
+        if (user == null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        return new PublicUserResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Status = user.Status,
+            Profile = user.Profile == null
+                ? null
+                : new PublicUserProfileDto
+                {
+                    FullName = user.Profile.FullName,
                     ProfilePictureUrl = user.Profile.ProfilePictureUrl
                 }
         };

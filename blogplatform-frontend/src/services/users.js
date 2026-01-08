@@ -7,6 +7,11 @@ export const usersService = {
     return data; // UserDto
   },
 
+  async getPublicById(id) {
+    const { data } = await api.get(`/Users/${id}/public`);
+    return data; // PublicUserDto
+  },
+
   /**
    * counters: /api/Follows/{userId}/counters
    */
