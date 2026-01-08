@@ -49,7 +49,9 @@ export default function LikeButton({ type = 'post', targetId, initialLiked = fal
       title={liked ? 'Убрать лайк' : 'Лайкнуть'}
     >
       <span className="flex items-center gap-2">
-        <i className={`fas ${liked ? 'fa-heart' : 'fa-heart'}`} />
+        <span role="img" aria-label={liked ? 'Лайк' : 'Лайк'}>
+          ❤️
+        </span>
         <span>{count}</span>
       </span>
     </button>
