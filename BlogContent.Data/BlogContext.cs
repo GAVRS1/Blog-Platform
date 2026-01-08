@@ -23,6 +23,10 @@ public class BlogContext : DbContext
     public DbSet<PrivacySettings> PrivacySettings { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Report> Reports { get; set; }
+    public DbSet<ModerationAction> ModerationActions { get; set; }
+    public DbSet<Appeal> Appeals { get; set; }
+    public DbSet<Block> Blocks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -187,6 +191,37 @@ public class BlogContext : DbContext
             .Property(ns => ns.OnMessages)
             .HasDefaultValue(true);
 
+        modelBuilder.Entity<Report>()
+            .Property(r => r.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<Report>()
+            .Property(r => r.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<ModerationAction>()
+            .Property(ma => ma.ActionType)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<ModerationAction>()
+            .Property(ma => ma.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Appeal>()
+            .Property(a => a.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<Appeal>()
+            .Property(a => a.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Block>()
+            .Property(b => b.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
@@ -207,6 +242,27 @@ public class BlogContext : DbContext
 
         modelBuilder.Entity<CommentReply>()
             .HasIndex(r => r.CommentId);
+
+        modelBuilder.Entity<Report>()
+            .HasIndex(r => r.ReporterUserId);
+
+        modelBuilder.Entity<Report>()
+            .HasIndex(r => r.TargetUserId);
+
+        modelBuilder.Entity<ModerationAction>()
+            .HasIndex(a => a.AdminUserId);
+
+        modelBuilder.Entity<ModerationAction>()
+            .HasIndex(a => a.TargetUserId);
+
+        modelBuilder.Entity<Appeal>()
+            .HasIndex(a => a.UserId);
+
+        modelBuilder.Entity<Block>()
+            .HasIndex(b => new { b.BlockerUserId, b.BlockedUserId });
+
+        modelBuilder.Entity<Block>()
+            .HasIndex(b => new { b.BlockerUserId, b.IsActive });
 
         modelBuilder.Entity<EmailVerification>()
             .Property(ev => ev.Status)
@@ -244,5 +300,47 @@ public class BlogContext : DbContext
         modelBuilder.Entity<NotificationSettings>()
             .HasIndex(ns => ns.UserId)
             .IsUnique();
+
+        modelBuilder.Entity<Report>()
+            .HasOne(r => r.ReporterUser)
+            .WithMany(u => u.ReportsSent)
+            .HasForeignKey(r => r.ReporterUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Report>()
+            .HasOne(r => r.TargetUser)
+            .WithMany(u => u.ReportsReceived)
+            .HasForeignKey(r => r.TargetUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ModerationAction>()
+            .HasOne(a => a.AdminUser)
+            .WithMany(u => u.ModerationActionsTaken)
+            .HasForeignKey(a => a.AdminUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ModerationAction>()
+            .HasOne(a => a.TargetUser)
+            .WithMany(u => u.ModerationActionsAgainst)
+            .HasForeignKey(a => a.TargetUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Appeal>()
+            .HasOne(a => a.User)
+            .WithMany(u => u.Appeals)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Block>()
+            .HasOne(b => b.BlockerUser)
+            .WithMany(u => u.BlocksInitiated)
+            .HasForeignKey(b => b.BlockerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Block>()
+            .HasOne(b => b.BlockedUser)
+            .WithMany(u => u.BlocksReceived)
+            .HasForeignKey(b => b.BlockedUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
