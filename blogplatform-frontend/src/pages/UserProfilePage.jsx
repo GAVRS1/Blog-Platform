@@ -18,15 +18,18 @@ export default function UserProfilePage() {
   const [counters, setCounters] = useState({ followers: 0, following: 0 });
   const [rel, setRel] = useState(null);
   const [blockRel, setBlockRel] = useState(null);
+  const [limitedProfile, setLimitedProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
+      setLimitedProfile(false);
       try {
-        const [u, cnt, r, b] = await Promise.all([
-          usersService.getById(userId),
+        const u = await usersService.getById(userId);
+        setUser(u);
+        const [cnt, r, b] = await Promise.all([
           usersService.counters(userId),
           followsService.relationship(userId),
           blocksService.relationship(userId).catch((err) => {
@@ -36,14 +39,27 @@ export default function UserProfilePage() {
             throw err;
           })
         ]);
-        setUser(u);
         setCounters(cnt);
         setRel(r);
         setBlockRel(b);
       } catch (e) {
         const status = e.response?.status;
         if (status === 403) {
-          toast.error('Профиль скрыт настройками приватности');
+          try {
+            const publicUser = await usersService.getPublicById(userId);
+            setUser(publicUser);
+            setCounters({ followers: 0, following: 0 });
+            setRel(null);
+            setBlockRel(null);
+            setLimitedProfile(true);
+          } catch (publicError) {
+            const publicStatus = publicError.response?.status;
+            if (publicStatus === 404) {
+              toast.error('Пользователь не найден');
+            } else {
+              toast.error('Профиль скрыт настройками приватности');
+            }
+          }
         } else {
           toast.error('Пользователь не найден');
         }
@@ -74,6 +90,7 @@ export default function UserProfilePage() {
 
   const blockedByMe = !!blockRel?.iBlocked;
   const blockedMe = !!blockRel?.blockedMe;
+  const isRestricted = limitedProfile;
 
   return (
     <div className="space-y-6">
@@ -88,10 +105,10 @@ export default function UserProfilePage() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-2xl font-bold">@{user.username}</div>
-                <div className="badge">{user.status}</div>
+                {!isRestricted && <div className="badge">{user.status}</div>}
 
                 {/* Если есть блокировки — скрываем follow/message */}
-                {!blockedByMe && !blockedMe && (
+                {!isRestricted && !blockedByMe && !blockedMe && (
                   <>
                     <FollowButton userId={user.id} className="ml-2" />
                     {rel?.areFriends && <div className="badge badge-success">Друзья</div>}
@@ -100,18 +117,24 @@ export default function UserProfilePage() {
               </div>
 
               <div className="mt-1 opacity-80">{user?.profile?.fullName}</div>
-              <div className="mt-2 text-sm opacity-70">{user?.profile?.bio}</div>
+              {!isRestricted && <div className="mt-2 text-sm opacity-70">{user?.profile?.bio}</div>}
 
-              <div className="mt-3 flex items-center gap-4">
-                <Link to={`/users/${user.id}/followers`} className="link">
-                  <b>{counters.followers}</b> подписчиков
-                </Link>
-                <Link to={`/users/${user.id}/following`} className="link">
-                  <b>{counters.following}</b> подписок
-                </Link>
-              </div>
+              {!isRestricted && (
+                <div className="mt-3 flex items-center gap-4">
+                  <Link to={`/users/${user.id}/followers`} className="link">
+                    <b>{counters.followers}</b> подписчиков
+                  </Link>
+                  <Link to={`/users/${user.id}/following`} className="link">
+                    <b>{counters.following}</b> подписок
+                  </Link>
+                </div>
+              )}
 
-              {(blockedByMe || blockedMe) && (
+              {isRestricted && (
+                <div className="mt-3 text-sm opacity-70">Пользователь ограничил доступ</div>
+              )}
+
+              {!isRestricted && (blockedByMe || blockedMe) && (
                 <div className="alert alert-warning mt-3">
                   {blockedByMe && <span>Вы заблокировали этого пользователя — вы не увидите его контент и не сможете писать ему.</span>}
                   {blockedMe && <span>Этот пользователь заблокировал вас — доступ ограничен.</span>}
@@ -119,25 +142,29 @@ export default function UserProfilePage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              {!blockedByMe && !blockedMe && (
-                <Link to={`/messages/${user.id}`} className="btn btn-sm btn-outline">Написать</Link>
-              )}
-              <BlockButton userId={user.id} />
-              <button className="btn btn-sm btn-ghost" onClick={() => setReportOpen(true)}>Пожаловаться</button>
-            </div>
+            {!isRestricted && (
+              <div className="flex flex-col gap-2">
+                {!blockedByMe && !blockedMe && (
+                  <Link to={`/messages/${user.id}`} className="btn btn-sm btn-outline">Написать</Link>
+                )}
+                <BlockButton userId={user.id} />
+                <button className="btn btn-sm btn-ghost" onClick={() => setReportOpen(true)}>Пожаловаться</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Если заблокированы друг другом — вкладки могут быть пусты/ограничены, бэкенд вернёт 403 на приватные вещи */}
-      <ProfileTabs user={user} />
+      {!isRestricted && <ProfileTabs user={user} />}
 
-      <ReportModal
-        open={reportOpen}
-        onClose={() => setReportOpen(false)}
-        subject={{ type: 'user', userId: user.id }}
-      />
+      {!isRestricted && (
+        <ReportModal
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          subject={{ type: 'user', userId: user.id }}
+        />
+      )}
     </div>
   );
 }

@@ -54,6 +54,19 @@ public class UsersController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet("{id}/public")]
+    public IActionResult GetPublicById(int id)
+    {
+        var user = _userService.GetUserById(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(ToPublicResponse(user));
+    }
+
+    [AllowAnonymous]
     [HttpGet("search")]
     public IActionResult Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
@@ -117,6 +130,8 @@ public class UsersController : ControllerBase
     }
 
     private static UserResponseDto ToResponse(User user) => user.ToDto();
+
+    private static PublicUserResponseDto ToPublicResponse(User user) => user.ToPublicDto();
 
     private static PagedResponse<UserResponseDto> ToPagedResponse(PagedResult<User> source)
     {
