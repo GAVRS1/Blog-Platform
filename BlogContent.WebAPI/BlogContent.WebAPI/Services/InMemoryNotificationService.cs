@@ -121,8 +121,39 @@ public class InMemoryNotificationService : INotificationService
                 IsRead = false
             };
 
+            HydrateSubjects(notification);
             list.Add(notification);
             return Clone(notification);
+        }
+    }
+
+    private static void HydrateSubjects(NotificationDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.SubjectType)
+            && !string.IsNullOrWhiteSpace(dto.SubjectId))
+        {
+            if (dto.SubjectType == "post"
+                && int.TryParse(dto.SubjectId, out var postId))
+            {
+                dto.PostId = postId;
+            }
+
+            if (dto.SubjectType == "comment"
+                && int.TryParse(dto.SubjectId, out var commentId))
+            {
+                dto.CommentId = commentId;
+            }
+
+            if (dto.SubjectType == "user"
+                && int.TryParse(dto.SubjectId, out var userId))
+            {
+                dto.UserId = userId;
+            }
+        }
+
+        if (dto.UserId == null && dto.SenderId.HasValue)
+        {
+            dto.UserId = dto.SenderId;
         }
     }
 
@@ -137,6 +168,9 @@ public class InMemoryNotificationService : INotificationService
             Text = dto.Text,
             SubjectType = dto.SubjectType,
             SubjectId = dto.SubjectId,
+            PostId = dto.PostId,
+            CommentId = dto.CommentId,
+            UserId = dto.UserId,
             CreatedAt = dto.CreatedAt,
             IsRead = dto.IsRead
         };

@@ -18,14 +18,15 @@ public class DatabaseNotificationService : INotificationService
 
     public IEnumerable<NotificationDto> GetLatest(int userId, int page, int pageSize)
     {
-        return _context.Notifications
+        var notifications = _context.Notifications
             .AsNoTracking()
             .Where(n => n.RecipientUserId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(ToDto)
             .ToList();
+
+        return notifications.Select(ToDto).ToList();
     }
 
     public int GetUnreadCount(int userId)
@@ -111,9 +112,9 @@ public class DatabaseNotificationService : INotificationService
         return ToDto(notification);
     }
 
-    private static NotificationDto ToDto(Core.Models.Notification notification)
+    private NotificationDto ToDto(Core.Models.Notification notification)
     {
-        return new NotificationDto
+        var dto = new NotificationDto
         {
             Id = notification.Id,
             RecipientUserId = notification.RecipientUserId,
@@ -125,5 +126,43 @@ public class DatabaseNotificationService : INotificationService
             CreatedAt = notification.CreatedAt,
             IsRead = notification.IsRead
         };
+
+        HydrateSubjects(dto);
+        return dto;
+    }
+
+    private void HydrateSubjects(NotificationDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.SubjectType)
+            && !string.IsNullOrWhiteSpace(dto.SubjectId))
+        {
+            if (dto.SubjectType == "post"
+                && int.TryParse(dto.SubjectId, out var postId))
+            {
+                dto.PostId = postId;
+            }
+
+            if (dto.SubjectType == "comment"
+                && int.TryParse(dto.SubjectId, out var commentId))
+            {
+                dto.CommentId = commentId;
+                dto.PostId = _context.Comments
+                    .AsNoTracking()
+                    .Where(c => c.Id == commentId)
+                    .Select(c => (int?)c.PostId)
+                    .FirstOrDefault();
+            }
+
+            if (dto.SubjectType == "user"
+                && int.TryParse(dto.SubjectId, out var userId))
+            {
+                dto.UserId = userId;
+            }
+        }
+
+        if (dto.UserId == null && dto.SenderId.HasValue)
+        {
+            dto.UserId = dto.SenderId;
+        }
     }
 }
