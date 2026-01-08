@@ -24,12 +24,21 @@ public class MessagesController : ControllerBase
     private readonly IMessageService _messageService;
     private readonly IUserService _userService;
     private readonly IFollowService _followService;
+    private readonly ISettingsService _settingsService;
+    private readonly INotificationService _notificationService;
 
-    public MessagesController(IMessageService messageService, IUserService userService, IFollowService followService)
+    public MessagesController(
+        IMessageService messageService,
+        IUserService userService,
+        IFollowService followService,
+        ISettingsService settingsService,
+        INotificationService notificationService)
     {
         _messageService = messageService;
         _userService = userService;
         _followService = followService;
+        _settingsService = settingsService;
+        _notificationService = notificationService;
     }
 
     [HttpGet("inbox")]
@@ -88,6 +97,20 @@ public class MessagesController : ControllerBase
         }
 
         var saved = _messageService.SendMessage(userId, request.RecipientId, request.Content ?? string.Empty, request.Attachments);
+
+        if (recipient.Id != userId)
+        {
+            var settings = _settingsService.GetNotificationSettings(recipient.Id);
+            if (settings.OnMessages)
+            {
+                _notificationService.AddNotification(
+                    recipient.Id,
+                    "message",
+                    "Новое сообщение.",
+                    userId);
+            }
+        }
+
         return Ok(saved);
     }
 

@@ -13,6 +13,8 @@ public class User
     public Profile Profile { get; set; } = new Profile();
     public PrivacySettings PrivacySettings { get; set; } = null!;
     public NotificationSettings NotificationSettings { get; set; } = null!;
+    public ICollection<Notification> ReceivedNotifications { get; set; } = [];
+    public ICollection<Notification> SentNotifications { get; set; } = [];
     public ICollection<Post> Posts { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Like> Likes { get; set; } = [];

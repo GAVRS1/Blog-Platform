@@ -22,6 +22,7 @@ public class BlogContext : DbContext
     public DbSet<PostMedia> PostMedias { get; set; }
     public DbSet<PrivacySettings> PrivacySettings { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,6 +49,18 @@ public class BlogContext : DbContext
             .WithOne(ns => ns.User)
             .HasForeignKey<NotificationSettings>(ns => ns.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.RecipientUser)
+            .WithMany(u => u.ReceivedNotifications)
+            .HasForeignKey(n => n.RecipientUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Sender)
+            .WithMany(u => u.SentNotifications)
+            .HasForeignKey(n => n.SenderId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<User>()
             .Property(u => u.Status)
@@ -113,6 +126,14 @@ public class BlogContext : DbContext
             .WithMany(u => u.CommentReplies)
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Notification>()
+            .Property(n => n.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Notification>()
+            .Property(n => n.IsRead)
+            .HasDefaultValue(false);
 
         modelBuilder.Entity<Like>()
             .HasOne(l => l.User)
@@ -206,6 +227,12 @@ public class BlogContext : DbContext
 
         modelBuilder.Entity<PostMedia>()
             .HasIndex(m => m.PostId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.RecipientUserId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.RecipientUserId, n.IsRead });
 
         modelBuilder.Entity<PrivacySettings>()
             .HasIndex(ps => ps.UserId)
