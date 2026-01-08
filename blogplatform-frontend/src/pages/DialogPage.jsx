@@ -348,7 +348,7 @@ export default function DialogPage() {
                 </div>
                 {m.isOwn && (
                   <div className="chat-footer text-xs opacity-60">
-                    {m.isRead ? `Прочитано${m.readAt ? ` · ${new Date(m.readAt).toLocaleString()}` : ''}` : 'Не прочитано'}
+                    {m.isRead ? 'Прочитано' : 'Не прочитано'}
                   </div>
                 )}
               </div>
