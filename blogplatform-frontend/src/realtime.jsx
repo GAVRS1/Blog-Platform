@@ -89,8 +89,10 @@ export function connectRealtime(jwt, handlers = {}) {
       await chat.start();
       await notify.start();
       activeChatConnection = chat;
+      onStatus?.({ type: 'connected' });
     } catch (e) {
       console.warn('Realtime start error:', e);
+      onStatus?.({ type: 'error', error: e });
       setTimeout(start, 2000);
     }
   };

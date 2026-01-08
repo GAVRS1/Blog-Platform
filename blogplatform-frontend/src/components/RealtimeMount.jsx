@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { connectRealtime } from '@/realtime';
-import { emitRealtimeMessage, emitRealtimePresence, emitRealtimeStatus } from '@/realtimeEvents';
+import {
+  emitRealtimeMessage,
+  emitRealtimeNotification,
+  emitRealtimePresence,
+  emitRealtimeStatus
+} from '@/realtimeEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { AUTH_TOKEN_COOKIE, getCookie } from '@/utils/cookies';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
@@ -46,7 +51,7 @@ export default function RealtimeMount() {
     if (!ref.current) {
       ref.current = connectRealtime(token, {
         onMessage: (m) => emitRealtimeMessage(normalizeMessage(m)),
-        onNotification: () => {},
+        onNotification: (n) => emitRealtimeNotification(n),
         onStatus: emitRealtimeStatus,
         onPresence: emitRealtimePresence,
       });

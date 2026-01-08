@@ -1,31 +1,41 @@
 // src/pages/MessagesPage.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { usersService } from '@/services/users';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeToRealtimeMessages, subscribeToRealtimePresence } from '@/realtimeEvents';
+import {
+  subscribeToRealtimeMessages,
+  subscribeToRealtimePresence,
+  subscribeToRealtimeStatus
+} from '@/realtimeEvents';
 
 export default function MessagesPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState({});
   const [presenceByUser, setPresenceByUser] = useState({});
+  const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
   const { user } = useAuth();
+  const isRealtimeUnavailable = useMemo(() => (
+    ['reconnecting', 'closed', 'error'].includes(realtimeStatus?.type)
+  ), [realtimeStatus]);
+
+  async function loadInbox() {
+    try {
+      const data = await messagesService.getInbox();
+      setItems(data);
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось загрузить диалоги');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await messagesService.getInbox();
-        setItems(data);
-      } catch (e) {
-        toast.error(e.response?.data || 'Не удалось загрузить диалоги');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    loadInbox();
   }, []);
 
   useEffect(() => {
@@ -111,6 +121,26 @@ export default function MessagesPage() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimeStatus((status) => {
+      if (!status) return;
+      setRealtimeStatus(status);
+      if (status.type === 'reconnected' || status.type === 'connected') {
+        loadInbox();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!isRealtimeUnavailable) return undefined;
+    const interval = setInterval(() => {
+      loadInbox();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [isRealtimeUnavailable]);
 
   useEffect(() => {
     if (!items || items.length === 0) return;
