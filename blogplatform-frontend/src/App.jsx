@@ -117,41 +117,44 @@ function AppLayout() {
       <div className="min-h-screen bg-base-200">
         <Toaster position="top-center" />
         <div className="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-[280px,1fr] gap-4 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-[280px,minmax(0,1fr),280px] gap-4 pt-4">
             <aside className="hidden md:block">
               <Sidebar />
             </aside>
-            <main>
-              <Suspense fallback={<PageSkeleton />}>
-                <Routes>
-                  {/* Public */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register/*" element={<RegisterWizard />} />
-                  <Route path="/verify" element={<VerifyEmailPage />} />
-                  <Route path="/appeal" element={<AppealPage />} />
+            <main className="flex justify-center">
+              <div className="w-full max-w-3xl">
+                <Suspense fallback={<PageSkeleton />}>
+                  <Routes>
+                    {/* Public */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register/*" element={<RegisterWizard />} />
+                    <Route path="/verify" element={<VerifyEmailPage />} />
+                    <Route path="/appeal" element={<AppealPage />} />
 
-                  {/* Private */}
-                  <Route path="/" element={<ProtectedHome />} />
-                  <Route path="/profile" element={<ProtectedProfile />} />
-                  <Route path="/users/:id" element={<ProtectedUserProfile />} />
-                  <Route path="/users/:id/followers" element={<ProtectedFollowers />} />
-                  <Route path="/users/:id/following" element={<ProtectedFollowing />} />
-                  <Route path="/posts/:id" element={<ProtectedPostDetail />} />
-                  <Route path="/my" element={<ProtectedMyItems />} />
+                    {/* Private */}
+                    <Route path="/" element={<ProtectedHome />} />
+                    <Route path="/profile" element={<ProtectedProfile />} />
+                    <Route path="/users/:id" element={<ProtectedUserProfile />} />
+                    <Route path="/users/:id/followers" element={<ProtectedFollowers />} />
+                    <Route path="/users/:id/following" element={<ProtectedFollowing />} />
+                    <Route path="/posts/:id" element={<ProtectedPostDetail />} />
+                    <Route path="/my" element={<ProtectedMyItems />} />
 
-                  <Route path="/messages" element={<ProtectedMessages />} />
-                  <Route path="/messages/:id" element={<ProtectedDialog />} />
-                  <Route path="/notifications" element={<ProtectedNotifications />} />
-                  <Route path="/settings" element={<ProtectedSettings />} />
-                  <Route path="/admin" element={<ProtectedAdmin />} />
-                  <Route path="/blocks" element={<ProtectedBlocks />} />
+                    <Route path="/messages" element={<ProtectedMessages />} />
+                    <Route path="/messages/:id" element={<ProtectedDialog />} />
+                    <Route path="/notifications" element={<ProtectedNotifications />} />
+                    <Route path="/settings" element={<ProtectedSettings />} />
+                    <Route path="/admin" element={<ProtectedAdmin />} />
+                    <Route path="/blocks" element={<ProtectedBlocks />} />
 
-                  {/* other */}
-                  <Route path="/404" element={<NotFound />} />
-                  <Route path="*" element={<Navigate to="/404" />} />
-                </Routes>
-              </Suspense>
+                    {/* other */}
+                    <Route path="/404" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/404" />} />
+                  </Routes>
+                </Suspense>
+              </div>
             </main>
+            <div className="hidden md:block" aria-hidden="true" />
           </div>
         </div>
 
