@@ -257,10 +257,10 @@ export default function DialogPage() {
   }
 
   const resolveDisplayName = () => {
-    if (!profile) return `Пользователь #${otherUserId}`;
+    if (!profile) return 'Пользователь';
     const fullName = profile.profile?.fullName?.trim();
     const username = profile.profile?.username?.trim() || profile.username?.trim();
-    return fullName || username || `Пользователь #${otherUserId}`;
+    return fullName || username || 'Пользователь';
   };
 
   const resolveStatus = () => {
@@ -352,7 +352,7 @@ export default function DialogPage() {
             {group.items.map((m) => (
               <div key={m.id} className={`chat ${m.isOwn ? 'chat-end' : (m.senderId === otherUserId ? 'chat-start' : 'chat-end')}`}>
                 <div className="chat-header">
-                  {m.senderId === otherUserId ? `#${otherUserId}` : 'Вы'}
+                  {m.senderId === otherUserId ? resolveDisplayName() : 'Вы'}
                   <time className="text-xs opacity-50 ml-2">{formatTime(m.createdAt)}</time>
                 </div>
                 <div className="chat-bubble">
