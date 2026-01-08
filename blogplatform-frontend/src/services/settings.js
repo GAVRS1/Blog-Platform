@@ -2,17 +2,28 @@
 import api from '@/api/axios';
 
 // Маппинг Audience: 0=Everyone, 1=FriendsOnly, 2=NoOne
-const AtoS = (n) => (n === 0 ? 'Everyone' : n === 1 ? 'FriendsOnly' : 'NoOne');
-const StoA = (s) => (s === 'Everyone' ? 0 : s === 'FriendsOnly' ? 1 : 2);
+const audienceFromApi = (value) => {
+  if (typeof value === 'string') return value;
+  if (value === 0) return 'Everyone';
+  if (value === 1) return 'FriendsOnly';
+  return 'NoOne';
+};
+
+const audienceToApi = (value) => {
+  if (typeof value === 'string') return value;
+  if (value === 0) return 'Everyone';
+  if (value === 1) return 'FriendsOnly';
+  return 'NoOne';
+};
 
 export const settingsService = {
   async getPrivacy() {
     const { data } = await api.get('/Settings/privacy');
     // API -> UI
     return {
-      whoCanMessage: AtoS(data.canMessageFrom),
-      whoCanComment: AtoS(data.canCommentFrom),
-      whoCanViewProfile: AtoS(data.profileVisibility),
+      whoCanMessage: audienceFromApi(data.canMessageFrom),
+      whoCanComment: audienceFromApi(data.canCommentFrom),
+      whoCanViewProfile: audienceFromApi(data.profileVisibility),
       showActivity: !!data.showActivity,
       showEmail: !!data.showEmail,
     };
@@ -21,18 +32,18 @@ export const settingsService = {
   async updatePrivacy(p) {
     // UI -> API
     const payload = {
-      canMessageFrom: StoA(p.whoCanMessage),
-      canCommentFrom: StoA(p.whoCanComment),
-      profileVisibility: StoA(p.whoCanViewProfile),
+      canMessageFrom: audienceToApi(p.whoCanMessage),
+      canCommentFrom: audienceToApi(p.whoCanComment),
+      profileVisibility: audienceToApi(p.whoCanViewProfile),
       showActivity: !!p.showActivity,
       showEmail: !!p.showEmail,
     };
     const { data } = await api.put('/Settings/privacy', payload);
     // Вернём в UI-формате (чтобы не мигали селекты)
     return {
-      whoCanMessage: AtoS(data.canMessageFrom),
-      whoCanComment: AtoS(data.canCommentFrom),
-      whoCanViewProfile: AtoS(data.profileVisibility),
+      whoCanMessage: audienceFromApi(data.canMessageFrom),
+      whoCanComment: audienceFromApi(data.canCommentFrom),
+      whoCanViewProfile: audienceFromApi(data.profileVisibility),
       showActivity: !!data.showActivity,
       showEmail: !!data.showEmail,
     };
@@ -41,26 +52,26 @@ export const settingsService = {
   async getNotifications() {
     const { data } = await api.get('/Settings/notifications');
     return {
-      onLikes: AtoS(data.onLikes),
-      onComments: AtoS(data.onComments),
-      onFollows: AtoS(data.onFollows),
-      onMessages: AtoS(data.onMessages),
+      onLikes: !!data.onLikes,
+      onComments: !!data.onComments,
+      onFollows: !!data.onFollows,
+      onMessages: !!data.onMessages,
     };
   },
 
   async updateNotifications(n) {
     const payload = {
-      onLikes: StoA(n.onLikes),
-      onComments: StoA(n.onComments),
-      onFollows: StoA(n.onFollows),
-      onMessages: StoA(n.onMessages),
+      onLikes: !!n.onLikes,
+      onComments: !!n.onComments,
+      onFollows: !!n.onFollows,
+      onMessages: !!n.onMessages,
     };
     const { data } = await api.put('/Settings/notifications', payload);
     return {
-      onLikes: AtoS(data.onLikes),
-      onComments: AtoS(data.onComments),
-      onFollows: AtoS(data.onFollows),
-      onMessages: AtoS(data.onMessages),
+      onLikes: !!data.onLikes,
+      onComments: !!data.onComments,
+      onFollows: !!data.onFollows,
+      onMessages: !!data.onMessages,
     };
   },
 };

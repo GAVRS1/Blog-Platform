@@ -10,6 +10,11 @@ const AUDIENCE = [
   { value: 'NoOne', label: 'Никто' }
 ];
 
+const NOTIFICATION_OPTIONS = [
+  { value: 'true', label: 'Вкл' },
+  { value: 'false', label: 'Выкл' }
+];
+
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [privacy, setPrivacy] = useState(null);
@@ -75,17 +80,17 @@ export default function SettingsPage() {
         <div className="card-body">
           <h2 className="card-title">Приватность</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <SelectField
+            <AudienceSelectField
               label="Кто может писать сообщения"
               value={privacy?.whoCanMessage}
               onChange={(v) => setPrivacy(p => ({ ...p, whoCanMessage: v }))}
             />
-            <SelectField
+            <AudienceSelectField
               label="Кто может комментировать"
               value={privacy?.whoCanComment}
               onChange={(v) => setPrivacy(p => ({ ...p, whoCanComment: v }))}
             />
-            <SelectField
+            <AudienceSelectField
               label="Кто видит профиль"
               value={privacy?.whoCanViewProfile}
               onChange={(v) => setPrivacy(p => ({ ...p, whoCanViewProfile: v }))}
@@ -104,22 +109,22 @@ export default function SettingsPage() {
         <div className="card-body">
           <h2 className="card-title">Уведомления</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <SelectField
+            <NotificationSelectField
               label="Подписки"
               value={notifs?.onFollows}
               onChange={(v) => setNotifs(n => ({ ...n, onFollows: v }))}
             />
-            <SelectField
+            <NotificationSelectField
               label="Лайки"
               value={notifs?.onLikes}
               onChange={(v) => setNotifs(n => ({ ...n, onLikes: v }))}
             />
-            <SelectField
+            <NotificationSelectField
               label="Комментарии"
               value={notifs?.onComments}
               onChange={(v) => setNotifs(n => ({ ...n, onComments: v }))}
             />
-            <SelectField
+            <NotificationSelectField
               label="Сообщения"
               value={notifs?.onMessages}
               onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
@@ -136,12 +141,33 @@ export default function SettingsPage() {
   );
 }
 
-function SelectField({ label, value, onChange }) {
+function AudienceSelectField({ label, value, onChange }) {
   return (
     <div className="form-control">
       <label className="label"><span className="label-text">{label}</span></label>
-      <select className="select select-bordered" value={value || 'Everyone'} onChange={(e) => onChange(e.target.value)}>
+      <select
+        className="select select-bordered"
+        value={value || 'Everyone'}
+        onChange={(e) => onChange(e.target.value)}
+      >
         {AUDIENCE.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function NotificationSelectField({ label, value, onChange }) {
+  return (
+    <div className="form-control">
+      <label className="label"><span className="label-text">{label}</span></label>
+      <select
+        className="select select-bordered"
+        value={String(value ?? true)}
+        onChange={(e) => onChange(e.target.value === 'true')}
+      >
+        {NOTIFICATION_OPTIONS.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
       </select>
     </div>
   );
