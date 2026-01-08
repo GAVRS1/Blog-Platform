@@ -2,14 +2,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
+import { usersService } from '@/services/users';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeToRealtimeMessages } from '@/realtimeEvents';
+import { subscribeToRealtimeMessages, subscribeToRealtimePresence } from '@/realtimeEvents';
 
 export default function MessagesPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profiles, setProfiles] = useState({});
+  const [presenceByUser, setPresenceByUser] = useState({});
   const { user } = useAuth();
 
   useEffect(() => {
@@ -66,6 +69,96 @@ export default function MessagesPage() {
     return () => unsubscribe();
   }, [user?.id]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimePresence((event) => {
+      if (!event?.userId) return;
+      setPresenceByUser((prev) => {
+        const current = prev[event.userId] || {};
+        if (event.type === 'online') {
+          return {
+            ...prev,
+            [event.userId]: {
+              ...current,
+              status: 'online',
+              lastSeenUtc: null,
+              isTyping: false
+            }
+          };
+        }
+        if (event.type === 'offline') {
+          return {
+            ...prev,
+            [event.userId]: {
+              ...current,
+              status: 'offline',
+              lastSeenUtc: event.lastSeenUtc || current.lastSeenUtc || null,
+              isTyping: false
+            }
+          };
+        }
+        if (event.type === 'typing') {
+          return {
+            ...prev,
+            [event.userId]: {
+              ...current,
+              isTyping: Boolean(event.isTyping)
+            }
+          };
+        }
+        return prev;
+      });
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+    const missing = items
+      .map((item) => item.otherUserId)
+      .filter((id) => id && !profiles[id]);
+    if (missing.length === 0) return;
+
+    let isActive = true;
+    Promise.all(missing.map((id) => usersService.getById(id).catch(() => null)))
+      .then((responses) => {
+        if (!isActive) return;
+        setProfiles((prev) => {
+          const updated = { ...prev };
+          responses.forEach((res) => {
+            if (!res?.id) return;
+            updated[res.id] = res;
+          });
+          return updated;
+        });
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [items, profiles]);
+
+  const resolveDisplayName = (profile, userId) => {
+    if (!profile) return `Пользователь #${userId}`;
+    const fullName = profile.profile?.fullName?.trim();
+    const username = profile.profile?.username?.trim() || profile.username?.trim();
+    return fullName || username || `Пользователь #${userId}`;
+  };
+
+  const resolveAvatar = (profile) => {
+    const avatar = profile?.profile?.profilePictureUrl?.trim();
+    return avatar || null;
+  };
+
+  const resolveStatus = (presence) => {
+    if (presence?.isTyping) return 'пишет...';
+    if (presence?.status === 'online') return 'онлайн';
+    if (presence?.lastSeenUtc) {
+      return `был(а) в ${new Date(presence.lastSeenUtc).toLocaleString()}`;
+    }
+    return 'офлайн';
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex items-center justify-between mb-4">
@@ -87,17 +180,26 @@ export default function MessagesPage() {
           {items.map((x) => (
             <Link key={x.otherUserId} to={`/messages/${x.otherUserId}`} className="card bg-base-100 hover:bg-base-200 transition">
               <div className="card-body flex-row items-center gap-4">
-                <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content rounded-full w-12">
-                    <span>{x.otherUserId}</span>
+                <div className="avatar">
+                  <div className="rounded-full w-12">
+                    {resolveAvatar(profiles[x.otherUserId]) ? (
+                      <img src={resolveAvatar(profiles[x.otherUserId])} alt={resolveDisplayName(profiles[x.otherUserId], x.otherUserId)} />
+                    ) : (
+                      <div className="bg-neutral text-neutral-content rounded-full w-12 flex items-center justify-center">
+                        <span>{resolveDisplayName(profiles[x.otherUserId], x.otherUserId).slice(0, 2)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold">Пользователь #{x.otherUserId}</div>
+                    <div className="font-semibold">{resolveDisplayName(profiles[x.otherUserId], x.otherUserId)}</div>
                     {x.unreadCount > 0 && (
                       <div className="badge badge-primary">{x.unreadCount}</div>
                     )}
+                  </div>
+                  <div className="text-xs opacity-70">
+                    {resolveStatus(presenceByUser[x.otherUserId])}
                   </div>
                   <div className="text-sm opacity-70 truncate">
                     {x.lastMessage?.content || '[вложение]'} · {new Date(x.lastMessage?.createdAt).toLocaleString()}

@@ -1,6 +1,7 @@
 // src/realtimeEvents.js
 const messageTarget = new EventTarget();
 const statusTarget = new EventTarget();
+const presenceTarget = new EventTarget();
 
 export function emitRealtimeMessage(message) {
   messageTarget.dispatchEvent(new CustomEvent('message', { detail: message }));
@@ -22,4 +23,15 @@ export function subscribeToRealtimeStatus(handler) {
   const listener = (event) => handler(event.detail);
   statusTarget.addEventListener('status', listener);
   return () => statusTarget.removeEventListener('status', listener);
+}
+
+export function emitRealtimePresence(update) {
+  presenceTarget.dispatchEvent(new CustomEvent('presence', { detail: update }));
+}
+
+export function subscribeToRealtimePresence(handler) {
+  if (!handler) return () => {};
+  const listener = (event) => handler(event.detail);
+  presenceTarget.addEventListener('presence', listener);
+  return () => presenceTarget.removeEventListener('presence', listener);
 }
