@@ -6,6 +6,8 @@ using BlogContent.Core.Enums;
 using BlogContent.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BlogContent.WebAPI.Services;
+using BlogContent.Services;
 
 namespace BlogContent.WebAPI.Controllers;
 
