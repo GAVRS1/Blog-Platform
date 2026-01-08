@@ -249,6 +249,28 @@ export default function DialogPage() {
     return 'офлайн';
   };
 
+  const formatTime = (value) => {
+    if (!value) return '';
+    return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const groupedMessages = (list || []).reduce((acc, messageItem) => {
+    const createdAt = new Date(messageItem.createdAt);
+    const dateKey = createdAt.toLocaleDateString('sv-SE');
+    const dateLabel = createdAt.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    const lastGroup = acc[acc.length - 1];
+    if (!lastGroup || lastGroup.dateKey !== dateKey) {
+      acc.push({ dateKey, dateLabel, items: [messageItem] });
+    } else {
+      lastGroup.items.push(messageItem);
+    }
+    return acc;
+  }, []);
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
@@ -271,27 +293,32 @@ export default function DialogPage() {
           </div>
         )}
 
-        {list?.map(m => (
-          <div key={m.id} className={`chat ${m.isOwn ? 'chat-end' : (m.senderId === otherUserId ? 'chat-start' : 'chat-end')}`}>
-            <div className="chat-header">
-              {m.senderId === otherUserId ? `#${otherUserId}` : 'Вы'}
-              <time className="text-xs opacity-50 ml-2">{new Date(m.createdAt).toLocaleString()}</time>
-            </div>
-            <div className="chat-bubble">
-              {m.content}
-              {m.attachments?.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {m.attachments.map((a, i) => (
-                    <Attachment key={i} a={a} />
-                  ))}
+        {groupedMessages.map((group) => (
+          <div key={group.dateKey} className="space-y-2">
+            <div className="divider text-xs opacity-70">{group.dateLabel}</div>
+            {group.items.map((m) => (
+              <div key={m.id} className={`chat ${m.isOwn ? 'chat-end' : (m.senderId === otherUserId ? 'chat-start' : 'chat-end')}`}>
+                <div className="chat-header">
+                  {m.senderId === otherUserId ? `#${otherUserId}` : 'Вы'}
+                  <time className="text-xs opacity-50 ml-2">{formatTime(m.createdAt)}</time>
                 </div>
-              )}
-            </div>
-            {m.isOwn && (
-              <div className="chat-footer text-xs opacity-60">
-                {m.isRead ? `Прочитано${m.readAt ? ` · ${new Date(m.readAt).toLocaleString()}` : ''}` : 'Не прочитано'}
+                <div className="chat-bubble">
+                  {m.content}
+                  {m.attachments?.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {m.attachments.map((a, i) => (
+                        <Attachment key={i} a={a} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {m.isOwn && (
+                  <div className="chat-footer text-xs opacity-60">
+                    {m.isRead ? `Прочитано${m.readAt ? ` · ${new Date(m.readAt).toLocaleString()}` : ''}` : 'Не прочитано'}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
         ))}
       </div>
