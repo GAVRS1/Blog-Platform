@@ -15,6 +15,7 @@ import {
 } from '@/realtimeEvents';
 import { sendTyping } from '@/realtime';
 import ReportModal from '@/components/ReportModal';
+import { getAvatarUrl } from '@/utils/avatar';
 
 const MAX_ATTACH = 10;
 
@@ -277,6 +278,10 @@ export default function DialogPage() {
     return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const resolveAvatarUrl = (isOtherUser) => (
+    getAvatarUrl(isOtherUser ? profile?.profile?.profilePictureUrl : user?.profile?.profilePictureUrl)
+  );
+
   const groupedMessages = (list || []).reduce((acc, messageItem) => {
     const createdAt = new Date(messageItem.createdAt);
     const dateKey = createdAt.toLocaleDateString('sv-SE');
@@ -351,6 +356,14 @@ export default function DialogPage() {
             <div className="divider text-xs opacity-70">{group.dateLabel}</div>
             {group.items.map((m) => (
               <div key={m.id} className={`chat ${m.isOwn ? 'chat-end' : (m.senderId === otherUserId ? 'chat-start' : 'chat-end')}`}>
+                <div className="chat-image avatar">
+                  <div className="w-10 rounded-full">
+                    <img
+                      src={resolveAvatarUrl(m.senderId === otherUserId)}
+                      alt={m.senderId === otherUserId ? resolveDisplayName() : user?.username || 'Вы'}
+                    />
+                  </div>
+                </div>
                 <div className="chat-header">
                   {m.senderId === otherUserId ? resolveDisplayName() : 'Вы'}
                   <time className="text-xs opacity-50 ml-2">{formatTime(m.createdAt)}</time>
