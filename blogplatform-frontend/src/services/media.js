@@ -3,7 +3,7 @@ import api from '@/api/axios';
 
 /**
  * Унифицированная загрузка медиа на сервер.
- * По OpenAPI у тебя: POST /api/Media/upload?type={string}
+ * По API: POST /api/Media/upload (multipart/form-data) с полями file и type
  * Возвращаемое значение ожидаем как минимум { url: string, thumbnailUrl?: string }
  */
 export const mediaService = {
@@ -26,10 +26,26 @@ export const mediaService = {
     const form = new FormData();
     form.append('file', file);
 
-    const { data } = await api.post(endpoint, form, {
-      params: safeType ? { type: safeType } : {},
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    if (safeType) {
+      form.append('type', safeType);
+    }
+
+    let data;
+    try {
+      ({ data } = await api.post(endpoint, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }));
+    } catch (error) {
+      if (error?.response) {
+        console.error('[mediaService.upload] Upload failed', {
+          status: error.response.status,
+          data: error.response.data,
+        });
+      } else {
+        console.error('[mediaService.upload] Upload failed', error);
+      }
+      throw error;
+    }
 
     if (!data || !data.url) {
       throw new Error('Сервер не вернул URL загруженного файла');
