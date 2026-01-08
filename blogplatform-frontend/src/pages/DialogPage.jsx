@@ -1,5 +1,5 @@
 // src/pages/DialogPage.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { mediaService } from '@/services/media';
@@ -8,7 +8,11 @@ import { blocksService } from '@/services/blocks';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeToRealtimeMessages, subscribeToRealtimePresence, subscribeToRealtimeStatus } from '@/realtimeEvents';
+import {
+  subscribeToRealtimeMessages,
+  subscribeToRealtimePresence,
+  subscribeToRealtimeStatus
+} from '@/realtimeEvents';
 import { sendTyping } from '@/realtime';
 import ReportModal from '@/components/ReportModal';
 
@@ -28,10 +32,14 @@ export default function DialogPage() {
   const [presence, setPresence] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
 
   const containerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const typingStateRef = useRef(false);
+  const isRealtimeUnavailable = useMemo(() => (
+    ['reconnecting', 'closed', 'error'].includes(realtimeStatus?.type)
+  ), [realtimeStatus]);
 
   useEffect(() => {
     loadPage(1, true);
@@ -67,7 +75,9 @@ export default function DialogPage() {
     });
 
     const unsubscribeStatus = subscribeToRealtimeStatus((status) => {
-      if (status?.type === 'reconnected') {
+      if (!status) return;
+      setRealtimeStatus(status);
+      if (status.type === 'reconnected' || status.type === 'connected') {
         loadPage(1, true);
         markReadAndSync();
       }
@@ -113,6 +123,15 @@ export default function DialogPage() {
       }
     };
   }, [otherUserId]);
+
+  useEffect(() => {
+    if (!isRealtimeUnavailable) return undefined;
+    const interval = setInterval(() => {
+      loadPage(1, true);
+      markReadAndSync();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [isRealtimeUnavailable, otherUserId]);
 
   async function loadPage(p, replace = false) {
     try {

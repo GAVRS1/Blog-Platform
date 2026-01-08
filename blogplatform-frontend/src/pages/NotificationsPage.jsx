@@ -1,12 +1,17 @@
 // src/pages/NotificationsPage.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { notificationsService } from '@/services/notifications';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { subscribeToRealtimeNotifications, subscribeToRealtimeStatus } from '@/realtimeEvents';
 
 export default function NotificationsPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
+  const isRealtimeUnavailable = useMemo(() => (
+    ['reconnecting', 'closed', 'error'].includes(realtimeStatus?.type)
+  ), [realtimeStatus]);
 
   async function load() {
     try {
@@ -20,6 +25,44 @@ export default function NotificationsPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimeNotifications((incoming) => {
+      if (!incoming) return;
+      setItems((prev) => {
+        if (!prev || prev.length === 0) {
+          return [incoming];
+        }
+        const index = prev.findIndex((item) => item.id === incoming.id);
+        if (index === -1) {
+          return [incoming, ...prev];
+        }
+        const updated = [...prev];
+        updated[index] = { ...updated[index], ...incoming };
+        return updated;
+      });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimeStatus((status) => {
+      if (!status) return;
+      setRealtimeStatus(status);
+      if (status.type === 'reconnected' || status.type === 'connected') {
+        load();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!isRealtimeUnavailable) return undefined;
+    const interval = setInterval(() => {
+      load();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [isRealtimeUnavailable]);
 
   const markAll = async () => {
     try {
