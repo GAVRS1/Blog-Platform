@@ -53,7 +53,9 @@ public class FollowsController : ControllerBase
                     userId,
                     "follow",
                     "Новый подписчик.",
-                    currentUserId);
+                    currentUserId,
+                    "user",
+                    currentUserId.ToString());
             }
         }
 

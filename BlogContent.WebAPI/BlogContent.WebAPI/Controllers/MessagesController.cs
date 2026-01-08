@@ -107,7 +107,9 @@ public class MessagesController : ControllerBase
                     recipient.Id,
                     "message",
                     "Новое сообщение.",
-                    userId);
+                    userId,
+                    "message",
+                    saved.Id.ToString());
             }
         }
 

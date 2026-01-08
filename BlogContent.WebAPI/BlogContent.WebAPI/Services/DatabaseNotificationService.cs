@@ -68,8 +68,30 @@ public class DatabaseNotificationService : INotificationService
         return 1;
     }
 
-    public NotificationDto AddNotification(int recipientUserId, string type, string? text = null, int? senderId = null)
+    public NotificationDto AddNotification(
+        int recipientUserId,
+        string type,
+        string? text = null,
+        int? senderId = null,
+        string? subjectType = null,
+        string? subjectId = null)
     {
+        var existing = _context.Notifications.FirstOrDefault(n =>
+            n.RecipientUserId == recipientUserId
+            && n.SenderId == senderId
+            && n.Type == type
+            && n.SubjectType == subjectType
+            && n.SubjectId == subjectId);
+
+        if (existing != null)
+        {
+            existing.CreatedAt = DateTime.UtcNow;
+            existing.IsRead = false;
+            existing.Text = text;
+            _context.SaveChanges();
+            return ToDto(existing);
+        }
+
         var notification = new Core.Models.Notification
         {
             Id = Guid.NewGuid(),
@@ -77,6 +99,8 @@ public class DatabaseNotificationService : INotificationService
             SenderId = senderId,
             Type = type,
             Text = text,
+            SubjectType = subjectType,
+            SubjectId = subjectId,
             CreatedAt = DateTime.UtcNow,
             IsRead = false
         };
@@ -96,6 +120,8 @@ public class DatabaseNotificationService : INotificationService
             SenderId = notification.SenderId,
             Type = notification.Type,
             Text = notification.Text,
+            SubjectType = notification.SubjectType,
+            SubjectId = notification.SubjectId,
             CreatedAt = notification.CreatedAt,
             IsRead = notification.IsRead
         };

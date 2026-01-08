@@ -234,6 +234,9 @@ public class BlogContext : DbContext
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.RecipientUserId, n.IsRead });
 
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.RecipientUserId, n.SenderId, n.Type, n.SubjectType, n.SubjectId });
+
         modelBuilder.Entity<PrivacySettings>()
             .HasIndex(ps => ps.UserId)
             .IsUnique();
