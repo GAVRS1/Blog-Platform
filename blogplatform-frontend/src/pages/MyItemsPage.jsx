@@ -11,6 +11,7 @@ export default function MyItemsPage({ title, endpoint }) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    invalidate
   } = useMyData(endpoint);
 
   const { ref, inView } = useInView({ threshold: 0.5 });
@@ -25,7 +26,13 @@ export default function MyItemsPage({ title, endpoint }) {
       <h1 className="text-3xl font-bold text-primary mb-6">{title}</h1>
 
       <div className="space-y-6">
-        {items.map(p => <PostCard key={p.id} post={p} />)}
+        {items.map(p => (
+          <PostCard
+            key={p.id}
+            post={p}
+            onDeleted={() => invalidate()}
+          />
+        ))}
         {isFetchingNextPage && [...Array(3)].map((_, i) => <SkeletonPost key={i} />)}
         {!isFetchingNextPage && !hasNextPage && items.length === 0 && (
           <p className="text-center text-base-content/60">Пока пусто 😴</p>

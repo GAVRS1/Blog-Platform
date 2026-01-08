@@ -9,12 +9,14 @@ import Comment from '@/components/Comment';
 import ReportModal from '@/components/ReportModal';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
 
 export default function PostDetailPage() {
   const { id } = useParams();
   const postId = Number(id);
+  const { user } = useAuth();
 
   const [post, setPost] = useState(null);
   const [loadingPost, setLoadingPost] = useState(true);
@@ -91,6 +93,12 @@ export default function PostDetailPage() {
     } finally {
       setCSending(false);
     }
+  };
+
+  const handleCommentDeleted = (commentId) => {
+    setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+    setPost((p) => p ? ({ ...p, commentCount: Math.max((p.commentCount || 1) - 1, 0) }) : p);
+    setCTotal((total) => Math.max(total - 1, 0));
   };
 
   const canLoadMore = comments.length < cTotal;
@@ -177,7 +185,14 @@ export default function PostDetailPage() {
 
       <div className="space-y-3">
         {comments.map(c => (
-          <Comment key={c.id} comment={c} enableLike />
+          <Comment
+            key={c.id}
+            comment={c}
+            enableLike
+            currentUserId={user?.id}
+            postUserId={post?.userId}
+            onDeleted={handleCommentDeleted}
+          />
         ))}
 
         {cLoading && (
