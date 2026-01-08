@@ -55,16 +55,19 @@ public class PostsController : ControllerBase
     [HttpGet("user/{userId}")]
     public IActionResult GetByUserId(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
+        var authUserId = TryGetUserId(out var uid) ? uid : (int?)null;
+
         var user = _userService.GetUserById(userId);
         if (user == null)
         {
             return NotFound();
         }
 
-        if (TryGetUserId(out var currentUserId) && currentUserId != userId)
+        if (authUserId.HasValue && authUserId.Value != userId)
         {
-            var relation = _followService.GetRelationship(currentUserId, userId);
+            var relation = _followService.GetRelationship(authUserId.Value, userId);
             var audience = user.PrivacySettings?.ProfileVisibility ?? Audience.Everyone;
+
             if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
             {
                 return StatusCode(403, new AccessDeniedResponse { Message = AccessDeniedMessage });
@@ -73,10 +76,18 @@ public class PostsController : ControllerBase
 
         (page, pageSize) = NormalizePagination(page, pageSize);
         var posts = _postService.GetPostsByUser(userId, page, pageSize);
-        var currentUserId = TryGetUserId(out var authUserId) ? authUserId : (int?)null;
-        var mapped = posts.Items.Select(p => ToResponse(p, currentUserId)).ToList();
-        return Ok(ToPagedResponse(new PagedResult<PostResponseDto>(mapped, posts.TotalCount), page, pageSize));
+
+        var mapped = posts.Items
+            .Select(p => ToResponse(p, authUserId))
+            .ToList();
+
+        return Ok(ToPagedResponse(
+            new PagedResult<PostResponseDto>(mapped, posts.TotalCount),
+            page,
+            pageSize
+        ));
     }
+
 
     [HttpPost]
     public IActionResult Create([FromBody] PostDto dto)
