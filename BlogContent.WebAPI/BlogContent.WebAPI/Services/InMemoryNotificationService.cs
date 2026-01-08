@@ -121,6 +121,7 @@ public class InMemoryNotificationService : INotificationService
                 IsRead = false
             };
 
+            PopulateTargets(notification);
             list.Add(notification);
             return Clone(notification);
         }
@@ -137,8 +138,40 @@ public class InMemoryNotificationService : INotificationService
             Text = dto.Text,
             SubjectType = dto.SubjectType,
             SubjectId = dto.SubjectId,
+            PostId = dto.PostId,
+            CommentId = dto.CommentId,
+            UserId = dto.UserId,
+            MessageId = dto.MessageId,
             CreatedAt = dto.CreatedAt,
             IsRead = dto.IsRead
         };
+    }
+
+    private static void PopulateTargets(NotificationDto dto)
+    {
+        if (dto.SubjectType == null || string.IsNullOrWhiteSpace(dto.SubjectId))
+        {
+            return;
+        }
+
+        if (dto.SubjectType.Equals("post", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var postId))
+        {
+            dto.PostId = postId;
+            return;
+        }
+
+        if (dto.SubjectType.Equals("comment", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var commentId))
+        {
+            dto.CommentId = commentId;
+            return;
+        }
+
+        if (dto.SubjectType.Equals("user", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var userId))
+        {
+            dto.UserId = userId;
+        }
     }
 }

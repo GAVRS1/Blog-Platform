@@ -18,12 +18,15 @@ public class DatabaseNotificationService : INotificationService
 
     public IEnumerable<NotificationDto> GetLatest(int userId, int page, int pageSize)
     {
-        return _context.Notifications
+        var notifications = _context.Notifications
             .AsNoTracking()
             .Where(n => n.RecipientUserId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .ToList();
+
+        return notifications
             .Select(ToDto)
             .ToList();
     }
@@ -89,7 +92,7 @@ public class DatabaseNotificationService : INotificationService
             existing.IsRead = false;
             existing.Text = text;
             _context.SaveChanges();
-            return ToDto(existing);
+        return ToDto(existing);
         }
 
         var notification = new Core.Models.Notification
@@ -111,9 +114,9 @@ public class DatabaseNotificationService : INotificationService
         return ToDto(notification);
     }
 
-    private static NotificationDto ToDto(Core.Models.Notification notification)
+    private NotificationDto ToDto(Core.Models.Notification notification)
     {
-        return new NotificationDto
+        var dto = new NotificationDto
         {
             Id = notification.Id,
             RecipientUserId = notification.RecipientUserId,
@@ -125,5 +128,41 @@ public class DatabaseNotificationService : INotificationService
             CreatedAt = notification.CreatedAt,
             IsRead = notification.IsRead
         };
+
+        PopulateTargets(dto);
+        return dto;
+    }
+
+    private void PopulateTargets(NotificationDto dto)
+    {
+        if (dto.SubjectType == null || string.IsNullOrWhiteSpace(dto.SubjectId))
+        {
+            return;
+        }
+
+        if (dto.SubjectType.Equals("post", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var postId))
+        {
+            dto.PostId = postId;
+            return;
+        }
+
+        if (dto.SubjectType.Equals("comment", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var commentId))
+        {
+            dto.CommentId = commentId;
+            dto.PostId = _context.Comments
+                .AsNoTracking()
+                .Where(c => c.Id == commentId)
+                .Select(c => (int?)c.PostId)
+                .FirstOrDefault();
+            return;
+        }
+
+        if (dto.SubjectType.Equals("user", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(dto.SubjectId, out var userId))
+        {
+            dto.UserId = userId;
+        }
     }
 }
