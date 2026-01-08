@@ -1,11 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { connectRealtime } from '@/realtime';
+import { emitRealtimeMessage, emitRealtimeStatus } from '@/realtimeEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { AUTH_TOKEN_COOKIE, getCookie } from '@/utils/cookies';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 const PUBLIC = ['/login', '/register', '/verify', '/appeal', '/404'];
+const normalizeMessage = (message) => {
+  if (!message) return message;
+  if (!message.createdAt && message.sentAt) {
+    return { ...message, createdAt: message.sentAt };
+  }
+  return message;
+};
 
 export default function RealtimeMount() {
   const ref = useRef(null);
@@ -37,9 +45,9 @@ export default function RealtimeMount() {
 
     if (!ref.current) {
       ref.current = connectRealtime(token, {
-        onMessage: () => {},
+        onMessage: (m) => emitRealtimeMessage(normalizeMessage(m)),
         onNotification: () => {},
-        onStatus: () => {},
+        onStatus: emitRealtimeStatus,
       });
       ref.current.start();
     }

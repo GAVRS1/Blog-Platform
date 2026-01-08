@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { subscribeToRealtimeMessages } from '@/realtimeEvents';
 
 export default function MessagesPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -21,6 +24,47 @@ export default function MessagesPage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtimeMessages((incoming) => {
+      if (!incoming) return;
+      setItems((prev) => {
+        if (!prev) {
+          const isOwn = user?.id && incoming.senderId === user.id;
+          const otherUserId = isOwn ? incoming.recipientId : incoming.senderId;
+          return [{
+            otherUserId,
+            lastMessage: incoming,
+            unreadCount: isOwn ? 0 : 1,
+          }];
+        }
+        const isOwn = user?.id && incoming.senderId === user.id;
+        const otherUserId = isOwn ? incoming.recipientId : incoming.senderId;
+        const updated = {
+          otherUserId,
+          lastMessage: incoming,
+          unreadCount: isOwn ? 0 : 1,
+        };
+
+        const existingIndex = prev.findIndex((item) => item.otherUserId === otherUserId);
+        if (existingIndex === -1) {
+          return [updated, ...prev];
+        }
+
+        const existing = prev[existingIndex];
+        const merged = {
+          ...existing,
+          lastMessage: incoming,
+          unreadCount: isOwn ? existing.unreadCount : (existing.unreadCount || 0) + 1,
+        };
+
+        const without = prev.filter((item) => item.otherUserId !== otherUserId);
+        return [merged, ...without];
+      });
+    });
+
+    return () => unsubscribe();
+  }, [user?.id]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

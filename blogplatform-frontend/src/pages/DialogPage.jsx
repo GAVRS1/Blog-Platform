@@ -5,12 +5,15 @@ import { messagesService } from '@/services/messages';
 import { mediaService } from '@/services/media';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { subscribeToRealtimeMessages, subscribeToRealtimeStatus } from '@/realtimeEvents';
 
 const MAX_ATTACH = 10;
 
 export default function DialogPage() {
   const { id } = useParams();
   const otherUserId = Number(id);
+  const { user } = useAuth();
   const [list, setList] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -25,6 +28,45 @@ export default function DialogPage() {
     messagesService.markRead(otherUserId).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUserId]);
+
+  useEffect(() => {
+    const unsubscribeMessages = subscribeToRealtimeMessages((incoming) => {
+      if (!incoming) return;
+      const isOwn = user?.id && incoming.senderId === user.id;
+      const matchesDialog = incoming.senderId === otherUserId || incoming.recipientId === otherUserId;
+      if (!matchesDialog) return;
+
+      setList((prev) => {
+        if (!prev || prev.length === 0) {
+          return [incoming];
+        }
+        if (prev.some((item) => item.id === incoming.id)) {
+          return prev;
+        }
+        return [...prev, incoming];
+      });
+
+      setTimeout(() => {
+        containerRef.current?.scrollTo({ top: containerRef.current.scrollHeight, behavior: 'smooth' });
+      }, 50);
+
+      if (!isOwn && incoming.senderId === otherUserId) {
+        messagesService.markRead(otherUserId).catch(() => {});
+      }
+    });
+
+    const unsubscribeStatus = subscribeToRealtimeStatus((status) => {
+      if (status?.type === 'reconnected') {
+        loadPage(1, true);
+        messagesService.markRead(otherUserId).catch(() => {});
+      }
+    });
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeStatus();
+    };
+  }, [otherUserId, user?.id]);
 
   async function loadPage(p, replace = false) {
     try {
@@ -122,7 +164,6 @@ export default function DialogPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-bold">Диалог с #{otherUserId}</h1>
-        <button className="btn btn-sm" onClick={() => loadPage(1, true)}>Обновить</button>
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto bg-base-100 rounded-lg p-4 space-y-2">
