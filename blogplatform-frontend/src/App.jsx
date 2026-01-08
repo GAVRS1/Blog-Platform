@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
+import TopBar from '@/components/TopBar';
 import withAuth from '@/hocs/withAuth';
 import CreatePostModal from '@/components/CreatePostModal';
 import RealtimeMount from '@/components/RealtimeMount';
@@ -116,6 +117,7 @@ function AppLayout() {
       <RealtimeMount />
       <div className="min-h-screen bg-base-200">
         <Toaster position="top-center" />
+        <TopBar />
         <div className="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-[280px,1fr] gap-4 pt-4">
             <aside className="hidden md:block">
