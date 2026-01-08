@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { API_BASE } from './api/config';
 
 export function connectRealtime(jwt, handlers = {}) {
-  const { onMessage, onNotification } = handlers;
+  const { onMessage, onNotification, onStatus } = handlers;
   const baseOptions = {
     withCredentials: true,
   };
@@ -49,6 +49,18 @@ export function connectRealtime(jwt, handlers = {}) {
       setTimeout(start, 2000);
     }
   };
+
+  chat.onreconnecting((error) => {
+    onStatus?.({ type: 'reconnecting', error });
+  });
+
+  chat.onreconnected((connectionId) => {
+    onStatus?.({ type: 'reconnected', connectionId });
+  });
+
+  chat.onclose((error) => {
+    onStatus?.({ type: 'closed', error });
+  });
 
   const stop = async () => {
     try {
