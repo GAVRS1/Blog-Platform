@@ -1,14 +1,16 @@
 // src/pages/DialogPage.jsx
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { mediaService } from '@/services/media';
 import { usersService } from '@/services/users';
+import { blocksService } from '@/services/blocks';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeToRealtimeMessages, subscribeToRealtimePresence, subscribeToRealtimeStatus } from '@/realtimeEvents';
 import { sendTyping } from '@/realtime';
+import ReportModal from '@/components/ReportModal';
 
 const MAX_ATTACH = 10;
 
@@ -24,6 +26,8 @@ export default function DialogPage() {
   const [uploads, setUploads] = useState([]); // [{ url, mediaType, mimeType, sizeBytes, thumbnailUrl }]
   const [profile, setProfile] = useState(null);
   const [presence, setPresence] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   const containerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -271,12 +275,42 @@ export default function DialogPage() {
     return acc;
   }, []);
 
+  const handleBlockUser = async () => {
+    setBlocking(true);
+    try {
+      await blocksService.block(otherUserId);
+      toast.success('Пользователь заблокирован');
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось заблокировать');
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
           <div className="text-xs opacity-70">{resolveStatus()}</div>
+        </div>
+        <div className="dropdown dropdown-end">
+          <label tabIndex={0} className="btn btn-ghost btn-sm btn-square" title="Меню">
+            ☰
+          </label>
+          <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+            <li>
+              <Link to={`/users/${otherUserId}`}>Открыть профиль</Link>
+            </li>
+            <li>
+              <button type="button" onClick={() => setReportOpen(true)}>Пожаловаться</button>
+            </li>
+            <li>
+              <button type="button" onClick={handleBlockUser} disabled={blocking}>
+                {blocking ? 'Блокировка...' : 'Заблокировать'}
+              </button>
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -367,6 +401,12 @@ export default function DialogPage() {
         </div>
         <button className={`btn btn-primary ${sending ? 'loading' : ''}`} disabled={sending}>Отправить</button>
       </form>
+
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        subject={{ type: 'user', userId: otherUserId }}
+      />
     </motion.div>
   );
 }
