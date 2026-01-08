@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { followsService } from '@/services/follows';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function FollowButton({ userId, className = '' }) {
+  const { user: currentUser } = useAuth();
   const [state, setState] = useState({ loading: true, iFollow: false, followsMe: false, areFriends: false });
 
   async function load() {
@@ -36,6 +38,10 @@ export default function FollowButton({ userId, className = '' }) {
       toast.error(e.response?.data || 'Не удалось отписаться');
     }
   };
+
+  if (currentUser && userId === currentUser.id) {
+    return <span className={`badge badge-ghost ${className}`}>Это вы</span>;
+  }
 
   if (state.loading) {
     return <button className={`btn btn-sm btn-ghost ${className}`} disabled>...</button>;
