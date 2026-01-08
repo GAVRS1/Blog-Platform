@@ -1,6 +1,6 @@
 // src/App.jsx
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
@@ -10,6 +10,7 @@ import CreatePostModal from '@/components/CreatePostModal';
 import RealtimeMount from '@/components/RealtimeMount';
 import CookieConsentModal from '@/components/CookieConsentModal';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { isPublicNavPath } from '@/config/navigation';
 
 // Pages (lazy)
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -113,41 +114,45 @@ function ConsentWrappedApp() {
 function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const location = useLocation();
+  const showNav = !isPublicNavPath(location.pathname);
 
   return (
     <>
       <RealtimeMount />
       <div className="min-h-screen bg-base-200">
         <Toaster position="top-center" />
-        <TopBar />
-        <div className="md:hidden sticky top-0 z-40 border-b border-base-300 bg-base-200/95 backdrop-blur">
-          <div className="flex items-center justify-between px-3 py-2">
-            <button
-              type="button"
-              className="btn btn-ghost btn-circle"
-              onClick={() => setMobileSidebarOpen(true)}
-              aria-label="Открыть меню">
-              <i className="fas fa-bars"></i>
-            </button>
-            <div className="font-semibold">Меню</div>
-            <button
-              type="button"
-              className="btn btn-ghost btn-circle"
-              onClick={() => setMobileSearchOpen(prev => !prev)}
-              aria-expanded={mobileSearchOpen}
-              aria-label="Поиск">
-              <i className="fas fa-magnifying-glass"></i>
-            </button>
-          </div>
-          {mobileSearchOpen && (
-            <div className="px-3 pb-3">
-              <label className="input input-bordered flex items-center gap-2">
-                <i className="fas fa-search opacity-60"></i>
-                <input type="text" className="grow" placeholder="Поиск по постам и авторам" />
-              </label>
+        {showNav && <TopBar />}
+        {showNav && (
+          <div className="md:hidden sticky top-0 z-40 border-b border-base-300 bg-base-200/95 backdrop-blur">
+            <div className="flex items-center justify-between px-3 py-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-circle"
+                onClick={() => setMobileSidebarOpen(true)}
+                aria-label="Открыть меню">
+                <i className="fas fa-bars"></i>
+              </button>
+              <div className="font-semibold">Меню</div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-circle"
+                onClick={() => setMobileSearchOpen(prev => !prev)}
+                aria-expanded={mobileSearchOpen}
+                aria-label="Поиск">
+                <i className="fas fa-magnifying-glass"></i>
+              </button>
             </div>
-          )}
-        </div>
+            {mobileSearchOpen && (
+              <div className="px-3 pb-3">
+                <label className="input input-bordered flex items-center gap-2">
+                  <i className="fas fa-search opacity-60"></i>
+                  <input type="text" className="grow" placeholder="Поиск по постам и авторам" />
+                </label>
+              </div>
+            )}
+          </div>
+        )}
         <div className="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-[280px,minmax(0,1fr),280px] gap-4 pt-4">
             <aside className="hidden md:block">
