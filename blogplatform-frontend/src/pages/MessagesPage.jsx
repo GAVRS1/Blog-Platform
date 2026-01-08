@@ -159,6 +159,17 @@ export default function MessagesPage() {
     return 'офлайн';
   };
 
+  const formatMessageTimestamp = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    const now = new Date();
+    const isSameDay = date.toDateString() === now.toDateString();
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (isSameDay) return time;
+    const shortDate = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    return `${shortDate} ${time}`;
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex items-center justify-between mb-4">
@@ -202,7 +213,7 @@ export default function MessagesPage() {
                     {resolveStatus(presenceByUser[x.otherUserId])}
                   </div>
                   <div className="text-sm opacity-70 truncate">
-                    {x.lastMessage?.content || '[вложение]'} · {new Date(x.lastMessage?.createdAt).toLocaleString()}
+                    {x.lastMessage?.content || '[вложение]'} · {formatMessageTimestamp(x.lastMessage?.createdAt)}
                     {x.lastMessage && (
                       <span className="ml-2 text-xs opacity-70">
                         {x.lastMessage.senderId === user?.id
