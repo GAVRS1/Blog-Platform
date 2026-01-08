@@ -10,5 +10,11 @@ public interface INotificationService
     int GetUnreadCount(int userId);
     int MarkAllRead(int userId);
     int MarkRead(int userId, Guid notificationId);
-    NotificationDto AddNotification(int recipientUserId, string type, string? text = null, int? senderId = null);
+    NotificationDto AddNotification(
+        int recipientUserId,
+        string type,
+        string? text = null,
+        int? senderId = null,
+        string? subjectType = null,
+        string? subjectId = null);
 }

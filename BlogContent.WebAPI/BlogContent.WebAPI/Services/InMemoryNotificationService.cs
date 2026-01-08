@@ -82,26 +82,48 @@ public class InMemoryNotificationService : INotificationService
         }
     }
 
-    public NotificationDto AddNotification(int recipientUserId, string type, string? text = null, int? senderId = null)
+    public NotificationDto AddNotification(
+        int recipientUserId,
+        string type,
+        string? text = null,
+        int? senderId = null,
+        string? subjectType = null,
+        string? subjectId = null)
     {
-        var notification = new NotificationDto
-        {
-            Id = Guid.NewGuid(),
-            RecipientUserId = recipientUserId,
-            SenderId = senderId,
-            Type = type,
-            Text = text,
-            CreatedAt = DateTime.UtcNow,
-            IsRead = false
-        };
-
         lock (_lock)
         {
             var list = _notifications.GetOrAdd(recipientUserId, _ => []);
-            list.Add(notification);
-        }
+            var existing = list.FirstOrDefault(n =>
+                n.RecipientUserId == recipientUserId
+                && n.SenderId == senderId
+                && n.Type == type
+                && n.SubjectType == subjectType
+                && n.SubjectId == subjectId);
 
-        return Clone(notification);
+            if (existing != null)
+            {
+                existing.CreatedAt = DateTime.UtcNow;
+                existing.IsRead = false;
+                existing.Text = text;
+                return Clone(existing);
+            }
+
+            var notification = new NotificationDto
+            {
+                Id = Guid.NewGuid(),
+                RecipientUserId = recipientUserId,
+                SenderId = senderId,
+                Type = type,
+                Text = text,
+                SubjectType = subjectType,
+                SubjectId = subjectId,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            list.Add(notification);
+            return Clone(notification);
+        }
     }
 
     private static NotificationDto Clone(NotificationDto dto)
@@ -113,6 +135,8 @@ public class InMemoryNotificationService : INotificationService
             SenderId = dto.SenderId,
             Type = dto.Type,
             Text = dto.Text,
+            SubjectType = dto.SubjectType,
+            SubjectId = dto.SubjectId,
             CreatedAt = dto.CreatedAt,
             IsRead = dto.IsRead
         };

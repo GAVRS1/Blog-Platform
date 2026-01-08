@@ -63,7 +63,9 @@ public class LikesController : ControllerBase
                         post.UserId,
                         "like",
                         "Новый лайк вашему посту.",
-                        userId);
+                        userId,
+                        "post",
+                        postId.ToString());
                 }
             }
         }
@@ -102,7 +104,9 @@ public class LikesController : ControllerBase
                         comment.UserId,
                         "like",
                         "Новый лайк вашему комментарию.",
-                        userId);
+                        userId,
+                        "comment",
+                        commentId.ToString());
                 }
             }
         }

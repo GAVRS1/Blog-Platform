@@ -98,7 +98,9 @@ public class CommentsController : ControllerBase
                     post.UserId,
                     "comment",
                     "Новый комментарий к вашему посту.",
-                    userId);
+                    userId,
+                    "post",
+                    dto.PostId.ToString());
             }
         }
 
@@ -148,7 +150,9 @@ public class CommentsController : ControllerBase
                     comment.UserId,
                     "reply",
                     "Новый ответ на ваш комментарий.",
-                    userId);
+                    userId,
+                    "comment",
+                    commentId.ToString());
             }
         }
 
