@@ -20,4 +20,11 @@ public class User
     public ICollection<Like> Likes { get; set; } = [];
     public ICollection<CommentLike> CommentLikes { get; set; } = [];
     public ICollection<CommentReply> CommentReplies { get; set; } = [];
+    public ICollection<Report> ReportsSent { get; set; } = [];
+    public ICollection<Report> ReportsReceived { get; set; } = [];
+    public ICollection<ModerationAction> ModerationActionsTaken { get; set; } = [];
+    public ICollection<ModerationAction> ModerationActionsAgainst { get; set; } = [];
+    public ICollection<Appeal> Appeals { get; set; } = [];
+    public ICollection<Block> BlocksInitiated { get; set; } = [];
+    public ICollection<Block> BlocksReceived { get; set; } = [];
 }
