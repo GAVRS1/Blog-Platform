@@ -29,7 +29,12 @@ export default function UserProfilePage() {
           usersService.getById(userId),
           usersService.counters(userId),
           followsService.relationship(userId),
-          blocksService.relationship(userId)
+          blocksService.relationship(userId).catch((err) => {
+            if (err.response?.status === 404) {
+              return null;
+            }
+            throw err;
+          })
         ]);
         setUser(u);
         setCounters(cnt);
