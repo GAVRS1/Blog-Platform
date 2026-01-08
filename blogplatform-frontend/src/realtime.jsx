@@ -1,7 +1,47 @@
 // src/realtime.js
 import * as signalR from '@microsoft/signalr';
-import toast from 'react-hot-toast';
 import { API_BASE } from './api/config';
+
+let messageAudioContext;
+
+const playMessageSound = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) {
+    return;
+  }
+
+  if (!messageAudioContext) {
+    messageAudioContext = new AudioContext();
+  }
+
+  const context = messageAudioContext;
+  if (context.state === 'suspended') {
+    context.resume().catch(() => {});
+  }
+
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.value = 880;
+  gainNode.gain.value = 0.08;
+
+  oscillator.connect(gainNode);
+  gainNode.connect(context.destination);
+
+  const stopAt = context.currentTime + 0.18;
+  oscillator.start();
+  oscillator.stop(stopAt);
+
+  oscillator.onended = () => {
+    oscillator.disconnect();
+    gainNode.disconnect();
+  };
+};
 
 export function connectRealtime(jwt, handlers = {}) {
   const { onMessage, onNotification, onStatus } = handlers;
@@ -24,20 +64,11 @@ export function connectRealtime(jwt, handlers = {}) {
 
   chat.on('MessageReceived', (m) => {
     onMessage?.(m);
-    toast.custom(() => (
-      <div className="alert alert-info shadow-lg max-w-md">
-        <span>Новое сообщение от #{m.senderId}: {m.content?.slice(0, 80)}</span>
-      </div>
-    ), { id: `msg-${m.id}`, duration: 3000 });
+    playMessageSound();
   });
 
   notify.on('NotificationReceived', (n) => {
     onNotification?.(n);
-    toast.custom(() => (
-      <div className="alert alert-success shadow-lg max-w-md">
-        <span>Уведомление: {n.text || n.type}</span>
-      </div>
-    ), { id: `notif-${n.id}`, duration: 2500 });
   });
 
   const start = async () => {
