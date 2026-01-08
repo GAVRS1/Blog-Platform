@@ -1,5 +1,6 @@
 // src/pages/NotificationsPage.jsx
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { notificationsService } from '@/services/notifications';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -9,6 +10,7 @@ export default function NotificationsPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
   const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
+  const navigate = useNavigate();
   const isRealtimeUnavailable = useMemo(() => (
     ['reconnecting', 'closed', 'error'].includes(realtimeStatus?.type)
   ), [realtimeStatus]);
@@ -74,6 +76,67 @@ export default function NotificationsPage() {
     }
   };
 
+  const formatTimestamp = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const getNotificationRoute = (notification) => {
+    if (notification.postId) {
+      return `/posts/${notification.postId}`;
+    }
+    if (notification.userId) {
+      return `/users/${notification.userId}`;
+    }
+    if (notification.messageId) {
+      return `/messages/${notification.messageId}`;
+    }
+
+    if (notification.subjectType && notification.subjectId) {
+      if (notification.subjectType === 'post') {
+        return `/posts/${notification.subjectId}`;
+      }
+      if (notification.subjectType === 'user') {
+        return `/users/${notification.subjectId}`;
+      }
+    }
+
+    return null;
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification) {
+      return;
+    }
+
+    const route = getNotificationRoute(notification);
+
+    if (!notification.isRead) {
+      try {
+        await notificationsService.markRead(notification.id);
+        setItems((prev) => prev?.map((item) => (
+          item.id === notification.id ? { ...item, isRead: true } : item
+        )));
+      } catch (e) {
+        toast.error(e.response?.data || 'Не удалось отметить уведомление');
+      }
+    }
+
+    if (route) {
+      navigate(route);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex items-center justify-between mb-4">
@@ -91,10 +154,10 @@ export default function NotificationsPage() {
         <ul className="menu bg-base-100 rounded-box">
           {items.map(n => (
             <li key={n.id} className={n.isRead ? '' : 'font-semibold'}>
-              <span>
+              <button type="button" onClick={() => handleNotificationClick(n)}>
                 <span className="badge mr-2">{n.type}</span>
-                {n.text || 'Уведомление'} · <span className="opacity-60">{new Date(n.createdAt).toLocaleString()}</span>
-              </span>
+                {n.text || 'Уведомление'} · <span className="opacity-60">{formatTimestamp(n.createdAt)}</span>
+              </button>
             </li>
           ))}
         </ul>
