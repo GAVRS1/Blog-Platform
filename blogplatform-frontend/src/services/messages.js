@@ -19,6 +19,6 @@ export const messagesService = {
 
   markRead: async (otherUserId) => {
     const { data } = await api.post(`/messages/read/${otherUserId}`);
-    return data; // { marked: N }
+    return data; // { marked, updatedMessages }
   }
 };

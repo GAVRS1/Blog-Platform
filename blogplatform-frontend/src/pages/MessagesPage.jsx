@@ -101,6 +101,13 @@ export default function MessagesPage() {
                   </div>
                   <div className="text-sm opacity-70 truncate">
                     {x.lastMessage?.content || '[вложение]'} · {new Date(x.lastMessage?.createdAt).toLocaleString()}
+                    {x.lastMessage && (
+                      <span className="ml-2 text-xs opacity-70">
+                        {x.lastMessage.senderId === user?.id
+                          ? (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')
+                          : (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
