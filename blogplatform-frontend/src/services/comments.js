@@ -17,6 +17,11 @@ export const commentsService = {
     return data; // created reply
   },
 
+  remove: async (id) => {
+    const { data } = await api.delete(`/comments/${id}`);
+    return data;
+  },
+
   // Если у тебя есть отдельная выдача ответов — оставляем
   listReplies: async (commentId, page = 1, pageSize = 10) => {
     const { data } = await api.get(`/comments/${commentId}/replies`, { params: { page, pageSize } });

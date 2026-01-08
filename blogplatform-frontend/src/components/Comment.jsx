@@ -11,7 +11,13 @@ import { getAvatarUrl } from '@/utils/avatar';
  * - ответить на комментарий
  * - подгрузить/показать ответы
  */
-export default function Comment({ comment, enableLike = false }) {
+export default function Comment({
+  comment,
+  enableLike = false,
+  onDeleted,
+  currentUserId,
+  postUserId
+}) {
   const [local, setLocal] = useState(() => ({
     id: comment.id,
     content: comment.content,
@@ -30,6 +36,7 @@ export default function Comment({ comment, enableLike = false }) {
   const [replyHasMore, setReplyHasMore] = useState(true);
   const [replyText, setReplyText] = useState('');
   const [replyLoading, setReplyLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     setLocal((s) => ({
@@ -88,6 +95,26 @@ export default function Comment({ comment, enableLike = false }) {
     }
   };
 
+  const canDelete = Boolean(
+    currentUserId && (currentUserId === local.userId || currentUserId === postUserId)
+  );
+
+  const handleDelete = async () => {
+    if (!canDelete || deleteLoading) return;
+    setDeleteLoading(true);
+    try {
+      await commentsService.remove(local.id);
+      onDeleted?.(local.id);
+      toast.success('Комментарий удалён');
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403) toast.error('Нет прав на удаление комментария');
+      else toast.error(err.response?.data || 'Не удалось удалить комментарий');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body p-4">
@@ -118,6 +145,15 @@ export default function Comment({ comment, enableLike = false }) {
           <button className="btn btn-sm btn-ghost" onClick={toggleReplies}>
             Ответы <span className="ml-2">{local.replyCount}</span>
           </button>
+          {canDelete && (
+            <button
+              className={`btn btn-sm btn-outline btn-error ${deleteLoading ? 'loading' : ''}`}
+              onClick={handleDelete}
+              disabled={deleteLoading}
+            >
+              Удалить
+            </button>
+          )}
         </div>
 
         {/* REPLIES */}

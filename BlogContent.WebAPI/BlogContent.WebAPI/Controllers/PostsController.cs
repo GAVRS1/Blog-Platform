@@ -126,6 +126,22 @@ public class PostsController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
+        if (!TryGetUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var post = _postService.GetPostById(id);
+        if (post == null)
+        {
+            return NotFound();
+        }
+
+        if (post.UserId != currentUserId)
+        {
+            return StatusCode(403);
+        }
+
         _postService.DeletePost(id);
         return NoContent();
     }

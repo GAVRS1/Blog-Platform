@@ -5,6 +5,7 @@ import LikeButton from '@/components/LikeButton';
 import MediaPlayer from '@/components/MediaPlayer';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { postsService } from '@/services/posts';
 
 export default function PostCard({ post, onDeleted }) {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function PostCard({ post, onDeleted }) {
     commentCount: post.commentCount ?? 0,
     isLiked: !!post.isLikedByCurrentUser
   }));
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const attachments = useMemo(() => post.attachments || post.media || [], [post]);
 
@@ -27,6 +29,22 @@ export default function PostCard({ post, onDeleted }) {
   };
 
   const openDetails = () => navigate(`/posts/${post.id}`);
+
+  const handleDelete = async () => {
+    if (deleteLoading) return;
+    setDeleteLoading(true);
+    try {
+      await postsService.remove(post.id);
+      toast.success('Пост удалён');
+      onDeleted?.(post);
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403) toast.error('Нет прав на удаление поста');
+      else toast.error(err.response?.data || 'Не удалось удалить пост');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <article className="card bg-base-100 shadow-sm hover:shadow transition">
@@ -80,8 +98,9 @@ export default function PostCard({ post, onDeleted }) {
           {/* Если это мой пост — можно удалить (если у тебя есть такая логика) */}
           {post.isOwn && (
             <button
-              className="btn btn-sm btn-outline btn-error"
-              onClick={() => onDeleted?.(post)}
+              className={`btn btn-sm btn-outline btn-error ${deleteLoading ? 'loading' : ''}`}
+              onClick={handleDelete}
+              disabled={deleteLoading}
             >
               Удалить
             </button>

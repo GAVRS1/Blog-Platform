@@ -166,6 +166,28 @@ public class CommentsController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
+        if (!TryGetUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var comment = _commentService.GetCommentById(id);
+        if (comment == null)
+        {
+            return NotFound();
+        }
+
+        var post = _postService.GetPostById(comment.PostId);
+        if (post == null)
+        {
+            return NotFound();
+        }
+
+        if (comment.UserId != currentUserId && post.UserId != currentUserId)
+        {
+            return StatusCode(403);
+        }
+
         _commentService.DeleteComment(id);
         return NoContent();
     }
