@@ -7,9 +7,10 @@ import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
 import { useUnreadBadges } from '@/hooks/useUnreadBadges';
 import { getAvatarUrl } from '@/utils/avatar';
 
-const NavItem = ({ to, label, icon, badge, badgeClass }) => (
+const NavItem = ({ to, label, icon, badge, badgeClass, onClick }) => (
   <NavLink
     to={to}
+    onClick={onClick}
     className={({ isActive }) =>
       `btn btn-md justify-start w-full text-left text-base font-medium transition-all duration-200 ` +
       (isActive
@@ -23,7 +24,7 @@ const NavItem = ({ to, label, icon, badge, badgeClass }) => (
   </NavLink>
 );
 
-export default function Sidebar() {
+export default function Sidebar({ placements = ['desktop'], onNavigate, containerClassName = 'sticky top-4' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,14 +37,15 @@ export default function Sidebar() {
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
   if (isPublic) return null;
 
-  const navItems = NAV_ITEMS.filter(item => item.placements.includes('desktop')).filter(item => {
+  const navItems = NAV_ITEMS.filter(item => placements.some(placement => item.placements.includes(placement))).filter(
+    item => {
     if (!item.roles?.length) return true;
     return !!user && item.roles.includes(user.status);
   });
   const navBadges = { messages: unreadMsgs, notifications: unreadNotif };
 
   return (
-    <aside className="sticky top-4">
+    <aside className={containerClassName}>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
         {/* Профиль */}
         {user && (
@@ -60,7 +62,12 @@ export default function Sidebar() {
                   <div className="text-xs opacity-70">{user.status}</div>
                 </div>
               </div>
-              <button className="btn btn-primary btn-sm mt-3" onClick={() => navigate('/profile')}>
+              <button
+                className="btn btn-primary btn-sm mt-3"
+                onClick={() => {
+                  navigate('/profile');
+                  onNavigate?.();
+                }}>
                 Мой профиль
               </button>
               {user.status === 'Banned' && (
@@ -84,10 +91,16 @@ export default function Sidebar() {
               icon={item.icon}
               badgeClass={item.badgeClass}
               badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
+              onClick={onNavigate}
             />
           ))}
 
-          <button onClick={openComposer} className="btn btn-accent mt-1">
+          <button
+            onClick={() => {
+              openComposer();
+              onNavigate?.();
+            }}
+            className="btn btn-accent mt-1">
             <span className="flex items-center gap-2">
               <i className="fas fa-plus"></i>
               <span>Создать пост</span>
