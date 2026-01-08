@@ -20,6 +20,7 @@ export default function BottomNav() {
     .trim()
     .charAt(0)
     .toUpperCase() || '?';
+  const userHandle = user?.username ? `@${user.username}` : '';
 
   const renderProfileIcon = isActive => {
     if (!user || isPublicRoute) {
@@ -29,7 +30,7 @@ export default function BottomNav() {
     if (user.profile?.profilePictureUrl) {
       return (
         <span className="avatar">
-          <div className={`w-8 rounded-full ${isActive ? 'ring ring-primary ring-offset-base-100 ring-offset-2' : ''}`}>
+          <div className={`w-6 rounded-full ${isActive ? 'ring ring-primary ring-offset-base-100 ring-offset-2' : ''}`}>
             <img src={getAvatarUrl(user.profile.profilePictureUrl)} alt={user.username} />
           </div>
         </span>
@@ -38,11 +39,16 @@ export default function BottomNav() {
 
     return (
       <span className="avatar placeholder">
-        <div className={`w-8 rounded-full uppercase ${isActive ? 'bg-primary text-primary-content' : 'bg-base-200 text-base-content'}`}>
-          <span className="text-sm font-semibold">{profileInitial}</span>
+        <div className={`w-6 rounded-full uppercase ${isActive ? 'bg-primary text-primary-content' : 'bg-base-200 text-base-content'}`}>
+          <span className="text-[10px] font-semibold">{profileInitial}</span>
         </div>
       </span>
     );
+  };
+
+  const renderProfileLabel = () => {
+    if (!user || isPublicRoute || !userHandle) return null;
+    return <span className="text-[10px] leading-none max-w-[4.5rem] truncate">{userHandle}</span>;
   };
 
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
@@ -65,8 +71,17 @@ export default function BottomNav() {
         {mobileItems.map(item => (
           <NavLink key={item.key} to={item.to} className={linkClass}>
             {({ isActive }) => (
-              <span className="relative flex items-center gap-2">
-                {item.key === 'profile' ? renderProfileIcon(isActive) : <i className={`fas ${item.icon}`}></i>}
+              <span
+                className={`relative flex ${item.key === 'profile' ? 'flex-col items-center gap-1' : 'items-center gap-2'}`}
+              >
+                {item.key === 'profile' ? (
+                  <>
+                    {renderProfileIcon(isActive)}
+                    {renderProfileLabel()}
+                  </>
+                ) : (
+                  <i className={`fas ${item.icon}`}></i>
+                )}
                 {item.badgeKey && badges[item.badgeKey] > 0 && (
                   <span className={`badge badge-xs ${item.badgeClass || 'badge-primary'} absolute -top-1 -right-2`}>
                     {badges[item.badgeKey]}

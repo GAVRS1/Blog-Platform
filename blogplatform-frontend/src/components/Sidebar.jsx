@@ -32,6 +32,8 @@ export default function Sidebar() {
     user,
     enabled: !!user && !isPublic,
   });
+  const displayName = user?.profile?.fullName?.trim() || user?.username || '';
+  const userHandle = user?.username ? `@${user.username}` : '';
 
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
   if (isPublic) return null;
@@ -51,13 +53,13 @@ export default function Sidebar() {
             <div className="card-body p-4">
               <div className="flex items-center gap-3">
                 <div className="avatar">
-                  <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                  <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                     <img src={getAvatarUrl(user?.profile?.profilePictureUrl)} alt="" />
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="font-semibold truncate">@{user.username}</div>
-                  <div className="text-xs opacity-70">{user.status}</div>
+                  <div className="font-semibold truncate">{displayName}</div>
+                  {userHandle ? <div className="text-xs opacity-70 truncate">{userHandle}</div> : null}
                 </div>
               </div>
               <button className="btn btn-primary btn-sm mt-3" onClick={() => navigate('/profile')}>
