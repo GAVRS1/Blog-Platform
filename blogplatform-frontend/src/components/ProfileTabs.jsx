@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import PostCard from '@/components/PostCard';
 import SkeletonPost from '@/components/SkeletonPost';
 import { postsService } from '@/services/posts';
+import { getUserStatusLabel } from '@/utils/userStatus';
 
 const PAGE_SIZE = 10;
 
@@ -73,7 +74,7 @@ export default function ProfileTabs({ user, active = 'posts' }) {
             <Lines label="Полное имя" value={user?.profile?.fullName || '—'} />
             <Lines label="О себе" value={user?.profile?.bio || '—'} />
             <Lines label="Дата рождения" value={user?.profile?.birthDate ? new Date(user.profile.birthDate).toLocaleDateString() : '—'} />
-            <Lines label="Статус" value={user?.status || '—'} />
+            <Lines label="Статус" value={getUserStatusLabel(user?.status)} />
           </div>
         </div>
       )}
