@@ -1,4 +1,5 @@
 // src/components/Sidebar.jsx
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -28,6 +29,10 @@ export default function Sidebar({ placements = ['desktop'], onNavigate, containe
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [navCollapsed, setNavCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('sidebar-nav-collapsed') === 'true';
+  });
   const isPublic = isPublicNavPath(location.pathname);
   const { messages: unreadMsgs, notifications: unreadNotif } = useUnreadBadges({
     user,
@@ -35,6 +40,11 @@ export default function Sidebar({ placements = ['desktop'], onNavigate, containe
   });
   const displayName = user?.profile?.fullName?.trim() || user?.username || '';
   const userHandle = user?.username ? `@${user.username}` : '';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('sidebar-nav-collapsed', String(navCollapsed));
+  }, [navCollapsed]);
 
   const openComposer = () => window.dispatchEvent(new CustomEvent('open-create-post'));
   if (isPublic) return null;
@@ -84,31 +94,40 @@ export default function Sidebar({ placements = ['desktop'], onNavigate, containe
         )}
 
         {/* Навигация */}
-        <nav className="grid gap-2">
-          {navItems.map(item => (
-            <NavItem
-              key={item.key}
-              to={item.to}
-              label={item.label}
-              icon={item.icon}
-              badgeClass={item.badgeClass}
-              badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
-              onClick={onNavigate}
-            />
-          ))}
+        <button
+          type="button"
+          onClick={() => setNavCollapsed(prev => !prev)}
+          className="btn btn-xs btn-outline justify-center">
+          {navCollapsed ? 'Показать меню' : 'Скрыть меню'}
+        </button>
 
-          <button
-            onClick={() => {
-              openComposer();
-              onNavigate?.();
-            }}
-            className="btn btn-accent mt-1">
-            <span className="flex items-center gap-2">
-              <i className="fas fa-plus"></i>
-              <span>Создать пост</span>
-            </span>
-          </button>
-        </nav>
+        {!navCollapsed && (
+          <nav className="grid gap-2">
+            {navItems.map(item => (
+              <NavItem
+                key={item.key}
+                to={item.to}
+                label={item.label}
+                icon={item.icon}
+                badgeClass={item.badgeClass}
+                badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
+                onClick={onNavigate}
+              />
+            ))}
+
+            <button
+              onClick={() => {
+                openComposer();
+                onNavigate?.();
+              }}
+              className="btn btn-accent mt-1">
+              <span className="flex items-center gap-2">
+                <i className="fas fa-plus"></i>
+                <span>Создать пост</span>
+              </span>
+            </button>
+          </nav>
+        )}
 
         {/* Тема */}
         <div className="flex justify-center pt-4 border-t border-base-300/50">
