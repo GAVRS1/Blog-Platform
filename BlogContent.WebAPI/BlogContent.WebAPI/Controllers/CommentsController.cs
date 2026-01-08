@@ -24,12 +24,21 @@ public class CommentsController : ControllerBase
     private readonly ICommentService _commentService;
     private readonly IPostService _postService;
     private readonly IFollowService _followService;
+    private readonly ISettingsService _settingsService;
+    private readonly INotificationService _notificationService;
 
-    public CommentsController(ICommentService commentService, IPostService postService, IFollowService followService)
+    public CommentsController(
+        ICommentService commentService,
+        IPostService postService,
+        IFollowService followService,
+        ISettingsService settingsService,
+        INotificationService notificationService)
     {
         _commentService = commentService;
         _postService = postService;
         _followService = followService;
+        _settingsService = settingsService;
+        _notificationService = notificationService;
     }
 
     [HttpGet("post/{postId}")]
@@ -79,6 +88,20 @@ public class CommentsController : ControllerBase
 
         _commentService.CreateComment(comment);
         var saved = _commentService.GetCommentByIdWithDetails(comment.Id) ?? comment;
+
+        if (post.UserId != userId)
+        {
+            var settings = _settingsService.GetNotificationSettings(post.UserId);
+            if (settings.OnComments)
+            {
+                _notificationService.AddNotification(
+                    post.UserId,
+                    "comment",
+                    "Новый комментарий к вашему посту.",
+                    userId);
+            }
+        }
+
         return CreatedAtAction(nameof(GetByPostId), new { postId = dto.PostId }, saved.ToResponseDto(userId));
     }
 
@@ -115,6 +138,20 @@ public class CommentsController : ControllerBase
         };
 
         var saved = _commentService.AddReplyWithReturn(reply);
+
+        if (comment.UserId != userId)
+        {
+            var settings = _settingsService.GetNotificationSettings(comment.UserId);
+            if (settings.OnComments)
+            {
+                _notificationService.AddNotification(
+                    comment.UserId,
+                    "reply",
+                    "Новый ответ на ваш комментарий.",
+                    userId);
+            }
+        }
+
         return Ok(saved.ToResponseDto());
     }
 

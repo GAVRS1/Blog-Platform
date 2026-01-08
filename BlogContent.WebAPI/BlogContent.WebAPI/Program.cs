@@ -57,7 +57,7 @@ public class Program
         builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
         builder.Services.AddSingleton<IFollowService, InMemoryFollowService>();
         builder.Services.AddSingleton<IMessageService, InMemoryMessageService>();
-        builder.Services.AddSingleton<INotificationService, InMemoryNotificationService>();
+        builder.Services.AddScoped<INotificationService, DatabaseNotificationService>();
         builder.Services.AddSignalR();
 
         // JWT

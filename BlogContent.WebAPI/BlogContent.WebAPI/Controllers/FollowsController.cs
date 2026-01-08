@@ -19,11 +19,19 @@ public class FollowsController : ControllerBase
 
     private readonly IFollowService _followService;
     private readonly IUserService _userService;
+    private readonly ISettingsService _settingsService;
+    private readonly INotificationService _notificationService;
 
-    public FollowsController(IFollowService followService, IUserService userService)
+    public FollowsController(
+        IFollowService followService,
+        IUserService userService,
+        ISettingsService settingsService,
+        INotificationService notificationService)
     {
         _followService = followService;
         _userService = userService;
+        _settingsService = settingsService;
+        _notificationService = notificationService;
     }
 
     [HttpPost("{userId}")]
@@ -35,6 +43,20 @@ public class FollowsController : ControllerBase
         }
 
         _followService.Follow(currentUserId, userId);
+
+        if (currentUserId != userId)
+        {
+            var settings = _settingsService.GetNotificationSettings(userId);
+            if (settings.OnFollows)
+            {
+                _notificationService.AddNotification(
+                    userId,
+                    "follow",
+                    "Новый подписчик.",
+                    currentUserId);
+            }
+        }
+
         return Ok(new { followed = true });
     }
 
