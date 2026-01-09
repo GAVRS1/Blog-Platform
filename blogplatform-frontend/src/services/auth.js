@@ -43,7 +43,7 @@ export const authService = {
    */
   async completeRegister(payload) {
     const { data } = await api.post('/Auth/register/complete', payload);
-    if (data?.token) persistToken(data.token);
+    if (data?.token) removeCookie(AUTH_TOKEN_COOKIE, { path: '/' });
     return data;
   },
 
