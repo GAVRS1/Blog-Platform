@@ -171,7 +171,7 @@ export default function StepProfile() {
             <AvatarUploader onUploaded={onAvatarUploaded} usePublicUpload />
             {profile.profilePictureUrl && (
               <span className="label-text-alt text-success mt-1">
-                Загружено: {profile.profilePictureUrl}
+                Аватар загружен
               </span>
             )}
           </div>
