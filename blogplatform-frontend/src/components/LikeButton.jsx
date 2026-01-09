@@ -1,5 +1,6 @@
 // src/components/LikeButton.jsx
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { likesService } from '@/services/likes';
 import toast from 'react-hot-toast';
 
@@ -8,6 +9,7 @@ import toast from 'react-hot-toast';
  * type: 'post' | 'comment'
  */
 export default function LikeButton({ type = 'post', targetId, initialLiked = false, initialCount = 0, className = '', onChange }) {
+  const queryClient = useQueryClient();
   const [liked, setLiked] = useState(!!initialLiked);
   const [count, setCount] = useState(initialCount);
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,9 @@ export default function LikeButton({ type = 'post', targetId, initialLiked = fal
       setLiked(!!res.liked);
       setCount(res.count ?? prevCount);
       onChange?.(res);
+      if (type === 'post') {
+        await queryClient.invalidateQueries({ queryKey: ['feed'] });
+      }
     } catch (e) {
       // откат
       setLiked(prevLiked);
