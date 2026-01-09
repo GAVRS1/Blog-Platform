@@ -1,5 +1,6 @@
 // src/pages/SettingsPage.jsx
 import { useEffect, useState } from 'react';
+import { authService } from '@/services/auth';
 import { settingsService } from '@/services/settings';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -119,7 +120,10 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button className="btn btn-outline btn-error" onClick={authService.logout}>
+          Выйти из аккаунта
+        </button>
         <button className={`btn btn-primary ${saving ? 'loading' : ''}`} onClick={saveSettings} disabled={saving}>
           Сохранить
         </button>
