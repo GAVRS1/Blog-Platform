@@ -6,6 +6,7 @@ import { usersService } from '@/services/users';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { getAvatarUrl } from '@/utils/avatar';
 import {
   subscribeToRealtimeMessages,
   subscribeToRealtimePresence,
@@ -176,8 +177,7 @@ export default function MessagesPage() {
   };
 
   const resolveAvatar = (profile) => {
-    const avatar = profile?.profile?.profilePictureUrl?.trim();
-    return avatar || null;
+    return getAvatarUrl(profile?.profile?.profilePictureUrl);
   };
 
   const resolveStatus = (presence) => {
@@ -223,13 +223,10 @@ export default function MessagesPage() {
               <div className="card-body flex-row items-center gap-4 min-w-0">
                 <div className="avatar">
                   <div className="rounded-full w-12">
-                    {resolveAvatar(profiles[x.otherUserId]) ? (
-                      <img src={resolveAvatar(profiles[x.otherUserId])} alt={resolveDisplayName(profiles[x.otherUserId], x.otherUserId)} />
-                    ) : (
-                      <div className="bg-neutral text-neutral-content rounded-full w-12 flex items-center justify-center">
-                        <span>{resolveDisplayName(profiles[x.otherUserId], x.otherUserId).slice(0, 2)}</span>
-                      </div>
-                    )}
+                    <img
+                      src={resolveAvatar(profiles[x.otherUserId])}
+                      alt={resolveDisplayName(profiles[x.otherUserId], x.otherUserId)}
+                    />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
