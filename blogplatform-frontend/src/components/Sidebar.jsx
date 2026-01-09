@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
@@ -98,46 +98,57 @@ export default function Sidebar({
         )}
 
         {/* Навигация */}
-        <button
-          type="button"
-          onClick={() => setNavCollapsed(prev => !prev)}
-          className="btn btn-xs btn-outline justify-center hidden md:inline-flex"
-          aria-label={navCollapsed ? 'Показать меню' : 'Скрыть меню'}>
-          <i
-            className={`fas fa-chevron-down transition-transform duration-200 ${
-              navCollapsed ? 'rotate-180' : ''
-            }`}
-            aria-hidden="true"
-          ></i>
-        </button>
+        <div className="flex justify-center">
+          <motion.button
+            type="button"
+            onClick={() => setNavCollapsed(prev => !prev)}
+            className="hidden md:inline-flex h-7 w-7 items-center justify-center rounded-full text-base-content/60"
+            aria-label={navCollapsed ? 'Показать меню' : 'Скрыть меню'}
+            animate={{ y: navCollapsed ? 0 : 6 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18 }}>
+            <i
+              className={`fas fa-chevron-down transition-transform duration-200 ${
+                navCollapsed ? 'rotate-180' : ''
+              }`}
+              aria-hidden="true"
+            ></i>
+          </motion.button>
+        </div>
 
-        {!navCollapsed && (
-          <nav className="grid gap-2">
-            {navItems.map(item => (
-              <NavItem
-                key={item.key}
-                to={item.to}
-                label={item.label}
-                icon={item.icon}
-                badgeClass={item.badgeClass}
-                badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
-                onClick={onNavigate}
-              />
-            ))}
+        <AnimatePresence initial={false}>
+          {!navCollapsed && (
+            <motion.nav
+              className="grid gap-2 overflow-hidden"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}>
+              {navItems.map(item => (
+                <NavItem
+                  key={item.key}
+                  to={item.to}
+                  label={item.label}
+                  icon={item.icon}
+                  badgeClass={item.badgeClass}
+                  badge={item.badgeKey ? navBadges[item.badgeKey] || undefined : undefined}
+                  onClick={onNavigate}
+                />
+              ))}
 
-            <button
-              onClick={() => {
-                openComposer();
-                onNavigate?.();
-              }}
-              className="btn btn-accent mt-1">
-              <span className="flex items-center gap-2">
-                <i className="fas fa-plus"></i>
-                <span>Создать пост</span>
-              </span>
-            </button>
-          </nav>
-        )}
+              <button
+                onClick={() => {
+                  openComposer();
+                  onNavigate?.();
+                }}
+                className="btn btn-accent mt-1">
+                <span className="flex items-center gap-2">
+                  <i className="fas fa-plus"></i>
+                  <span>Создать пост</span>
+                </span>
+              </button>
+            </motion.nav>
+          )}
+        </AnimatePresence>
 
         {/* Тема */}
         <div className="flex justify-center pt-4 border-t border-base-300/50">
