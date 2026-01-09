@@ -48,6 +48,8 @@ public class Program
         builder.Services.AddScoped<IModerationActionRepository, ModerationActionRepository>();
         builder.Services.AddScoped<IAppealRepository, AppealRepository>();
         builder.Services.AddScoped<IBlockRepository, BlockRepository>();
+        builder.Services.AddScoped<IFollowRepository, FollowRepository>();
+        builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
         // Services (через интерфейсы)
         builder.Services.AddScoped<IPostService, PostService>();
@@ -61,8 +63,8 @@ public class Program
         builder.Services.AddScoped<IModerationService, ModerationService>();
         builder.Services.AddScoped<IBlockService, BlockService>();
         builder.Services.AddScoped<IMediaStorageService, LocalMediaStorageService>();
-        builder.Services.AddSingleton<IFollowService, InMemoryFollowService>();
-        builder.Services.AddSingleton<IMessageService, InMemoryMessageService>();
+        builder.Services.AddScoped<IFollowService, DatabaseFollowService>();
+        builder.Services.AddScoped<IMessageService, DatabaseMessageService>();
         builder.Services.AddScoped<INotificationService, DatabaseNotificationService>();
         builder.Services.AddSignalR();
 

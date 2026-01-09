@@ -27,6 +27,9 @@ public class BlogContext : DbContext
     public DbSet<ModerationAction> ModerationActions { get; set; }
     public DbSet<Appeal> Appeals { get; set; }
     public DbSet<Block> Blocks { get; set; }
+    public DbSet<Follow> Follows { get; set; }
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<MessageAttachment> MessageAttachments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -222,6 +225,18 @@ public class BlogContext : DbContext
             .Property(b => b.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+        modelBuilder.Entity<Follow>()
+            .Property(f => f.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Message>()
+            .Property(m => m.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Message>()
+            .Property(m => m.IsRead)
+            .HasDefaultValue(false);
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
@@ -264,6 +279,16 @@ public class BlogContext : DbContext
         modelBuilder.Entity<Block>()
             .HasIndex(b => new { b.BlockerUserId, b.IsActive });
 
+        modelBuilder.Entity<Follow>()
+            .HasIndex(f => f.FollowerUserId);
+
+        modelBuilder.Entity<Follow>()
+            .HasIndex(f => f.TargetUserId);
+
+        modelBuilder.Entity<Follow>()
+            .HasIndex(f => new { f.FollowerUserId, f.TargetUserId })
+            .IsUnique();
+
         modelBuilder.Entity<EmailVerification>()
             .Property(ev => ev.Status)
             .HasConversion<string>()
@@ -292,6 +317,18 @@ public class BlogContext : DbContext
 
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.RecipientUserId, n.SenderId, n.Type, n.SubjectType, n.SubjectId });
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => m.SenderId);
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => m.RecipientId);
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => new { m.SenderId, m.RecipientId });
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => new { m.RecipientId, m.SenderId, m.IsRead });
 
         modelBuilder.Entity<PrivacySettings>()
             .HasIndex(ps => ps.UserId)
@@ -342,5 +379,35 @@ public class BlogContext : DbContext
             .WithMany(u => u.BlocksReceived)
             .HasForeignKey(b => b.BlockedUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Follow>()
+            .HasOne(f => f.FollowerUser)
+            .WithMany(u => u.Following)
+            .HasForeignKey(f => f.FollowerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Follow>()
+            .HasOne(f => f.TargetUser)
+            .WithMany(u => u.Followers)
+            .HasForeignKey(f => f.TargetUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany(u => u.SentMessages)
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Recipient)
+            .WithMany(u => u.ReceivedMessages)
+            .HasForeignKey(m => m.RecipientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MessageAttachment>()
+            .HasOne(a => a.Message)
+            .WithMany(m => m.Attachments)
+            .HasForeignKey(a => a.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

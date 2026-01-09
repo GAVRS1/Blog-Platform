@@ -27,4 +27,8 @@ public class User
     public ICollection<Appeal> Appeals { get; set; } = [];
     public ICollection<Block> BlocksInitiated { get; set; } = [];
     public ICollection<Block> BlocksReceived { get; set; } = [];
+    public ICollection<Follow> Followers { get; set; } = [];
+    public ICollection<Follow> Following { get; set; } = [];
+    public ICollection<Message> SentMessages { get; set; } = [];
+    public ICollection<Message> ReceivedMessages { get; set; } = [];
 }
