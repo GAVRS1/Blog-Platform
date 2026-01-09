@@ -90,7 +90,7 @@ export default function StepProfile() {
       await authService.completeRegister(payload);
       toast.success('Регистрация завершена');
       resetWizard();
-      navigate('/');
+      navigate('/login');
     } catch (err) {
       const msg = err?.response?.data?.message || err?.response?.data || 'Ошибка сохранения профиля';
       setError(msg);
