@@ -16,6 +16,8 @@ import {
 import { sendTyping } from '@/realtime';
 import ReportModal from '@/components/ReportModal';
 import { getAvatarUrl } from '@/utils/avatar';
+import MediaPlayer from '@/components/MediaPlayer';
+import MediaViewer from '@/components/MediaViewer';
 
 const MAX_ATTACH = 10;
 
@@ -34,6 +36,9 @@ export default function DialogPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [viewerItems, setViewerItems] = useState([]);
 
   const containerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -311,6 +316,12 @@ export default function DialogPage() {
     }
   };
 
+  const openViewer = (items, index) => {
+    setViewerItems(items || []);
+    setViewerIndex(index);
+    setViewerOpen(true);
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
@@ -373,7 +384,14 @@ export default function DialogPage() {
                   {m.attachments?.length > 0 && (
                     <div className="mt-2 space-y-2">
                       {m.attachments.map((a, i) => (
-                        <Attachment key={i} a={a} />
+                        <button
+                          key={i}
+                          type="button"
+                          className="block w-full text-left"
+                          onClick={() => openViewer(m.attachments, i)}
+                        >
+                          <MediaPlayer media={a} type={a.mediaType} url={a.url} />
+                        </button>
                       ))}
                     </div>
                   )}
@@ -439,19 +457,12 @@ export default function DialogPage() {
         onClose={() => setReportOpen(false)}
         subject={{ type: 'user', userId: otherUserId }}
       />
+      <MediaViewer
+        open={viewerOpen}
+        items={viewerItems}
+        startIndex={viewerIndex}
+        onClose={() => setViewerOpen(false)}
+      />
     </motion.div>
   );
-}
-
-function Attachment({ a }) {
-  if (a.mediaType === 'Image') {
-    return <img src={a.url} alt="" className="max-h-40 rounded" />;
-  }
-  if (a.mediaType === 'Video') {
-    return <video src={a.url} controls className="max-h-48 rounded" />;
-  }
-  if (a.mediaType === 'Audio') {
-    return <audio src={a.url} controls />;
-  }
-  return <a className="link" href={a.url} target="_blank" rel="noreferrer">Файл</a>;
 }

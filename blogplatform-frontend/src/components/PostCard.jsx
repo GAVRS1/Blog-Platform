@@ -3,12 +3,15 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LikeButton from '@/components/LikeButton';
 import MediaPlayer from '@/components/MediaPlayer';
+import MediaViewer from '@/components/MediaViewer';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
 import { postsService } from '@/services/posts';
 
 export default function PostCard({ post, onDeleted }) {
   const navigate = useNavigate();
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [local, setLocal] = useState(() => ({
     likeCount: post.likeCount ?? 0,
     commentCount: post.commentCount ?? 0,
@@ -29,6 +32,10 @@ export default function PostCard({ post, onDeleted }) {
   };
 
   const openDetails = () => navigate(`/posts/${post.id}`);
+  const openViewer = (index) => {
+    setViewerIndex(index);
+    setViewerOpen(true);
+  };
 
   const handleDelete = async () => {
     if (deleteLoading) return;
@@ -74,8 +81,15 @@ export default function PostCard({ post, onDeleted }) {
         {/* Media */}
         {attachments.length > 0 && (
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {attachments.map((m) => (
-              <MediaPlayer key={m.id || m.url} media={m} type={m.type} url={m.url} />
+            {attachments.map((m, idx) => (
+              <button
+                key={m.id || m.url}
+                type="button"
+                className="text-left"
+                onClick={() => openViewer(idx)}
+              >
+                <MediaPlayer media={m} type={m.type} url={m.url} />
+              </button>
             ))}
           </div>
         )}
@@ -107,6 +121,12 @@ export default function PostCard({ post, onDeleted }) {
           )}
         </div>
       </div>
+      <MediaViewer
+        open={viewerOpen}
+        items={attachments}
+        startIndex={viewerIndex}
+        onClose={() => setViewerOpen(false)}
+      />
     </article>
   );
 }
