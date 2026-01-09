@@ -51,8 +51,10 @@ export default function TopBar() {
   }, [trimmedQuery]);
 
   return (
-    <div className="hidden md:block sticky top-0 z-30 border-b border-base-300 bg-base-200/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-3">
+    <div
+      className="hidden md:block sticky top-0 z-30 border-b border-base-300 bg-base-200/95 backdrop-blur h-[var(--topbar-height)]"
+      style={{ '--topbar-height': '72px' }}>
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-6 px-6">
         <div className="flex items-baseline gap-3">
           <span className="text-xl font-bold">BlogPlatform</span>
           <span className="text-sm opacity-60">by. Gavrs</span>
