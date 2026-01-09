@@ -74,6 +74,10 @@ export default function PostDetailPage() {
   }) : null, [post]);
 
   const attachments = useMemo(() => post?.attachments || post?.media || [], [post]);
+  const isVisualMedia = (item) => {
+    const rawType = (item?.type || item?.mediaType || '').toString().toLowerCase();
+    return rawType.includes('image') || rawType.includes('video');
+  };
 
   const onLikeChange = (r) => {
     setPost((p) => p ? ({ ...p, isLikedByCurrentUser: !!r.liked, likeCount: r.count ?? p.likeCount }) : p);
@@ -150,15 +154,19 @@ export default function PostDetailPage() {
               )}
 
               {attachments.length > 0 && (
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 auto-rows-[140px] sm:auto-rows-[180px] gap-2">
                   {attachments.map((m, idx) => (
                     <button
                       key={m.id || m.url}
                       type="button"
-                      className="text-left"
+                      className={`text-left relative overflow-hidden rounded-xl bg-base-200 ${
+                        idx === 0 && attachments.length > 2
+                          ? 'col-span-2 row-span-2 sm:col-span-1 sm:row-span-1'
+                          : ''
+                      } ${isVisualMedia(m) ? 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]' : ''}`}
                       onClick={() => openViewer(idx)}
                     >
-                      <MediaPlayer media={m} type={m.type} url={m.url} />
+                      <MediaPlayer media={m} type={m.type} url={m.url} className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
