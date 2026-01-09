@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
 import { useUnreadBadges } from '@/hooks/useUnreadBadges';
@@ -150,10 +149,6 @@ export default function Sidebar({
           )}
         </AnimatePresence>
 
-        {/* Тема */}
-        <div className="flex justify-center pt-4 border-t border-base-300/50">
-          <ThemeToggle />
-        </div>
       </motion.div>
     </aside>
   );
