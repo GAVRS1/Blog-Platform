@@ -82,6 +82,41 @@ public class InMemoryNotificationService : INotificationService
         }
     }
 
+    public int DeleteAll(int userId)
+    {
+        lock (_lock)
+        {
+            if (!_notifications.TryGetValue(userId, out var list) || list.Count == 0)
+            {
+                return 0;
+            }
+
+            var removed = list.Count;
+            list.Clear();
+            return removed;
+        }
+    }
+
+    public int Delete(int userId, Guid notificationId)
+    {
+        lock (_lock)
+        {
+            if (!_notifications.TryGetValue(userId, out var list) || list.Count == 0)
+            {
+                return 0;
+            }
+
+            var index = list.FindIndex(n => n.Id == notificationId);
+            if (index < 0)
+            {
+                return 0;
+            }
+
+            list.RemoveAt(index);
+            return 1;
+        }
+    }
+
     public NotificationDto AddNotification(
         int recipientUserId,
         string type,
