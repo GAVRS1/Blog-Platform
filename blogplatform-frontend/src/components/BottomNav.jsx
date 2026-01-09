@@ -16,10 +16,6 @@ export default function BottomNav() {
   const linkClass = ({ isActive }) =>
     `btn btn-ghost rounded-none flex-1 flex items-center justify-center ${isActive ? 'text-primary' : 'text-base-content'}`;
 
-  const profileInitial = (user?.profile?.fullName || user?.username || '')
-    .trim()
-    .charAt(0)
-    .toUpperCase() || '?';
   const userHandle = user?.username ? `@${user.username}` : '';
 
   const renderProfileIcon = isActive => {
@@ -27,20 +23,10 @@ export default function BottomNav() {
       return <i className="fas fa-user"></i>;
     }
 
-    if (user.profile?.profilePictureUrl) {
-      return (
-        <span className="avatar">
-          <div className={`w-6 rounded-full ${isActive ? 'ring ring-primary ring-offset-base-100 ring-offset-2' : ''}`}>
-            <img src={getAvatarUrl(user.profile.profilePictureUrl)} alt={user.username} />
-          </div>
-        </span>
-      );
-    }
-
     return (
-      <span className="avatar placeholder">
-        <div className={`w-6 rounded-full uppercase ${isActive ? 'bg-primary text-primary-content' : 'bg-base-200 text-base-content'}`}>
-          <span className="text-[10px] font-semibold">{profileInitial}</span>
+      <span className="avatar">
+        <div className={`w-6 rounded-full ${isActive ? 'ring ring-primary ring-offset-base-100 ring-offset-2' : ''}`}>
+          <img src={getAvatarUrl(user?.profile?.profilePictureUrl)} alt={user.username} />
         </div>
       </span>
     );
