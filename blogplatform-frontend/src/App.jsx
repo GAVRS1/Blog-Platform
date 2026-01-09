@@ -153,8 +153,8 @@ function AppLayout() {
             )}
           </div>
         )}
-        <div className="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-[280px,minmax(0,1fr),280px] gap-4 pt-4">
+        <div className="mx-auto max-w-7xl px-2 md:px-4 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-[280px,minmax(0,1fr)] lg:grid-cols-[280px,minmax(0,1fr),280px] gap-4 pt-4">
             <aside className="hidden md:block">
               <Sidebar />
             </aside>
@@ -191,7 +191,7 @@ function AppLayout() {
                 </Suspense>
               </div>
             </main>
-            <div className="hidden md:block" aria-hidden="true" />
+            <div className="hidden lg:block" aria-hidden="true" />
           </div>
         </div>
 
