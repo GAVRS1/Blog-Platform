@@ -52,10 +52,10 @@ export default function TopBar() {
 
   return (
     <div className="hidden md:block sticky top-0 z-30 border-b border-base-300 bg-base-200/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-2">
         <div className="flex items-baseline gap-3">
-          <span className="text-xl font-bold">BlogPlatform</span>
-          <span className="text-sm opacity-60">by. Gavrs</span>
+          <span className="text-lg font-bold">BlogPlatform</span>
+          <span className="text-xs opacity-60">by. Gavrs</span>
         </div>
         <div className="relative w-full max-w-md">
           <label className="input input-bordered flex items-center gap-2 w-full">
