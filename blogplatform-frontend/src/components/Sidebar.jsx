@@ -97,8 +97,14 @@ export default function Sidebar({ placements = ['desktop'], onNavigate, containe
         <button
           type="button"
           onClick={() => setNavCollapsed(prev => !prev)}
-          className="btn btn-xs btn-outline justify-center">
-          {navCollapsed ? 'Показать меню' : 'Скрыть меню'}
+          className="btn btn-xs btn-outline justify-center hidden md:inline-flex"
+          aria-label={navCollapsed ? 'Показать меню' : 'Скрыть меню'}>
+          <i
+            className={`fas fa-chevron-down transition-transform duration-200 ${
+              navCollapsed ? 'rotate-180' : ''
+            }`}
+            aria-hidden="true"
+          ></i>
         </button>
 
         {!navCollapsed && (
