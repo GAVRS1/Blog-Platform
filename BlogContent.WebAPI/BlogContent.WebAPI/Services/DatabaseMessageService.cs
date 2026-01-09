@@ -107,4 +107,16 @@ public class DatabaseMessageService : IMessageService
             ThumbnailUrl = attachment.ThumbnailUrl
         };
     }
+
+    private static MessageAttachment MapAttachment(MessageAttachmentDto attachment)
+    {
+        return new MessageAttachment
+        {
+            Url = attachment.Url,
+            MediaType = attachment.MediaType,
+            MimeType = attachment.MimeType,
+            SizeBytes = attachment.SizeBytes,
+            ThumbnailUrl = attachment.ThumbnailUrl
+        };
+    }
 }
