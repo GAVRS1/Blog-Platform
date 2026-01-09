@@ -6,6 +6,7 @@ import MediaPlayer from '@/components/MediaPlayer';
 import MediaViewer from '@/components/MediaViewer';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatDateTime } from '@/utils/date';
 import { postsService } from '@/services/posts';
 
 export default function PostCard({ post, onDeleted }) {
@@ -27,7 +28,7 @@ export default function PostCard({ post, onDeleted }) {
 
   const author = useMemo(() => ({
     id: post.userId,
-    name: post.username,
+    name: post.userFullName ?? post.username,
     avatar: getAvatarUrl(post.userAvatar)
   }), [post]);
 
@@ -71,9 +72,7 @@ export default function PostCard({ post, onDeleted }) {
             <Link to={`/users/${author.id}`} className="font-semibold hover:underline block truncate">
               @{author.name}
             </Link>
-            <div className="text-xs opacity-60">
-              {new Date(post.createdAt).toLocaleString()}
-            </div>
+            <div className="text-xs opacity-60">{formatDateTime(post.createdAt)}</div>
           </div>
         </div>
 

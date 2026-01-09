@@ -11,6 +11,7 @@ public class PostResponseDto
     public DateTime CreatedAt { get; set; }
     public int UserId { get; set; }
     public string Username { get; set; } = string.Empty;
+    public string? UserFullName { get; set; }
     public string? UserAvatar { get; set; }
     public bool IsOwn { get; set; }
     public bool IsLikedByCurrentUser { get; set; }

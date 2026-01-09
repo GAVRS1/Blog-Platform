@@ -192,6 +192,8 @@ public class PostsController : ControllerBase
             Type = m.Type
         }).ToList() ?? [];
 
+        var fullName = post.User?.Profile?.FullName;
+
         return new PostResponseDto
         {
             Id = post.Id,
@@ -201,6 +203,7 @@ public class PostsController : ControllerBase
             CreatedAt = post.CreatedAt,
             UserId = post.UserId,
             Username = post.User?.Username ?? string.Empty,
+            UserFullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
             UserAvatar = post.User?.Profile?.ProfilePictureUrl,
             IsOwn = currentUserId.HasValue && post.UserId == currentUserId.Value,
             IsLikedByCurrentUser = isLiked,

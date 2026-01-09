@@ -4,6 +4,7 @@ import LikeButton from '@/components/LikeButton';
 import { commentsService } from '@/services/comments';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatDateTime } from '@/utils/date';
 
 /**
  * Компонент комментария с возможностью:
@@ -126,7 +127,7 @@ export default function Comment({
           </div>
           <div className="min-w-0">
             <div className="font-medium truncate">@{local.username}</div>
-            <div className="text-xs opacity-60">{new Date(local.createdAt).toLocaleString()}</div>
+            <div className="text-xs opacity-60">{formatDateTime(local.createdAt)}</div>
           </div>
         </div>
 
@@ -207,7 +208,7 @@ function ReplyItem({ reply }) {
       </div>
       <div>
         <div className="text-sm font-medium">@{reply.username}</div>
-        <div className="text-xs opacity-60">{new Date(reply.createdAt).toLocaleString()}</div>
+        <div className="text-xs opacity-60">{formatDateTime(reply.createdAt)}</div>
         <div className="mt-1 whitespace-pre-wrap break-words text-sm">{reply.content}</div>
       </div>
     </div>
