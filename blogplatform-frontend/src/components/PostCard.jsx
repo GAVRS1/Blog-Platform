@@ -58,6 +58,17 @@ export default function PostCard({ post, onDeleted }) {
     }
   };
 
+  const mediaCount = attachments.length;
+  const mediaGridClass = useMemo(() => {
+    if (mediaCount === 1) {
+      return 'grid grid-cols-1 auto-rows-auto gap-1.5';
+    }
+    if (mediaCount <= 3) {
+      return 'grid grid-cols-2 sm:grid-cols-3 auto-rows-[minmax(120px,1fr)] sm:auto-rows-[minmax(160px,1fr)] gap-1.5';
+    }
+    return 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(120px,1fr)] sm:auto-rows-[minmax(160px,1fr)] gap-1.5';
+  }, [mediaCount]);
+
   return (
     <article className="card bg-base-100 shadow-sm hover:shadow transition">
       <div className="card-body p-4 md:p-6">
@@ -83,13 +94,13 @@ export default function PostCard({ post, onDeleted }) {
 
         {/* Media */}
         {attachments.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 auto-rows-[120px] sm:auto-rows-[160px] gap-2">
+          <div className={`mt-3 ${mediaGridClass}`}>
             {attachments.map((m, idx) => (
               <button
                 key={m.id || m.url}
                 type="button"
                 className={`text-left relative overflow-hidden rounded-xl bg-base-200 ${
-                  idx === 0 && attachments.length > 2
+                  idx === 0 && attachments.length > 3
                     ? 'col-span-2 row-span-2 sm:col-span-1 sm:row-span-1'
                     : ''
                 } ${isVisualMedia(m) ? 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]' : ''}`}
