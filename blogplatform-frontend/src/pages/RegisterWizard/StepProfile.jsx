@@ -101,11 +101,6 @@ export default function StepProfile() {
   };
 
   const handleBack = () => navigate('/register/code');
-  const handleExit = () => {
-    resetWizard();
-    navigate('/login');
-  };
-
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       <div className="space-y-2 mb-6">
@@ -199,9 +194,6 @@ export default function StepProfile() {
           </button>
           <button type="button" className="btn btn-outline" onClick={handleBack}>
             Назад
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={handleExit}>
-            Выйти
           </button>
         </div>
       </form>

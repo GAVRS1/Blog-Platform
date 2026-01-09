@@ -59,11 +59,6 @@ export default function StepEmail() {
     }
   };
 
-  const handleExit = () => {
-    resetWizard();
-    navigate('/login');
-  };
-
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       <div className="space-y-2 mb-6">
@@ -126,9 +121,6 @@ export default function StepEmail() {
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
           <button className={`btn btn-primary ${loading ? 'loading' : ''}`} disabled={loading}>
             Отправить код
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={handleExit}>
-            Выйти
           </button>
           <div className="text-sm text-base-content/60 md:ml-auto">
             Уже есть аккаунт?{' '}
