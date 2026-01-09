@@ -1,6 +1,7 @@
 // src/App.jsx
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
@@ -125,32 +126,48 @@ function AppLayout() {
         {showNav && <TopBar />}
         {showNav && (
           <div className="md:hidden sticky top-0 z-50 border-b border-base-300 bg-base-200 text-base-content shadow-sm">
-            <div className="flex items-center justify-between px-3 py-2">
+            <div className="relative flex items-center justify-between px-3 py-2 overflow-hidden">
               <button
                 type="button"
-                className="btn btn-ghost btn-circle"
+                className={`btn btn-ghost btn-circle ${mobileSearchOpen ? 'opacity-0 pointer-events-none' : ''}`}
                 onClick={() => setMobileSidebarOpen(true)}
                 aria-label="Открыть меню">
                 <i className="fas fa-bars"></i>
               </button>
-              <div className="font-semibold">Меню</div>
+              <div className={`font-semibold transition-opacity ${mobileSearchOpen ? 'opacity-0' : 'opacity-100'}`}>
+                Меню
+              </div>
               <button
                 type="button"
-                className="btn btn-ghost btn-circle"
+                className={`btn btn-ghost btn-circle ${mobileSearchOpen ? 'opacity-0 pointer-events-none' : ''}`}
                 onClick={() => setMobileSearchOpen(prev => !prev)}
                 aria-expanded={mobileSearchOpen}
                 aria-label="Поиск">
                 <i className="fas fa-magnifying-glass"></i>
               </button>
+              <AnimatePresence>
+                {mobileSearchOpen && (
+                  <motion.div
+                    className="absolute inset-y-0 left-0 right-0 flex items-center px-3"
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}>
+                    <label className="input input-bordered flex items-center gap-2 w-full">
+                      <i className="fas fa-search opacity-60"></i>
+                      <input type="text" className="grow" placeholder="Поиск авторов" autoFocus />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-circle ml-2"
+                      onClick={() => setMobileSearchOpen(false)}
+                      aria-label="Закрыть поиск">
+                      <i className="fas fa-xmark"></i>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            {mobileSearchOpen && (
-              <div className="px-3 pb-3">
-                <label className="input input-bordered flex items-center gap-2">
-                  <i className="fas fa-search opacity-60"></i>
-                  <input type="text" className="grow" placeholder="Поиск авторов" />
-                </label>
-              </div>
-            )}
           </div>
         )}
         <div className="mx-auto max-w-7xl px-2 md:px-4 lg:px-8">
