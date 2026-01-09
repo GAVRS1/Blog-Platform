@@ -40,13 +40,13 @@ function RegisterWizardShell() {
                   key={step.id}
                   className={`p-2 rounded-lg border ${
                     stepSlug === step.id ? 'border-primary bg-primary/10' : 'border-base-300'
-                  } ${step.disabled ? 'opacity-60' : ''}`}
+                  } ${step.disabled ? 'opacity-60' : ''} min-w-0`}
                 >
-                  <div className="text-sm font-semibold flex items-center gap-1">
+                  <div className="text-sm font-semibold flex items-center gap-1 min-w-0">
                     <span className="inline-block w-2 h-2 rounded-full bg-primary"></span>
-                    {step.title}
+                    <span className="truncate">{step.title}</span>
                   </div>
-                  <div className="text-xs text-base-content/60">{step.description}</div>
+                  <div className="text-xs text-base-content/60 break-words">{step.description}</div>
                 </div>
               ))}
             </div>

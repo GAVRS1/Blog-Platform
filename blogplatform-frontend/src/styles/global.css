@@ -41,6 +41,10 @@
   .card-hover {
     @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
   }
+
+  .card .card-body {
+    word-break: break-word;
+  }
   
   /* Градиентные кнопки */
   .btn-gradient {

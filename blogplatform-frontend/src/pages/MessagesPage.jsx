@@ -220,7 +220,7 @@ export default function MessagesPage() {
         <div className="space-y-3">
           {items.map((x) => (
             <Link key={x.otherUserId} to={`/messages/${x.otherUserId}`} className="card bg-base-100 hover:bg-base-200 transition">
-              <div className="card-body flex-row items-center gap-4">
+              <div className="card-body flex-row items-center gap-4 min-w-0">
                 <div className="avatar">
                   <div className="rounded-full w-12">
                     {resolveAvatar(profiles[x.otherUserId]) ? (
@@ -232,14 +232,14 @@ export default function MessagesPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold">{resolveDisplayName(profiles[x.otherUserId], x.otherUserId)}</div>
+                    <div className="font-semibold truncate">{resolveDisplayName(profiles[x.otherUserId], x.otherUserId)}</div>
                     {x.unreadCount > 0 && (
                       <div className="badge badge-primary">{x.unreadCount}</div>
                     )}
                   </div>
-                  <div className="text-xs opacity-70">
+                  <div className="text-xs opacity-70 truncate">
                     {resolveStatus(presenceByUser[x.otherUserId])}
                   </div>
                   <div className="text-sm opacity-70 truncate">
