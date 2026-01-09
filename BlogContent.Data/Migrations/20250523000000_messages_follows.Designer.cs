@@ -3,6 +3,7 @@ using System;
 using BlogContent.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,7 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogContent.Data.Migrations
 {
     [DbContext(typeof(BlogContext))]
-    partial class BlogContextModelSnapshot : ModelSnapshot
+    [Migration("20250523000000_messages_follows")]
+    partial class messages_follows : Migration
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
