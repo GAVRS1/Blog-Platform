@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { postsService } from '@/services/posts';
 import { commentsService } from '@/services/comments';
 import MediaPlayer from '@/components/MediaPlayer';
+import MediaViewer from '@/components/MediaViewer';
 import LikeButton from '@/components/LikeButton';
 import Comment from '@/components/Comment';
 import ReportModal from '@/components/ReportModal';
@@ -29,6 +30,8 @@ export default function PostDetailPage() {
   const [newComment, setNewComment] = useState('');
 
   const [reportOpen, setReportOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -74,6 +77,11 @@ export default function PostDetailPage() {
 
   const onLikeChange = (r) => {
     setPost((p) => p ? ({ ...p, isLikedByCurrentUser: !!r.liked, likeCount: r.count ?? p.likeCount }) : p);
+  };
+
+  const openViewer = (index) => {
+    setViewerIndex(index);
+    setViewerOpen(true);
   };
 
   const onSendComment = async (e) => {
@@ -143,8 +151,15 @@ export default function PostDetailPage() {
 
               {attachments.length > 0 && (
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {attachments.map(m => (
-                    <MediaPlayer key={m.id || m.url} media={m} type={m.type} url={m.url} />
+                  {attachments.map((m, idx) => (
+                    <button
+                      key={m.id || m.url}
+                      type="button"
+                      className="text-left"
+                      onClick={() => openViewer(idx)}
+                    >
+                      <MediaPlayer media={m} type={m.type} url={m.url} />
+                    </button>
                   ))}
                 </div>
               )}
@@ -217,6 +232,12 @@ export default function PostDetailPage() {
         open={reportOpen}
         onClose={() => setReportOpen(false)}
         subject={{ type: 'post', postId }}
+      />
+      <MediaViewer
+        open={viewerOpen}
+        items={attachments}
+        startIndex={viewerIndex}
+        onClose={() => setViewerOpen(false)}
       />
     </div>
   );
