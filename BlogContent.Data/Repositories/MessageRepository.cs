@@ -30,9 +30,9 @@ public class MessageRepository(BlogContext context) : IMessageRepository
     public IEnumerable<int> GetConversationUserIds(int userId) =>
         _context.Messages
             .Where(m => m.SenderId == userId || m.RecipientId == userId)
+            .AsNoTracking()
             .Select(m => m.SenderId == userId ? m.RecipientId : m.SenderId)
             .Distinct()
-            .AsNoTracking()
             .ToList();
 
     public Message? GetLastMessage(int userId, int otherUserId) =>
