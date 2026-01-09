@@ -38,27 +38,16 @@ export default function SettingsPage() {
     })();
   }, []);
 
-  const savePrivacy = async () => {
+  const saveSettings = async () => {
     setSaving(true);
     try {
-      const res = await settingsService.updatePrivacy(privacy);
-      setPrivacy(res);
-      toast.success('Приватность сохранена');
+      const updatedPrivacy = await settingsService.updatePrivacy(privacy);
+      const updatedNotifs = await settingsService.updateNotifications(notifs);
+      setPrivacy(updatedPrivacy);
+      setNotifs(updatedNotifs);
+      toast.success('Настройки сохранены');
     } catch {
-      toast.error('Ошибка сохранения');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveNotifs = async () => {
-    setSaving(true);
-    try {
-      const res = await settingsService.updateNotifications(notifs);
-      setNotifs(res);
-      toast.success('Уведомления сохранены');
-    } catch {
-      toast.error('Ошибка сохранения');
+      toast.error('Ошибка сохранения настроек');
     } finally {
       setSaving(false);
     }
@@ -75,67 +64,65 @@ export default function SettingsPage() {
         <p className="opacity-70">Приватность и уведомления</p>
       </div>
 
-      {/* PRIVACY */}
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          <h2 className="card-title">Приватность</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <AudienceSelectField
-              label="Кто может писать сообщения"
-              value={privacy?.whoCanMessage}
-              onChange={(v) => setPrivacy(p => ({ ...p, whoCanMessage: v }))}
-            />
-            <AudienceSelectField
-              label="Кто может комментировать"
-              value={privacy?.whoCanComment}
-              onChange={(v) => setPrivacy(p => ({ ...p, whoCanComment: v }))}
-            />
-            <AudienceSelectField
-              label="Кто видит профиль"
-              value={privacy?.whoCanViewProfile}
-              onChange={(v) => setPrivacy(p => ({ ...p, whoCanViewProfile: v }))}
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* PRIVACY */}
+        <div className="card bg-base-100 shadow h-full">
+          <div className="card-body h-full">
+            <h2 className="card-title">Приватность</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AudienceSelectField
+                label="Кто может писать сообщения"
+                value={privacy?.whoCanMessage}
+                onChange={(v) => setPrivacy(p => ({ ...p, whoCanMessage: v }))}
+              />
+              <AudienceSelectField
+                label="Кто может комментировать"
+                value={privacy?.whoCanComment}
+                onChange={(v) => setPrivacy(p => ({ ...p, whoCanComment: v }))}
+              />
+              <AudienceSelectField
+                label="Кто видит профиль"
+                value={privacy?.whoCanViewProfile}
+                onChange={(v) => setPrivacy(p => ({ ...p, whoCanViewProfile: v }))}
+              />
+            </div>
           </div>
-          <div className="mt-4">
-            <button className={`btn btn-primary ${saving ? 'loading' : ''}`} onClick={savePrivacy} disabled={saving}>
-              Сохранить приватность
-            </button>
+        </div>
+
+        {/* NOTIFICATIONS */}
+        <div className="card bg-base-100 shadow h-full">
+          <div className="card-body h-full">
+            <h2 className="card-title">Уведомления</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <NotificationSelectField
+                label="Подписки"
+                value={notifs?.onFollows}
+                onChange={(v) => setNotifs(n => ({ ...n, onFollows: v }))}
+              />
+              <NotificationSelectField
+                label="Лайки"
+                value={notifs?.onLikes}
+                onChange={(v) => setNotifs(n => ({ ...n, onLikes: v }))}
+              />
+              <NotificationSelectField
+                label="Комментарии"
+                value={notifs?.onComments}
+                onChange={(v) => setNotifs(n => ({ ...n, onComments: v }))}
+              />
+              <NotificationSelectField
+                label="Сообщения"
+                value={notifs?.onMessages}
+                onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* NOTIFICATIONS */}
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          <h2 className="card-title">Уведомления</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <NotificationSelectField
-              label="Подписки"
-              value={notifs?.onFollows}
-              onChange={(v) => setNotifs(n => ({ ...n, onFollows: v }))}
-            />
-            <NotificationSelectField
-              label="Лайки"
-              value={notifs?.onLikes}
-              onChange={(v) => setNotifs(n => ({ ...n, onLikes: v }))}
-            />
-            <NotificationSelectField
-              label="Комментарии"
-              value={notifs?.onComments}
-              onChange={(v) => setNotifs(n => ({ ...n, onComments: v }))}
-            />
-            <NotificationSelectField
-              label="Сообщения"
-              value={notifs?.onMessages}
-              onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
-            />
-          </div>
-          <div className="mt-4">
-            <button className={`btn btn-primary ${saving ? 'loading' : ''}`} onClick={saveNotifs} disabled={saving}>
-              Сохранить уведомления
-            </button>
-          </div>
-        </div>
+      <div className="flex justify-end">
+        <button className={`btn btn-primary ${saving ? 'loading' : ''}`} onClick={saveSettings} disabled={saving}>
+          Сохранить
+        </button>
       </div>
     </motion.div>
   );
