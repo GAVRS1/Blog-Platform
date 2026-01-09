@@ -55,7 +55,14 @@ export default function AvatarUploader({ onUploaded, initialUrl, usePublicUpload
       toast.success('Аватар загружен');
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data || err?.message || 'Не удалось загрузить аватар');
+      const status = err?.response?.status;
+      const responseData = err?.response?.data;
+      const responseMessage =
+        responseData?.message ?? responseData?.title ?? responseData ?? err?.message;
+      const messageText =
+        typeof responseMessage === 'string' ? responseMessage : JSON.stringify(responseMessage);
+      const errorText = [status ? `Ошибка ${status}` : null, messageText].filter(Boolean).join(': ');
+      toast.error(errorText || 'Не удалось загрузить аватар');
       // если аплоад не удался — откатываем превью
       setPreview(getAvatarUrl(initialUrl));
     } finally {
