@@ -112,7 +112,10 @@ export default function PostCard({ post, onDeleted }) {
               onChange={onLikeChange}
             />
             <button className="btn btn-sm btn-ghost" onClick={openDetails} title="Открыть комментарии">
-              💬 <span className="ml-2">{local.commentCount}</span>
+              <span className="flex items-center gap-2">
+                <i className="fas fa-comment" aria-hidden="true"></i>
+                <span>{local.commentCount}</span>
+              </span>
             </button>
           </div>
 

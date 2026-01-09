@@ -182,7 +182,10 @@ export default function PostDetailPage() {
                   onChange={onLikeChange}
                 />
                 <div className="btn btn-sm btn-ghost">
-                  💬 <span className="ml-2">{post.commentCount ?? 0}</span>
+                  <span className="flex items-center gap-2">
+                    <i className="fas fa-comment" aria-hidden="true"></i>
+                    <span>{post.commentCount ?? 0}</span>
+                  </span>
                 </div>
               </div>
             </>
