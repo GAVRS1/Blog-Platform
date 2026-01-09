@@ -73,8 +73,8 @@ export default function EditProfileModal({ open, onClose, initial, onSaved }) {
                   <div className="text-sm opacity-70 mb-2">Аватар</div>
                   <AvatarUploader onUploaded={onAvatarUploaded} />
                   {model.profilePictureUrl && (
-                    <div className="mt-2 text-xs opacity-70 break-all">
-                      {model.profilePictureUrl}
+                    <div className="mt-2 text-xs opacity-70">
+                      Аватар загружен
                     </div>
                   )}
                 </div>
