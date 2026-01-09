@@ -124,7 +124,7 @@ function AppLayout() {
         <Toaster position="top-center" />
         {showNav && <TopBar />}
         {showNav && (
-          <div className="md:hidden sticky top-0 z-40 border-b border-base-300 bg-base-200/95 backdrop-blur">
+          <div className="md:hidden sticky top-0 z-50 border-b border-base-300 bg-base-200 text-base-content shadow-sm">
             <div className="flex items-center justify-between px-3 py-2">
               <button
                 type="button"
