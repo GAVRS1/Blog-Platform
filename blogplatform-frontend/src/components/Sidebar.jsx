@@ -25,7 +25,11 @@ const NavItem = ({ to, label, icon, badge, badgeClass, onClick }) => (
   </NavLink>
 );
 
-export default function Sidebar({ placements = ['desktop'], onNavigate, containerClassName = 'sticky top-4' }) {
+export default function Sidebar({
+  placements = ['desktop'],
+  onNavigate,
+  containerClassName = 'sticky top-[var(--topbar-height)]',
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
