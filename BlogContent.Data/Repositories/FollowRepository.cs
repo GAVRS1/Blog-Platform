@@ -35,16 +35,16 @@ public class FollowRepository(BlogContext context) : IFollowRepository
         _context.Follows
             .Where(f => f.TargetUserId == userId)
             .OrderBy(f => f.FollowerUserId)
-            .Select(f => f.FollowerUserId)
             .AsNoTracking()
+            .Select(f => f.FollowerUserId)
             .ToList();
 
     public IEnumerable<int> GetFollowingIds(int userId) =>
         _context.Follows
             .Where(f => f.FollowerUserId == userId)
             .OrderBy(f => f.TargetUserId)
-            .Select(f => f.TargetUserId)
             .AsNoTracking()
+            .Select(f => f.TargetUserId)
             .ToList();
 
     public int GetFollowersCount(int userId) =>
