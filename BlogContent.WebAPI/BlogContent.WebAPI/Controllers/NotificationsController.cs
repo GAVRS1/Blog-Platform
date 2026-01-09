@@ -71,6 +71,30 @@ public class NotificationsController : ControllerBase
         return Ok(new { marked });
     }
 
+    [HttpDelete("{id}")]
+    public IActionResult Delete(Guid id)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var deleted = _notificationService.Delete(userId, id);
+        return Ok(new { deleted });
+    }
+
+    [HttpDelete]
+    public IActionResult DeleteAll()
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var deleted = _notificationService.DeleteAll(userId);
+        return Ok(new { deleted });
+    }
+
     private bool TryGetUserId(out int userId)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

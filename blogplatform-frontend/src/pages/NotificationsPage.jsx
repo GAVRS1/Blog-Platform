@@ -76,6 +76,28 @@ export default function NotificationsPage() {
     }
   };
 
+  const clearAll = async () => {
+    try {
+      await notificationsService.deleteAll();
+      setItems([]);
+      toast.success('Все уведомления удалены');
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось удалить уведомления');
+    }
+  };
+
+  const deleteOne = async (event, notificationId) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await notificationsService.delete(notificationId);
+      setItems((prev) => prev?.filter((item) => item.id !== notificationId));
+      toast.success('Уведомление удалено');
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось удалить уведомление');
+    }
+  };
+
   const formatTimestamp = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -141,7 +163,10 @@ export default function NotificationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Уведомления</h1>
-        <button className="btn btn-ghost btn-sm" onClick={markAll}>Отметить все прочитанными</button>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-ghost btn-sm" onClick={markAll}>Отметить все прочитанными</button>
+          <button className="btn btn-ghost btn-sm text-error" onClick={clearAll}>Очистить все</button>
+        </div>
       </div>
 
       {loading && <div className="flex justify-center py-10"><span className="loading loading-spinner text-primary"></span></div>}
@@ -154,10 +179,23 @@ export default function NotificationsPage() {
         <ul className="menu bg-base-100 rounded-box">
           {items.map(n => (
             <li key={n.id} className={n.isRead ? '' : 'font-semibold'}>
-              <button type="button" onClick={() => handleNotificationClick(n)}>
-                <span className="badge mr-2">{n.type}</span>
-                {n.text || 'Уведомление'} · <span className="opacity-60">{formatTimestamp(n.createdAt)}</span>
-              </button>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  className="flex-1 text-left"
+                  onClick={() => handleNotificationClick(n)}
+                >
+                  <span className="badge mr-2">{n.type}</span>
+                  {n.text || 'Уведомление'} · <span className="opacity-60">{formatTimestamp(n.createdAt)}</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs text-error"
+                  onClick={(event) => deleteOne(event, n.id)}
+                >
+                  Удалить
+                </button>
+              </div>
             </li>
           ))}
         </ul>

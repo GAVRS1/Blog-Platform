@@ -17,5 +17,13 @@ export const notificationsService = {
   markRead: async (id) => {
     const { data } = await api.post(`/notifications/read/${id}`);
     return data; // { marked: 1 }
+  },
+  delete: async (id) => {
+    const { data } = await api.delete(`/notifications/${id}`);
+    return data; // { deleted: 1 }
+  },
+  deleteAll: async () => {
+    const { data } = await api.delete('/notifications');
+    return data; // { deleted: N }
   }
 };

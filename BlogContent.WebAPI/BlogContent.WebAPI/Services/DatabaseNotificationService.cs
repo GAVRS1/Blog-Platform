@@ -71,6 +71,37 @@ public class DatabaseNotificationService : INotificationService
         return 1;
     }
 
+    public int DeleteAll(int userId)
+    {
+        var notifications = _context.Notifications
+            .Where(n => n.RecipientUserId == userId)
+            .ToList();
+
+        if (notifications.Count == 0)
+        {
+            return 0;
+        }
+
+        _context.Notifications.RemoveRange(notifications);
+        _context.SaveChanges();
+        return notifications.Count;
+    }
+
+    public int Delete(int userId, Guid notificationId)
+    {
+        var notification = _context.Notifications
+            .FirstOrDefault(n => n.RecipientUserId == userId && n.Id == notificationId);
+
+        if (notification == null)
+        {
+            return 0;
+        }
+
+        _context.Notifications.Remove(notification);
+        _context.SaveChanges();
+        return 1;
+    }
+
     public NotificationDto AddNotification(
         int recipientUserId,
         string type,
