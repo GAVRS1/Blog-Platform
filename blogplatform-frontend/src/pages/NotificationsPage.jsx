@@ -179,10 +179,10 @@ export default function NotificationsPage() {
         <ul className="menu bg-base-100 rounded-box">
           {items.map(n => (
             <li key={n.id} className={n.isRead ? '' : 'font-semibold'}>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 min-w-0">
                 <button
                   type="button"
-                  className="flex-1 text-left"
+                  className="flex-1 min-w-0 text-left break-words"
                   onClick={() => handleNotificationClick(n)}
                 >
                   <span className="badge mr-2">{n.type}</span>
