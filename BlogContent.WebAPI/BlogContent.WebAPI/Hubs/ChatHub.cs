@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using BlogContent.WebAPI.Services;
+using BlogContent.Core.Interfaces;
+using BlogContent.Core.Enums;
+using BlogContent.Services;
 
 namespace BlogContent.WebAPI.Hubs;
 
@@ -12,11 +16,22 @@ namespace BlogContent.WebAPI.Hubs;
 public class ChatHub : Hub
 {
     private readonly ILogger<ChatHub> _logger;
+    private readonly IMessageService _messageService;
+    private readonly IUserService _userService;
+    private readonly IFollowService _followService;
     private static readonly ConcurrentDictionary<int, UserPresenceState> PresenceStates = new();
+    private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
 
-    public ChatHub(ILogger<ChatHub> logger)
+    public ChatHub(
+        ILogger<ChatHub> logger,
+        IMessageService messageService,
+        IUserService userService,
+        IFollowService followService)
     {
         _logger = logger;
+        _messageService = messageService;
+        _userService = userService;
+        _followService = followService;
     }
 
     public override async Task OnConnectedAsync()
@@ -92,17 +107,56 @@ public class ChatHub : Hub
             throw new HubException("Recipient and content are required.");
         }
 
-        var message = new
+        var recipient = _userService.GetUserById(recipientUserId);
+        if (recipient == null)
         {
-            Id = Guid.NewGuid(),
-            SenderId = senderId,
-            RecipientId = recipientUserId,
-            Content = content,
-            SentAt = DateTime.UtcNow
-        };
+            throw new HubException("Recipient not found.");
+        }
+
+        if (recipient.Id != senderId)
+        {
+            var relation = _followService.GetRelationship(senderId, recipient.Id);
+            var audience = recipient.PrivacySettings?.CanMessageFrom ?? Audience.Everyone;
+            if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
+            {
+                throw new HubException(AccessDeniedMessage);
+            }
+        }
+
+        var message = _messageService.SendMessage(senderId, recipientUserId, content, null);
 
         await Clients.User(recipientUserId.ToString()).SendAsync("MessageReceived", message);
         await Clients.User(senderId.ToString()).SendAsync("MessageReceived", message);
+    }
+
+    public async Task MarkRead(int otherUserId)
+    {
+        if (!TryGetUserId(out var readerId))
+        {
+            Context.Abort();
+            return;
+        }
+
+        if (otherUserId <= 0)
+        {
+            throw new HubException("Recipient is required.");
+        }
+
+        var result = _messageService.MarkRead(readerId, otherUserId);
+        if (result.Marked <= 0)
+        {
+            return;
+        }
+
+        var payload = new
+        {
+            ReaderId = readerId,
+            SenderId = otherUserId,
+            result.UpdatedMessages
+        };
+
+        await Clients.Users(readerId.ToString(), otherUserId.ToString())
+            .SendAsync("MessagesRead", payload);
     }
 
     public async Task SendTyping(int recipientUserId, bool isTyping)

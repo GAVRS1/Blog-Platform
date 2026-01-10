@@ -5,6 +5,7 @@ import {
   emitRealtimeMessage,
   emitRealtimeNotification,
   emitRealtimePresence,
+  emitRealtimeReads,
   emitRealtimeStatus
 } from '@/realtimeEvents';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,6 +55,7 @@ export default function RealtimeMount() {
         onNotification: (n) => emitRealtimeNotification(n),
         onStatus: emitRealtimeStatus,
         onPresence: emitRealtimePresence,
+        onReads: (payload) => emitRealtimeReads(payload),
       });
       ref.current.start();
     }

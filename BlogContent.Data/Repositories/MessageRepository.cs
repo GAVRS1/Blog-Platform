@@ -15,17 +15,23 @@ public class MessageRepository(BlogContext context) : IMessageRepository
         return message;
     }
 
-    public IEnumerable<Message> GetDialog(int userId, int otherUserId, int page, int pageSize) =>
-        _context.Messages
+    public IEnumerable<Message> GetDialog(int userId, int otherUserId, int page, int pageSize)
+    {
+        var slice = _context.Messages
             .Include(m => m.Attachments)
             .Where(m =>
                 (m.SenderId == userId && m.RecipientId == otherUserId) ||
                 (m.SenderId == otherUserId && m.RecipientId == userId))
-            .OrderBy(m => m.CreatedAt)
+            .OrderByDescending(m => m.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsNoTracking()
             .ToList();
+
+        return slice
+            .OrderBy(m => m.CreatedAt)
+            .ToList();
+    }
 
     public IEnumerable<int> GetConversationUserIds(int userId) =>
         _context.Messages

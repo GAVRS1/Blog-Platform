@@ -1,5 +1,5 @@
 // src/pages/DialogPage.jsx
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { messagesService } from '@/services/messages';
 import { mediaService } from '@/services/media';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import {
   subscribeToRealtimeMessages,
+  subscribeToRealtimeReads,
   subscribeToRealtimeStatus
 } from '@/realtimeEvents';
 import { sendTyping } from '@/realtime';
@@ -33,7 +34,6 @@ export default function DialogPage() {
   const [profile, setProfile] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
-  const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [viewerItems, setViewerItems] = useState([]);
@@ -41,10 +41,6 @@ export default function DialogPage() {
   const containerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const typingStateRef = useRef(false);
-  const isRealtimeUnavailable = useMemo(() => (
-    ['reconnecting', 'closed', 'error'].includes(realtimeStatus?.type)
-  ), [realtimeStatus]);
-
   useEffect(() => {
     loadPage(1, true);
     markReadAndSync();
@@ -78,9 +74,25 @@ export default function DialogPage() {
       }
     });
 
+    const unsubscribeReads = subscribeToRealtimeReads((payload) => {
+      if (!payload?.updatedMessages?.length) return;
+      const { readerId, senderId, updatedMessages } = payload;
+      const matchesDialog = readerId === otherUserId || senderId === otherUserId;
+      if (!matchesDialog) return;
+
+      setList((prev) => {
+        if (!prev) return prev;
+        const updates = new Map(updatedMessages.map((item) => [item.id, item]));
+        return prev.map((item) => {
+          const update = updates.get(item.id);
+          if (!update) return item;
+          return { ...item, isRead: update.isRead, readAt: update.readAt };
+        });
+      });
+    });
+
     const unsubscribeStatus = subscribeToRealtimeStatus((status) => {
       if (!status) return;
-      setRealtimeStatus(status);
       if (status.type === 'reconnected' || status.type === 'connected') {
         loadPage(1, true);
         markReadAndSync();
@@ -89,6 +101,7 @@ export default function DialogPage() {
 
     return () => {
       unsubscribeMessages();
+      unsubscribeReads();
       unsubscribeStatus();
     };
   }, [otherUserId, user?.id]);
@@ -105,22 +118,21 @@ export default function DialogPage() {
     };
   }, [otherUserId]);
 
-  useEffect(() => {
-    if (!isRealtimeUnavailable) return undefined;
-    const interval = setInterval(() => {
-      loadPage(1, true);
-      markReadAndSync();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [isRealtimeUnavailable, otherUserId]);
-
   async function loadPage(p, replace = false) {
     try {
       const data = await messagesService.getDialog(otherUserId, p, 30);
       if (replace) {
         setList(data);
       } else {
-        setList((prev) => [...(prev || []), ...data]);
+        setList((prev) => {
+          const existing = prev || [];
+          const existingIds = new Set(existing.map((item) => item.id));
+          const merged = [
+            ...data.filter((item) => !existingIds.has(item.id)),
+            ...existing
+          ];
+          return merged;
+        });
       }
       setHasMore(data.length === 30);
       setPage(p);
