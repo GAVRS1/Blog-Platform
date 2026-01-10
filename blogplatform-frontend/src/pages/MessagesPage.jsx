@@ -220,7 +220,7 @@ export default function MessagesPage() {
         <div className="space-y-3">
           {items.map((x) => (
             <Link key={x.otherUserId} to={`/messages/${x.otherUserId}`} className="card bg-base-100 hover:bg-base-200 transition">
-              <div className="card-body flex-row items-center gap-4 min-w-0">
+              <div className="card-body grid grid-cols-[auto,1fr] items-center gap-4 min-w-0 py-4">
                 <div className="avatar">
                   <div className="rounded-full w-12">
                     <img
@@ -229,25 +229,30 @@ export default function MessagesPage() {
                     />
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                <div className="min-w-0 grid grid-rows-[auto,auto,auto] gap-1 min-h-[72px]">
+                  <div className="flex items-center justify-between gap-3 min-w-0">
                     <div className="font-semibold truncate">{resolveDisplayName(profiles[x.otherUserId], x.otherUserId)}</div>
                     {x.unreadCount > 0 && (
-                      <div className="badge badge-primary">{x.unreadCount}</div>
+                      <div className="badge badge-primary shrink-0">{x.unreadCount}</div>
                     )}
                   </div>
                   <div className="text-xs opacity-70 truncate">
                     {resolveStatus(presenceByUser[x.otherUserId])}
                   </div>
-                  <div className="text-sm opacity-70 truncate">
-                    {x.lastMessage?.content || '[вложение]'} · {formatMessageTimestamp(x.lastMessage?.createdAt)}
-                    {x.lastMessage && (
-                      <span className="ml-2 text-xs opacity-70">
-                        {x.lastMessage.senderId === user?.id
-                          ? (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')
-                          : (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')}
-                      </span>
-                    )}
+                  <div className="flex items-center justify-between gap-3 min-w-0 text-sm opacity-70">
+                    <div className="truncate">
+                      {x.lastMessage?.content || '[вложение]'}
+                    </div>
+                    <div className="shrink-0 text-xs opacity-70">
+                      {formatMessageTimestamp(x.lastMessage?.createdAt)}
+                      {x.lastMessage && (
+                        <span className="ml-2">
+                          {x.lastMessage.senderId === user?.id
+                            ? (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')
+                            : (x.lastMessage.isRead ? '· прочитано' : '· не прочитано')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
