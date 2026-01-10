@@ -70,7 +70,7 @@ export default function SettingsPage() {
         <div className="card bg-base-100 shadow h-full">
           <div className="card-body h-full">
             <h2 className="card-title">Приватность</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 gap-y-3">
               <AudienceSelectField
                 label="Кто может писать сообщения"
                 value={privacy?.whoCanMessage}
@@ -134,9 +134,9 @@ export default function SettingsPage() {
 
 function AudienceSelectField({ label, value, onChange }) {
   return (
-    <div className="form-control">
+    <div className="form-control min-w-0">
       <label className="label min-w-0">
-        <span className="label-text whitespace-normal break-words">{label}</span>
+        <span className="label-text whitespace-normal break-words leading-tight max-w-full block">{label}</span>
       </label>
       <select
         className="select select-bordered"
