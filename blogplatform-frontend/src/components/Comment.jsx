@@ -148,7 +148,7 @@ export default function Comment({
           </button>
           {canDelete && (
             <button
-              className={`btn btn-sm btn-outline btn-error ${deleteLoading ? 'loading' : ''}`}
+              className={`btn btn-sm btn-outline btn-error flex items-center justify-center ${deleteLoading ? 'loading' : ''}`}
               onClick={handleDelete}
               disabled={deleteLoading}
             >
