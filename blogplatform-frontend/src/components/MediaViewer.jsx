@@ -27,6 +27,22 @@ function getMediaUrl(mediaUrl) {
   return `${base}/uploads/${normalized}`;
 }
 
+function getBaseFileName(value = '') {
+  const cleaned = value.toString().replace(/\\/g, '/');
+  const parts = cleaned.split('/');
+  return parts[parts.length - 1] || '';
+}
+
+function getHeaderTitle(current) {
+  const baseName = getBaseFileName(current?.fileName);
+  if (baseName) return baseName;
+  if (current?.type === 'image') return 'Изображение';
+  if (current?.type === 'video') return 'Видео';
+  if (current?.type === 'audio') return 'Аудио';
+  if (current?.type === 'file') return 'Файл';
+  return 'Медиа';
+}
+
 export default function MediaViewer({ open, items = [], startIndex = 0, onClose }) {
   const normalizedItems = useMemo(() => (
     items.map((item) => {
@@ -90,7 +106,7 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
           >
             <div className="flex items-center justify-between p-3 border-b border-base-200">
               <div className="text-sm opacity-70 truncate">
-                {current?.fileName || current?.url || 'Медиа'}
+                {getHeaderTitle(current)}
               </div>
               <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
                 ✕
