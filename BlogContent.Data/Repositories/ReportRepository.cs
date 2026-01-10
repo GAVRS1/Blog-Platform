@@ -37,7 +37,13 @@ public class ReportRepository(BlogContext context) : IReportRepository
 
     public void UpdateReport(Report report)
     {
-        _context.Reports.Update(report);
+        var existing = _context.Reports.Find(report.Id);
+        if (existing == null)
+        {
+            return;
+        }
+
+        existing.Status = report.Status;
         _context.SaveChanges();
     }
 }
