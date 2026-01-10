@@ -113,6 +113,7 @@ export default function UserProfilePage() {
               </div>
             </div>
             <div className="flex-1 max-w-full min-w-0">
+              <div className="mt-1 opacity-80 break-words max-w-full">{user?.profile?.fullName}</div>
               <div className="flex flex-wrap items-center gap-2 max-w-full">
                 <div className="text-2xl font-bold break-words max-w-full">@{user.username}</div>
                 {!isRestricted && <div className="badge">{getUserStatusLabel(user.status)}</div>}
@@ -125,8 +126,6 @@ export default function UserProfilePage() {
                   </>
                 )}
               </div>
-
-              <div className="mt-1 opacity-80 break-words max-w-full">{user?.profile?.fullName}</div>
               {!isRestricted && (
                 <div className="mt-2 text-sm opacity-70 break-words max-w-full">
                   {user?.profile?.bio}

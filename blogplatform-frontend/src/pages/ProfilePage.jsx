@@ -67,11 +67,11 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="flex-1 max-w-full min-w-0">
+              <div className="mt-1 opacity-80 break-words max-w-full">{u?.profile?.fullName}</div>
               <div className="flex flex-wrap items-center gap-2 max-w-full">
                 <div className="text-2xl font-bold break-words max-w-full">@{u.username}</div>
                 <div className="badge">{getUserStatusLabel(u.status)}</div>
               </div>
-              <div className="mt-1 opacity-80 break-words max-w-full">{u?.profile?.fullName}</div>
               <div className="mt-2 text-sm opacity-70 break-words max-w-full">{u?.profile?.bio}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-4 max-w-full">
