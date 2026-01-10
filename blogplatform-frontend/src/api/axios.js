@@ -30,9 +30,17 @@ api.interceptors.response.use(
   (r) => r,
   (error) => {
     const status = error?.response?.status;
-    const isPublicPath = ['/login', '/register', '/verify', '/appeal'].some((p) =>
+    const errorCode = error?.response?.data?.code;
+    const isPublicPath = ['/login', '/register', '/verify', '/appeal', '/blocked'].some((p) =>
       location.pathname.startsWith(p)
     );
+
+    if (status === 403 && errorCode === 'AccountBlocked') {
+      if (!location.pathname.startsWith('/blocked')) {
+        location.href = '/blocked';
+      }
+      return Promise.reject(error);
+    }
 
     if (status === 401) {
       // Токен невалиден — почистим и отправим на логин, если мы не на публичном маршруте

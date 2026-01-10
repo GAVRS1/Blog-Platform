@@ -92,14 +92,26 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        var user = _authService.Login(request.Email, request.Password);
-        if (user == null)
+        try
         {
-            return Unauthorized("Неверный логин или пароль");
-        }
+            var user = _authService.Login(request.Email, request.Password);
+            if (user == null)
+            {
+                return Unauthorized("Неверный логин или пароль");
+            }
 
-        var token = GenerateJwtToken(user);
-        return Ok(new { token, userId = user.Id });
+            var token = GenerateJwtToken(user);
+            return Ok(new { token, userId = user.Id });
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("заблокирован", StringComparison.OrdinalIgnoreCase))
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]

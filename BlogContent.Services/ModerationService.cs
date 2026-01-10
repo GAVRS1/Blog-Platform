@@ -28,6 +28,9 @@ public class ModerationService : IModerationService
 
     public IEnumerable<Appeal> GetAppeals() => _appealRepository.GetAppeals();
 
+    public ModerationAction? GetLatestActionForUser(int userId, ModerationActionType actionType) =>
+        _actionRepository.GetLatestActionForUser(userId, actionType);
+
     public Report CreateReport(Report report)
     {
         _reportRepository.CreateReport(report);
@@ -43,6 +46,12 @@ public class ModerationService : IModerationService
     {
         _actionRepository.CreateAction(action);
         return action;
+    }
+
+    public Appeal CreateAppeal(Appeal appeal)
+    {
+        _appealRepository.CreateAppeal(appeal);
+        return appeal;
     }
 
     public Appeal ResolveAppeal(int appealId, AppealStatus status, string? resolution)

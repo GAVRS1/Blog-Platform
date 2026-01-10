@@ -22,21 +22,25 @@ public class MessagesController : ControllerBase
     private const int MaxPageSize = 100;
 
     private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
+    private const string BlockedMessage = "Вы не можете отправлять сообщения этому пользователю.";
 
     private readonly IMessageService _messageService;
     private readonly IUserService _userService;
     private readonly IFollowService _followService;
+    private readonly IBlockService _blockService;
     private readonly IHubContext<ChatHub> _chatHub;
 
     public MessagesController(
         IMessageService messageService,
         IUserService userService,
         IFollowService followService,
+        IBlockService blockService,
         IHubContext<ChatHub> chatHub)
     {
         _messageService = messageService;
         _userService = userService;
         _followService = followService;
+        _blockService = blockService;
         _chatHub = chatHub;
     }
 
@@ -92,6 +96,12 @@ public class MessagesController : ControllerBase
 
         if (recipient.Id != userId)
         {
+            var blockRelation = _blockService.GetRelationship(userId, recipient.Id);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+
             var relation = _followService.GetRelationship(userId, recipient.Id);
             var audience = recipient.PrivacySettings?.CanMessageFrom ?? Audience.Everyone;
             if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))

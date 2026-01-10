@@ -4,9 +4,12 @@ using BlogContent.Data.Repositories;
 using BlogContent.Services;
 using BlogContent.Services.Options;
 using BlogContent.WebAPI.Hubs;
+using BlogContent.WebAPI.Authorization;
+using BlogContent.WebAPI.Middleware;
 using BlogContent.WebAPI.Options;
 using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -120,6 +123,13 @@ public class Program
                 };
             });
 
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy =>
+                policy.Requirements.Add(new AdminRequirement()));
+        });
+        builder.Services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
+
         var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
         if (allowedOrigins.Length == 0)
         {
@@ -184,6 +194,7 @@ public class Program
         app.UseCors("FrontendPolicy");
 
         app.UseAuthentication();
+        app.UseMiddleware<BlockedUserMiddleware>();
         app.UseAuthorization();
 
         // ✅ Современный маппинг вместо UseEndpoints

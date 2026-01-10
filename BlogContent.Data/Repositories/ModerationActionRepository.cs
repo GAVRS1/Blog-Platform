@@ -1,3 +1,4 @@
+using BlogContent.Core.Enums;
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,17 @@ public class ModerationActionRepository(BlogContext context) : IModerationAction
             .Include(a => a.Appeals)
             .AsNoTracking()
             .FirstOrDefault(a => a.Id == id);
+
+    public ModerationAction? GetLatestActionForUser(int userId, ModerationActionType actionType) =>
+        _context.ModerationActions
+            .Include(a => a.AdminUser)
+            .Include(a => a.TargetUser)
+            .Include(a => a.Report)
+            .Include(a => a.Appeals)
+            .AsNoTracking()
+            .Where(a => a.TargetUserId == userId && a.ActionType == actionType)
+            .OrderByDescending(a => a.CreatedAt)
+            .FirstOrDefault();
 
     public void CreateAction(ModerationAction action)
     {

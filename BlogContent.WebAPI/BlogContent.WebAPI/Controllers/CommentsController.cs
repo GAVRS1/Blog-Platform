@@ -20,25 +20,29 @@ public class CommentsController : ControllerBase
     private const int MaxPageSize = 100;
 
     private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
+    private const string BlockedMessage = "Доступ ограничен из-за блокировки пользователя.";
 
     private readonly ICommentService _commentService;
     private readonly IPostService _postService;
     private readonly IFollowService _followService;
     private readonly ISettingsService _settingsService;
     private readonly INotificationService _notificationService;
+    private readonly IBlockService _blockService;
 
     public CommentsController(
         ICommentService commentService,
         IPostService postService,
         IFollowService followService,
         ISettingsService settingsService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IBlockService blockService)
     {
         _commentService = commentService;
         _postService = postService;
         _followService = followService;
         _settingsService = settingsService;
         _notificationService = notificationService;
+        _blockService = blockService;
     }
 
     [HttpGet("post/{postId}")]
@@ -47,6 +51,21 @@ public class CommentsController : ControllerBase
         if (!TryGetUserId(out var userId))
         {
             return Unauthorized();
+        }
+
+        var post = _postService.GetPostById(postId);
+        if (post == null)
+        {
+            return NotFound();
+        }
+
+        if (post.UserId != userId)
+        {
+            var blockRelation = _blockService.GetRelationship(userId, post.UserId);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
         }
 
         (page, pageSize) = NormalizePagination(page, pageSize);
@@ -70,6 +89,12 @@ public class CommentsController : ControllerBase
 
         if (post.UserId != userId)
         {
+            var blockRelation = _blockService.GetRelationship(userId, post.UserId);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+
             var relation = _followService.GetRelationship(userId, post.UserId);
             var audience = post.User?.PrivacySettings?.CanCommentFrom ?? Audience.Everyone;
             if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))
@@ -123,6 +148,12 @@ public class CommentsController : ControllerBase
 
         if (comment.UserId != userId)
         {
+            var blockRelation = _blockService.GetRelationship(userId, comment.UserId);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+
             var relation = _followService.GetRelationship(userId, comment.UserId);
             var audience = comment.User?.PrivacySettings?.CanCommentFrom ?? Audience.Everyone;
             if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))

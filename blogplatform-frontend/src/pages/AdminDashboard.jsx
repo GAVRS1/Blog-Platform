@@ -73,8 +73,8 @@ export default function AdminDashboard() {
           <select className="select select-bordered select-sm"
             value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="">Все статусы</option>
-            {tab === 'reports' && ['Open','UnderReview','Resolved','Rejected'].map(s => <option key={s} value={s}>{s}</option>)}
-            {tab === 'appeals' && ['Submitted','InReview','Approved','Denied'].map(s => <option key={s} value={s}>{s}</option>)}
+            {tab === 'reports' && ['Pending','Approved','Rejected'].map(s => <option key={s} value={s}>{s}</option>)}
+            {tab === 'appeals' && ['Pending','Approved','Rejected'].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         )}
         <button className="btn btn-sm" onClick={() => load(data.page)}>Обновить</button>
@@ -82,7 +82,9 @@ export default function AdminDashboard() {
 
       {loading && <div className="flex justify-center py-10"><span className="loading loading-spinner text-primary"></span></div>}
 
-      {!loading && tab === 'reports' && <ReportsTable data={data} onAction={handleAction} />}
+      {!loading && tab === 'reports' && (
+        <ReportsTable data={data} onAction={handleAction} onResolve={handleReportResolution} />
+      )}
       {!loading && tab === 'actions' && <ActionsTable data={data} />}
       {!loading && tab === 'appeals' && <AppealsTable data={data} onResolve={handleResolve} />}
     </motion.div>
@@ -90,7 +92,12 @@ export default function AdminDashboard() {
 
   async function handleAction(type, row) {
     try {
-      const payload = { actionType: type, targetUserId: row.targetUserId, postId: row.postId, reason: 'Админ-действие из панели' };
+      const payload = {
+        actionType: type,
+        targetUserId: row.targetUserId,
+        reportId: row.id,
+        reason: 'Админ-действие из панели'
+      };
       await adminService.createAction(payload);
       toast.success('Действие выполнено');
       await load(data.page);
@@ -108,9 +115,19 @@ export default function AdminDashboard() {
       toast.error(e.response?.data || 'Не удалось решить апелляцию');
     }
   }
+
+  async function handleReportResolution(row, status) {
+    try {
+      await adminService.resolveReport(row.id, status);
+      toast.success('Жалоба обновлена');
+      await load(data.page);
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось обновить жалобу');
+    }
+  }
 }
 
-function ReportsTable({ data, onAction }) {
+function ReportsTable({ data, onAction, onResolve }) {
   return (
     <div className="overflow-x-auto">
       <table className="table">
@@ -123,7 +140,7 @@ function ReportsTable({ data, onAction }) {
           {data.items.map(r => (
             <tr key={r.id}>
               <td>{r.id}</td>
-              <td>#{r.reporterId}</td>
+              <td>#{r.reporterUserId}</td>
               <td>{r.targetUserId ? `#${r.targetUserId}` : '-'}</td>
               <td>{r.postId ? <a className="link" href={`/posts/${r.postId}`}>#{r.postId}</a> : '-'}</td>
               <td>{r.commentId || '-'}</td>
@@ -131,15 +148,12 @@ function ReportsTable({ data, onAction }) {
               <td className="max-w-[240px] truncate" title={r.reason}>{r.reason}</td>
               <td>{new Date(r.createdAt).toLocaleString()}</td>
               <td className="space-x-2">
-                {r.postId && (
-                  <button className="btn btn-xs btn-error" onClick={() => onAction('DeletePost', r)}>Удалить пост</button>
-                )}
                 {r.targetUserId && (
                   <>
-                    <button className="btn btn-xs btn-warning" onClick={() => onAction('SuspendUser', r)}>Заморозить</button>
-                    <button className="btn btn-xs btn-error" onClick={() => onAction('BanUser', r)}>Забанить</button>
+                    <button className="btn btn-xs btn-error" onClick={() => onAction('Ban', r)}>Заблокировать</button>
                   </>
                 )}
+                <button className="btn btn-xs" onClick={() => onResolve(r, 'Rejected')}>Отклонить</button>
               </td>
             </tr>
           ))}
@@ -156,17 +170,16 @@ function ActionsTable({ data }) {
       <table className="table">
         <thead>
           <tr>
-            <th>ID</th><th>Admin</th><th>Type</th><th>User</th><th>Post</th><th>Reason</th><th>Создано</th>
+            <th>ID</th><th>Admin</th><th>Type</th><th>User</th><th>Reason</th><th>Создано</th>
           </tr>
         </thead>
         <tbody>
           {data.items.map(a => (
             <tr key={a.id}>
               <td>{a.id}</td>
-              <td>#{a.adminId}</td>
+              <td>#{a.adminUserId}</td>
               <td>{a.actionType}</td>
               <td>{a.targetUserId || '-'}</td>
-              <td>{a.postId || '-'}</td>
               <td className="max-w-[240px] truncate" title={a.reason}>{a.reason}</td>
               <td>{new Date(a.createdAt).toLocaleString()}</td>
             </tr>
@@ -198,7 +211,7 @@ function AppealsTable({ data, onResolve }) {
               <td>{new Date(a.createdAt).toLocaleString()}</td>
               <td className="space-x-2">
                 <button className="btn btn-xs btn-success" onClick={() => onResolve(a, 'Approved')}>Одобрить</button>
-                <button className="btn btn-xs btn-error" onClick={() => onResolve(a, 'Denied')}>Отклонить</button>
+                <button className="btn btn-xs btn-error" onClick={() => onResolve(a, 'Rejected')}>Отклонить</button>
               </td>
             </tr>
           ))}

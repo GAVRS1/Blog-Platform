@@ -39,14 +39,6 @@ export const NAV_ITEMS = [
     placements: ['desktop', 'mobile'],
   },
   {
-    key: 'blocks',
-    to: '/blocks',
-    label: 'Блокировки',
-    icon: 'fa-ban',
-    roles: ['Admin'],
-    placements: ['desktop', 'mobile'],
-  },
-  {
     key: 'admin',
     to: '/admin',
     label: 'Админ-панель',
@@ -56,7 +48,7 @@ export const NAV_ITEMS = [
   },
 ];
 
-export const PUBLIC_NAV_PATHS = ['/login', '/register', '/verify', '/appeal', '/404'];
+export const PUBLIC_NAV_PATHS = ['/login', '/register', '/verify', '/appeal', '/blocked', '/404'];
 
 export const isPublicNavPath = (pathname = '') =>
   PUBLIC_NAV_PATHS.some(publicPath => pathname.startsWith(publicPath));

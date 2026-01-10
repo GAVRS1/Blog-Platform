@@ -21,17 +21,20 @@ public class FollowsController : ControllerBase
     private readonly IUserService _userService;
     private readonly ISettingsService _settingsService;
     private readonly INotificationService _notificationService;
+    private readonly IBlockService _blockService;
 
     public FollowsController(
         IFollowService followService,
         IUserService userService,
         ISettingsService settingsService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IBlockService blockService)
     {
         _followService = followService;
         _userService = userService;
         _settingsService = settingsService;
         _notificationService = notificationService;
+        _blockService = blockService;
     }
 
     [HttpPost("{userId}")]
@@ -40,6 +43,12 @@ public class FollowsController : ControllerBase
         if (!TryGetUserId(out var currentUserId))
         {
             return Unauthorized();
+        }
+
+        var blockRelation = _blockService.GetRelationship(currentUserId, userId);
+        if (blockRelation.IBlocked || blockRelation.BlockedMe)
+        {
+            return StatusCode(403, new { message = "Подписка недоступна из-за блокировки пользователя." });
         }
 
         _followService.Follow(currentUserId, userId);

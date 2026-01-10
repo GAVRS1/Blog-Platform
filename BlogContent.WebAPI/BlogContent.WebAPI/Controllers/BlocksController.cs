@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
 using BlogContent.WebAPI.DTOs;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +14,14 @@ namespace BlogContent.WebAPI.Controllers;
 public class BlocksController : ControllerBase
 {
     private readonly IBlockService _blockService;
+    private readonly IFollowService _followService;
+    private readonly IUserService _userService;
 
-    public BlocksController(IBlockService blockService)
+    public BlocksController(IBlockService blockService, IFollowService followService, IUserService userService)
     {
         _blockService = blockService;
+        _followService = followService;
+        _userService = userService;
     }
 
     [HttpPost("block")]
@@ -42,6 +47,8 @@ public class BlocksController : ControllerBase
         };
 
         var result = _blockService.CreateBlock(block);
+        _followService.Unfollow(currentUserId, request.TargetUserId);
+        _followService.Unfollow(request.TargetUserId, currentUserId);
 
         return Ok(new BlockDto
         {
@@ -81,16 +88,26 @@ public class BlocksController : ControllerBase
         }
 
         var blocks = _blockService.GetBlocks(currentUserId)
-            .Select(block => new BlockDto
+            .Where(block => block.IsActive)
+            .Select(block =>
             {
-                Id = block.Id,
-                BlockerUserId = block.BlockerUserId,
-                BlockedUserId = block.BlockedUserId,
-                Reason = block.Reason,
-                IsActive = block.IsActive,
-                CreatedAt = block.CreatedAt,
-                UnblockedAt = block.UnblockedAt
-            });
+                var user = block.BlockedUser ?? _userService.GetUserById(block.BlockedUserId);
+                return new BlockedUserDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Profile = user.Profile == null
+                        ? null
+                        : new PublicUserProfileDto
+                        {
+                            FullName = user.Profile.FullName,
+                            ProfilePictureUrl = user.Profile.ProfilePictureUrl
+                        },
+                    Reason = block.Reason,
+                    CreatedAt = block.CreatedAt
+                };
+            })
+            .ToList();
 
         return Ok(blocks);
     }

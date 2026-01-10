@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { authService } from '@/services/auth';
 import { settingsService } from '@/services/settings';
+import { blocksService } from '@/services/blocks';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatar';
 
 const AUDIENCE = [
   { value: 'Everyone', label: 'Все' },
@@ -21,16 +23,20 @@ export default function SettingsPage() {
   const [privacy, setPrivacy] = useState(null);
   const [notifs, setNotifs] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [p, n] = await Promise.all([
+        const [p, n, blocks] = await Promise.all([
           settingsService.getPrivacy(),
-          settingsService.getNotifications()
+          settingsService.getNotifications(),
+          blocksService.list()
         ]);
         setPrivacy(p);
         setNotifs(n);
+        setBlockedUsers(blocks || []);
       } catch {
         toast.error('Не удалось загрузить настройки');
       } finally {
@@ -51,6 +57,28 @@ export default function SettingsPage() {
       toast.error('Ошибка сохранения настроек');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const refreshBlocks = async () => {
+    setLoadingBlocks(true);
+    try {
+      const blocks = await blocksService.list();
+      setBlockedUsers(blocks || []);
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось загрузить чёрный список');
+    } finally {
+      setLoadingBlocks(false);
+    }
+  };
+
+  const unblockUser = async (userId) => {
+    try {
+      await blocksService.unblock(userId);
+      toast.success('Пользователь удалён из чёрного списка');
+      await refreshBlocks();
+    } catch (e) {
+      toast.error(e.response?.data || 'Не удалось удалить пользователя из чёрного списка');
     }
   };
 
@@ -116,6 +144,47 @@ export default function SettingsPage() {
                 onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
               />
             </div>
+          </div>
+        </div>
+
+        {/* BLACKLIST */}
+        <div className="card bg-base-100 shadow h-full">
+          <div className="card-body h-full">
+            <div className="flex items-center justify-between">
+              <h2 className="card-title">Чёрный список</h2>
+              <button className="btn btn-sm" onClick={refreshBlocks} disabled={loadingBlocks}>
+                {loadingBlocks ? 'Обновление...' : 'Обновить'}
+              </button>
+            </div>
+
+            {blockedUsers.length === 0 ? (
+              <div className="text-sm opacity-70 mt-4">Список пуст</div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {blockedUsers.map((blocked) => (
+                  <div key={blocked.id} className="flex items-center gap-3">
+                    <div className="avatar">
+                      <div className="w-10 rounded-full ring ring-error ring-offset-base-100 ring-offset-2">
+                        <img src={getAvatarUrl(blocked.profile?.profilePictureUrl)} alt="" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{blocked.profile?.fullName || blocked.username}</div>
+                      <div className="text-xs opacity-70">@{blocked.username}</div>
+                      {blocked.reason && (
+                        <div className="text-xs opacity-60 truncate">Причина: {blocked.reason}</div>
+                      )}
+                    </div>
+                    <button
+                      className="btn btn-sm btn-warning"
+                      onClick={() => unblockUser(blocked.id)}
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

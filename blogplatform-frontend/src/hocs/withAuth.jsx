@@ -15,6 +15,10 @@ export default function withAuth(Component) {
     }
 
     // без токена – только на /login
+    if (user?.status === 'Banned') {
+      return <Navigate to="/blocked" replace />;
+    }
+
     return user ? <Component {...props} /> : <Navigate to="/login" replace />;
   };
 }
