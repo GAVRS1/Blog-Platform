@@ -123,7 +123,7 @@ public class DatabaseNotificationService : INotificationService
             existing.IsRead = false;
             existing.Text = text;
             _context.SaveChanges();
-        return ToDto(existing);
+            return ToDto(existing);
         }
 
         var notification = new Core.Models.Notification
@@ -160,6 +160,7 @@ public class DatabaseNotificationService : INotificationService
             IsRead = notification.IsRead
         };
 
+        PopulateSenderDisplayName(dto);
         PopulateTargets(dto);
         return dto;
     }
@@ -195,5 +196,39 @@ public class DatabaseNotificationService : INotificationService
         {
             dto.UserId = userId;
         }
+    }
+
+    private void PopulateSenderDisplayName(NotificationDto dto)
+    {
+        if (dto.SenderId == null)
+        {
+            return;
+        }
+
+        var sender = _context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == dto.SenderId)
+            .Select(u => new
+            {
+                u.Username,
+                ProfileUsername = u.Profile == null ? null : u.Profile.Username,
+                ProfileFullName = u.Profile == null ? null : u.Profile.FullName
+            })
+            .FirstOrDefault();
+
+        if (sender == null)
+        {
+            return;
+        }
+
+        var displayName = sender.ProfileFullName;
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = string.IsNullOrWhiteSpace(sender.ProfileUsername)
+                ? sender.Username
+                : sender.ProfileUsername;
+        }
+
+        dto.SenderDisplayName = displayName;
     }
 }

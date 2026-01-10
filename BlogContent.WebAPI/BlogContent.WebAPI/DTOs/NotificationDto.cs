@@ -16,5 +16,6 @@ public class NotificationDto
     public DateTime CreatedAt { get; set; }
     public bool IsRead { get; set; }
     public int? SenderId { get; set; }
+    public string? SenderDisplayName { get; set; }
     public int RecipientUserId { get; set; }
 }
