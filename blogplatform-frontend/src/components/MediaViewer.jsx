@@ -57,12 +57,21 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
   ), [items]);
 
   const [index, setIndex] = useState(startIndex);
+  const [zoom, setZoom] = useState(1);
+  const minZoom = 1;
+  const maxZoom = 3;
+  const zoomStep = 0.2;
 
   useEffect(() => {
     if (open) {
       setIndex(startIndex || 0);
+      setZoom(1);
     }
   }, [open, startIndex]);
+
+  useEffect(() => {
+    setZoom(1);
+  }, [index]);
 
   useEffect(() => {
     if (!open || normalizedItems.length === 0) return undefined;
@@ -86,6 +95,8 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
 
   const goPrev = () => setIndex((prev) => (prev - 1 + normalizedItems.length) % normalizedItems.length);
   const goNext = () => setIndex((prev) => (prev + 1) % normalizedItems.length);
+  const zoomIn = () => setZoom((prev) => Math.min(maxZoom, Number((prev + zoomStep).toFixed(2))));
+  const zoomOut = () => setZoom((prev) => Math.max(minZoom, Number((prev - zoomStep).toFixed(2))));
 
   return (
     <AnimatePresence>
@@ -108,7 +119,7 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
               <div className="text-sm opacity-70 truncate">
                 {getHeaderTitle(current)}
               </div>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+              <button type="button" className="btn btn-ghost btn-lg text-lg" onClick={onClose}>
                 ✕
               </button>
             </div>
@@ -118,7 +129,14 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
                 <div className="text-sm opacity-70">Файл недоступен для просмотра</div>
               )}
               {current?.src && current.type === 'image' && (
-                <img src={current.src} alt="" className="max-h-[70vh] w-auto rounded-lg" />
+                <div className="max-h-[70vh] max-w-full overflow-auto">
+                  <img
+                    src={current.src}
+                    alt=""
+                    className="block max-h-[70vh] w-auto rounded-lg transition-transform duration-200 origin-center"
+                    style={{ transform: `scale(${zoom})` }}
+                  />
+                </div>
               )}
               {current?.src && current.type === 'video' && (
                 <video src={current.src} controls className="max-h-[70vh] w-full rounded-lg" />
@@ -140,8 +158,29 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
               )}
             </div>
 
-            <div className="flex items-center justify-between px-4 py-2 text-xs opacity-60">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 text-xs opacity-60">
               <div>{index + 1} / {normalizedItems.length}</div>
+              {current?.src && current.type === 'image' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={zoomOut}
+                    className="btn btn-outline btn-md text-base"
+                    disabled={zoom <= minZoom}
+                  >
+                    −
+                  </button>
+                  <span className="text-xs opacity-70">{Math.round(zoom * 100)}%</span>
+                  <button
+                    type="button"
+                    onClick={zoomIn}
+                    className="btn btn-outline btn-md text-base"
+                    disabled={zoom >= maxZoom}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
               {canNavigate && (
                 <div className="flex items-center gap-2">
                   <span>← → для навигации</span>
@@ -154,14 +193,14 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="btn btn-circle btn-sm absolute left-3 top-1/2 -translate-y-1/2"
+                  className="btn btn-circle btn-lg text-lg absolute left-3 top-1/2 -translate-y-1/2"
                 >
                   ‹
                 </button>
                 <button
                   type="button"
                   onClick={goNext}
-                  className="btn btn-circle btn-sm absolute right-3 top-1/2 -translate-y-1/2"
+                  className="btn btn-circle btn-lg text-lg absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   ›
                 </button>
