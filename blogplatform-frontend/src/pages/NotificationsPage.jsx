@@ -130,28 +130,40 @@ export default function NotificationsPage() {
     notificationTypeLabels[type] || 'Уведомление'
   );
 
-  const getNotificationMessage = (notification) => (
-    notificationTypeMessages[notification?.type] || 'Новое уведомление'
-  );
+  const getNotificationMessage = (notification) => {
+    const baseMessage = notificationTypeMessages[notification?.type] || 'Новое уведомление';
+    const senderName = notification?.senderDisplayName?.trim();
+    if (senderName) {
+      return `${senderName}: ${baseMessage}`;
+    }
+
+    return notification?.text || baseMessage;
+  };
 
   const getNotificationRoute = (notification) => {
     if (notification.postId) {
       return `/posts/${notification.postId}`;
-    }
-    if (notification.userId) {
-      return `/users/${notification.userId}`;
-    }
-    if (notification.messageId) {
-      return `/messages/${notification.messageId}`;
     }
 
     if (notification.subjectType && notification.subjectId) {
       if (notification.subjectType === 'post') {
         return `/posts/${notification.subjectId}`;
       }
+      if (notification.subjectType === 'comment') {
+        if (notification.postId) {
+          return `/posts/${notification.postId}`;
+        }
+      }
       if (notification.subjectType === 'user') {
         return `/users/${notification.subjectId}`;
       }
+    }
+
+    if (notification.userId) {
+      return `/users/${notification.userId}`;
+    }
+    if (notification.messageId) {
+      return `/messages/${notification.messageId}`;
     }
 
     return null;
@@ -182,9 +194,9 @@ export default function NotificationsPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-hidden">
-      <div className="flex items-center justify-between mb-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2 min-w-0">
         <h1 className="text-2xl font-bold min-w-0">Уведомления</h1>
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0">
           <button className="btn btn-ghost btn-sm" onClick={markAll}>Отметить все прочитанными</button>
           <button className="btn btn-ghost btn-sm text-error" onClick={clearAll}>Очистить все</button>
         </div>
@@ -200,10 +212,10 @@ export default function NotificationsPage() {
         <ul className="menu bg-base-100 rounded-box">
           {items.map(n => (
             <li key={n.id} className={n.isRead ? '' : 'font-semibold'}>
-              <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0">
                 <button
                   type="button"
-                  className="flex-1 min-w-0 text-left break-words"
+                  className="flex-1 min-w-0 text-left break-words whitespace-normal"
                   onClick={() => handleNotificationClick(n)}
                 >
                   <span className="badge mr-2">{getNotificationTypeLabel(n.type)}</span>
