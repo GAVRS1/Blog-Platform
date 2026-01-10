@@ -4,7 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { notificationsService } from '@/services/notifications';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { subscribeToRealtimeNotifications, subscribeToRealtimeStatus } from '@/realtimeEvents';
+import {
+  emitUnreadBadgeRefresh,
+  subscribeToRealtimeNotifications,
+  subscribeToRealtimeStatus
+} from '@/realtimeEvents';
 
 const notificationTypeLabels = {
   Like: 'Лайк',
@@ -90,6 +94,7 @@ export default function NotificationsPage() {
     try {
       await notificationsService.markAllRead();
       toast.success('Все уведомления отмечены прочитанными');
+      emitUnreadBadgeRefresh({ type: 'notifications' });
       await load();
     } catch {
       toast.error('Не удалось пометить прочитанными');
@@ -182,6 +187,7 @@ export default function NotificationsPage() {
         setItems((prev) => prev?.map((item) => (
           item.id === notification.id ? { ...item, isRead: true } : item
         )));
+        emitUnreadBadgeRefresh({ type: 'notifications' });
       } catch (e) {
         toast.error(e.response?.data || 'Не удалось отметить уведомление');
       }
