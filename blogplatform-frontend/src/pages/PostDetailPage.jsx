@@ -177,14 +177,14 @@ export default function PostDetailPage() {
 
       <form onSubmit={onSendComment} className="card bg-base-100 shadow">
         <div className="card-body">
-          <textarea
-            className="textarea textarea-bordered w-full"
-            rows={3}
-            placeholder="Напишите комментарий…"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <div className="card-actions justify-end">
+          <div className="flex items-end gap-3">
+            <textarea
+              className="textarea textarea-bordered w-full min-h-[40px]"
+              rows={2}
+              placeholder="Напишите комментарий…"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
             <button className={`btn btn-primary btn-sm ${cSending ? 'loading' : ''}`} disabled={cSending}>
               Отправить
             </button>

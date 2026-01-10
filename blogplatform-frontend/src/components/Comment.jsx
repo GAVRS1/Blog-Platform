@@ -25,6 +25,7 @@ export default function Comment({
     createdAt: comment.createdAt,
     userId: comment.userId,
     username: comment.username,
+    displayName: comment.userFullName ?? comment.username,
     userAvatar: getAvatarUrl(comment.userAvatar),
     likeCount: comment.likeCount ?? 0,
     replyCount: comment.replyCount ?? 0,
@@ -100,6 +101,11 @@ export default function Comment({
     currentUserId && (currentUserId === local.userId || currentUserId === postUserId)
   );
 
+  const handleReplyDeleted = (replyId) => {
+    setReplies((prev) => prev?.filter((reply) => reply.id !== replyId) ?? prev);
+    setLocal((s) => ({ ...s, replyCount: Math.max((s.replyCount || 1) - 1, 0) }));
+  };
+
   const handleDelete = async () => {
     if (!canDelete || deleteLoading) return;
     setDeleteLoading(true);
@@ -122,11 +128,11 @@ export default function Comment({
         <div className="flex items-center gap-3">
           <div className="avatar">
             <div className="w-9 h-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
-              <img src={local.userAvatar} alt={local.username} />
+              <img src={local.userAvatar} alt={local.displayName} />
             </div>
           </div>
           <div className="min-w-0">
-            <div className="font-medium truncate">@{local.username}</div>
+            <div className="font-medium truncate">{local.displayName}</div>
             <div className="text-xs opacity-60">{formatDateTime(local.createdAt)}</div>
           </div>
         </div>
@@ -170,7 +176,13 @@ export default function Comment({
               <div className="text-sm opacity-60">Пока нет ответов</div>
             )}
             {replies?.map(r => (
-              <ReplyItem key={r.id} reply={r} />
+              <ReplyItem
+                key={r.id}
+                reply={r}
+                currentUserId={currentUserId}
+                postUserId={postUserId}
+                onDeleted={handleReplyDeleted}
+              />
             ))}
             {replyHasMore && (
               <button className="btn btn-xs btn-outline" onClick={() => loadReplies(replyPage + 1)}>
@@ -181,13 +193,13 @@ export default function Comment({
             {/* отправка ответа */}
             <form onSubmit={sendReply} className="flex items-end gap-2">
               <textarea
-                className="textarea textarea-bordered w-full"
+                className="textarea textarea-bordered w-full min-h-[40px]"
                 rows={2}
                 placeholder="Напишите ответ..."
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
               />
-              <button className={`btn btn-primary ${replyLoading ? 'loading' : ''}`} disabled={replyLoading}>
+              <button className={`btn btn-primary btn-sm ${replyLoading ? 'loading' : ''}`} disabled={replyLoading}>
                 Отправить
               </button>
             </form>
@@ -198,19 +210,52 @@ export default function Comment({
   );
 }
 
-function ReplyItem({ reply }) {
+function ReplyItem({ reply, currentUserId, postUserId, onDeleted }) {
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const displayName = reply.userFullName ?? reply.username;
+  const canDeleteReply = Boolean(
+    currentUserId && (currentUserId === reply.userId || currentUserId === postUserId)
+  );
+
+  const handleDelete = async () => {
+    if (!canDeleteReply || deleteLoading) return;
+    setDeleteLoading(true);
+    try {
+      await commentsService.removeReply(reply.id);
+      onDeleted?.(reply.id);
+      toast.success('Ответ удалён');
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403) toast.error('Нет прав на удаление ответа');
+      else toast.error(err.response?.data || 'Не удалось удалить ответ');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3">
-      <div className="avatar">
-        <div className="w-8 h-8 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2 overflow-hidden">
-          <img src={getAvatarUrl(reply.userAvatar)} alt={reply.username} />
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        <div className="avatar">
+          <div className="w-8 h-8 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2 overflow-hidden">
+            <img src={getAvatarUrl(reply.userAvatar)} alt={displayName} />
+          </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium">{displayName}</div>
+          <div className="text-xs opacity-60">{formatDateTime(reply.createdAt)}</div>
+          <div className="mt-1 whitespace-pre-wrap break-words text-sm">{reply.content}</div>
         </div>
       </div>
-      <div>
-        <div className="text-sm font-medium">@{reply.username}</div>
-        <div className="text-xs opacity-60">{formatDateTime(reply.createdAt)}</div>
-        <div className="mt-1 whitespace-pre-wrap break-words text-sm">{reply.content}</div>
-      </div>
+      {canDeleteReply && (
+        <button
+          className={`btn btn-xs btn-outline btn-error ${deleteLoading ? 'loading' : ''}`}
+          onClick={handleDelete}
+          disabled={deleteLoading}
+        >
+          Удалить
+        </button>
+      )}
     </div>
   );
 }

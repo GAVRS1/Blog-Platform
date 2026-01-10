@@ -22,6 +22,7 @@ public class CommentService : ICommentService
     public IEnumerable<Comment> GetCommentsByPostIdWithDetails(int postId) => _commentRepository.GetCommentsByPostIdWithDetails(postId);
     public IEnumerable<Comment> GetCommentsByPostIdWithUsers(int postId) => _commentRepository.GetCommentsByPostIdWithUsers(postId);
     public IEnumerable<CommentReply> GetCommentReplies(int commentId) => _commentRepository.GetCommentReplies(commentId);
+    public CommentReply GetReplyById(int replyId) => _commentRepository.GetReplyById(replyId);
     public PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
@@ -34,6 +35,7 @@ public class CommentService : ICommentService
     public void CreateComment(Comment comment) => _commentRepository.CreateComment(comment);
     public void UpdateComment(Comment comment) => _commentRepository.UpdateComment(comment);
     public void DeleteComment(int id) => _commentRepository.DeleteComment(id);
+    public void DeleteReply(int replyId) => _commentRepository.DeleteReply(replyId);
 
     public void LikeComment(int commentId, int userId)
     {

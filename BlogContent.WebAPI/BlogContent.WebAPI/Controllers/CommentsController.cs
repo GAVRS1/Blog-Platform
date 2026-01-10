@@ -196,6 +196,35 @@ public class CommentsController : ControllerBase
         return NoContent();
     }
 
+    [HttpDelete("reply/{replyId}")]
+    public IActionResult DeleteReply(int replyId)
+    {
+        if (!TryGetUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var reply = _commentService.GetReplyById(replyId);
+        if (reply == null)
+        {
+            return NotFound();
+        }
+
+        var postOwnerId = reply.Comment?.Post?.UserId;
+        if (postOwnerId == null)
+        {
+            return NotFound();
+        }
+
+        if (reply.UserId != currentUserId && postOwnerId != currentUserId)
+        {
+            return StatusCode(403);
+        }
+
+        _commentService.DeleteReply(replyId);
+        return NoContent();
+    }
+
     private static PagedResponse<CommentReplyResponseDto> ToPagedResponse(PagedResult<CommentReply> source, int page, int pageSize) =>
         new(source.Items.Select(r => r.ToResponseDto()), source.TotalCount, page, pageSize);
 

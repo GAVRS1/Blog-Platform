@@ -12,6 +12,7 @@ public record CommentResponseDto
     public int PostId { get; init; }
     public int UserId { get; init; }
     public string Username { get; init; } = string.Empty;
+    public string UserFullName { get; init; } = string.Empty;
     public string UserAvatar { get; init; } = string.Empty;
     public int LikeCount { get; init; }
     public int ReplyCount { get; init; }
@@ -26,6 +27,7 @@ public record CommentReplyResponseDto
     public DateTime CreatedAt { get; init; }
     public int UserId { get; init; }
     public string Username { get; init; } = string.Empty;
+    public string UserFullName { get; init; } = string.Empty;
     public string UserAvatar { get; init; } = string.Empty;
 }
 
@@ -41,6 +43,7 @@ public static class CommentMappingExtensions
             PostId = comment.PostId,
             UserId = comment.UserId,
             Username = comment.User?.Username ?? string.Empty,
+            UserFullName = comment.User?.Profile?.FullName ?? comment.User?.Username ?? string.Empty,
             UserAvatar = comment.User?.Profile?.ProfilePictureUrl ?? string.Empty,
             LikeCount = comment.Likes?.Count ?? 0,
             ReplyCount = comment.Replies?.Count ?? 0,
@@ -58,6 +61,7 @@ public static class CommentMappingExtensions
             CreatedAt = reply.CreatedAt,
             UserId = reply.UserId,
             Username = reply.User?.Username ?? string.Empty,
+            UserFullName = reply.User?.Profile?.FullName ?? reply.User?.Username ?? string.Empty,
             UserAvatar = reply.User?.Profile?.ProfilePictureUrl ?? string.Empty
         };
     }
