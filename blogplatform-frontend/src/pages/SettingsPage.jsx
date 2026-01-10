@@ -70,7 +70,7 @@ export default function SettingsPage() {
         <div className="card bg-base-100 shadow h-full">
           <div className="card-body h-full">
             <h2 className="card-title">Приватность</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <AudienceSelectField
                 label="Кто может писать сообщения"
                 value={privacy?.whoCanMessage}
@@ -94,7 +94,7 @@ export default function SettingsPage() {
         <div className="card bg-base-100 shadow h-full">
           <div className="card-body h-full">
             <h2 className="card-title">Уведомления</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <NotificationSelectField
                 label="Подписки"
                 value={notifs?.onFollows}
@@ -121,10 +121,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button className="btn btn-outline btn-error" onClick={authService.logout}>
+        <button className="btn btn-outline btn-error w-full sm:w-auto" onClick={authService.logout}>
           Выйти из аккаунта
         </button>
-        <button className={`btn btn-primary ${saving ? 'loading' : ''}`} onClick={saveSettings} disabled={saving}>
+        <button className={`btn btn-primary w-full sm:w-auto ${saving ? 'loading' : ''}`} onClick={saveSettings} disabled={saving}>
           Сохранить
         </button>
       </div>
@@ -135,7 +135,9 @@ export default function SettingsPage() {
 function AudienceSelectField({ label, value, onChange }) {
   return (
     <div className="form-control">
-      <label className="label"><span className="label-text">{label}</span></label>
+      <label className="label min-w-0">
+        <span className="label-text whitespace-normal break-words">{label}</span>
+      </label>
       <select
         className="select select-bordered"
         value={value || 'Everyone'}
@@ -150,7 +152,9 @@ function AudienceSelectField({ label, value, onChange }) {
 function NotificationSelectField({ label, value, onChange }) {
   return (
     <div className="form-control">
-      <label className="label"><span className="label-text">{label}</span></label>
+      <label className="label min-w-0">
+        <span className="label-text whitespace-normal break-words">{label}</span>
+      </label>
       <select
         className="select select-bordered"
         value={String(value ?? true)}
