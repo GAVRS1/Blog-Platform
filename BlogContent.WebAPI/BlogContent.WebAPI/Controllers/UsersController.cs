@@ -21,14 +21,17 @@ public class UsersController : ControllerBase
     private const int MaxPageSize = 100;
 
     private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
+    private const string BlockedMessage = "Доступ ограничен из-за блокировки пользователя.";
 
     private readonly IUserService _userService;
     private readonly IFollowService _followService;
+    private readonly IBlockService _blockService;
 
-    public UsersController(IUserService userService, IFollowService followService)
+    public UsersController(IUserService userService, IFollowService followService, IBlockService blockService)
     {
         _userService = userService;
         _followService = followService;
+        _blockService = blockService;
     }
 
     [HttpGet("{id}")]
@@ -42,6 +45,12 @@ public class UsersController : ControllerBase
 
         if (TryGetUserId(out var currentUserId) && currentUserId != id)
         {
+            var blockRelation = _blockService.GetRelationship(currentUserId, id);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+
             var relation = _followService.GetRelationship(currentUserId, id);
             var audience = user.PrivacySettings?.ProfileVisibility ?? Audience.Everyone;
             if (!SettingsAccessChecker.CanAccess(audience, relation.AreFriends))

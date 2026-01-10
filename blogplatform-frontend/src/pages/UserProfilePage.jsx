@@ -49,6 +49,20 @@ export default function UserProfilePage() {
         const status = e.response?.status;
         if (status === 403) {
           try {
+            const rel = await blocksService.relationship(userId);
+            if (rel?.iBlocked || rel?.blockedMe) {
+              setBlockRel(rel);
+              const publicUser = await usersService.getPublicById(userId);
+              setUser(publicUser);
+              setCounters({ followers: 0, following: 0 });
+              setRel(null);
+              setLimitedProfile(false);
+              return;
+            }
+          } catch {
+            // ignore and fallback to privacy handling
+          }
+          try {
             const publicUser = await usersService.getPublicById(userId);
             setUser(publicUser);
             setCounters({ followers: 0, following: 0 });

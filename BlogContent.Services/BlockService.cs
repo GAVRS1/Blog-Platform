@@ -1,5 +1,7 @@
 using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BlogContent.Services;
 
@@ -40,6 +42,21 @@ public class BlockService : IBlockService
 
     public IEnumerable<Block> GetBlocks(int blockerUserId) =>
         _blockRepository.GetBlocksByUser(blockerUserId);
+
+    public IReadOnlyCollection<int> GetBlockedUserIds(int userId)
+    {
+        var blockedByMe = _blockRepository.GetBlocksByUser(userId)
+            .Where(b => b.IsActive)
+            .Select(b => b.BlockedUserId);
+        var blockedMe = _blockRepository.GetBlocksAgainstUser(userId)
+            .Where(b => b.IsActive)
+            .Select(b => b.BlockerUserId);
+
+        return blockedByMe
+            .Concat(blockedMe)
+            .Distinct()
+            .ToList();
+    }
 
     public (bool IBlocked, bool BlockedMe) GetRelationship(int userId, int otherUserId)
     {

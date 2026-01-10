@@ -22,7 +22,13 @@ export default function LoginPage() {
       toast.success('Добро пожаловать!');
       navigate('/');
     } catch (err) {
+      const status = err.response?.status;
       const msg = err.response?.data?.message || 'Ошибка входа';
+      if (status === 403) {
+        toast.error(msg);
+        navigate('/blocked');
+        return;
+      }
       toast.error(msg);
     } finally {
       setLoading(false);

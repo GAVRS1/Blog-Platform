@@ -13,6 +13,10 @@ export const adminService = {
     const { data } = await api.get('/Admin/listReports', { params });
     return data; // { items,total,page,pageSize }
   },
+  resolveReport: async (reportId, status) => {
+    const { data } = await api.post('/Admin/resolveReport', { reportId, status });
+    return data;
+  },
 
   // Actions
   createAction: async (payload) => {
@@ -25,18 +29,14 @@ export const adminService = {
   },
 
   // Appeals
-  createAppeal: async (payload) => {
-    const { data } = await api.post('/admin/appeals', payload);
-    return data;
-  },
   listAppeals: async (status, page = 1, pageSize = 20) => {
     const params = { page, pageSize };
     if (status) params.status = status;
     const { data } = await api.get('/Admin/listAppeals', { params });
     return data; // { items,total,page,pageSize }
   },
-  resolveAppeal: async (id, decision) => {
-    const { data } = await api.post('/Admin/resolveAppeal', { id, decision });
+  resolveAppeal: async (appealId, status, resolution) => {
+    const { data } = await api.post('/Admin/resolveAppeal', { appealId, status, resolution });
     return data; // { resolved: true }
   }
 };

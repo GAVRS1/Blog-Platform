@@ -20,27 +20,55 @@ public class PostsController : ControllerBase
     private const int MaxPageSize = 100;
 
     private const string AccessDeniedMessage = "Пользователь ограничил круг лиц, которым доступно это действие.";
+    private const string BlockedMessage = "Доступ ограничен из-за блокировки пользователя.";
 
     private readonly IPostService _postService;
     private readonly IUserService _userService;
     private readonly IFollowService _followService;
+    private readonly IBlockService _blockService;
 
-    public PostsController(IPostService postService, IUserService userService, IFollowService followService)
+    public PostsController(
+        IPostService postService,
+        IUserService userService,
+        IFollowService followService,
+        IBlockService blockService)
     {
         _postService = postService;
         _userService = userService;
         _followService = followService;
+        _blockService = blockService;
     }
 
     [HttpGet]
     public IActionResult GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
-        var posts = _postService.GetAllPosts(page, pageSize);
         var currentUserId = TryGetUserId(out var userId) ? userId : (int?)null;
-        var mapped = posts.Items.Select(p => ToResponse(p, currentUserId)).ToList();
 
-        return Ok(ToPagedResponse(new PagedResult<PostResponseDto>(mapped, posts.TotalCount), page, pageSize));
+        if (currentUserId.HasValue)
+        {
+            var blockedUsers = _blockService.GetBlockedUserIds(currentUserId.Value);
+            if (blockedUsers.Count > 0)
+            {
+                var filteredPosts = _postService.GetAllPostsWithUsers()
+                    .Where(post => !blockedUsers.Contains(post.UserId))
+                    .ToList();
+
+                var total = filteredPosts.Count;
+                var items = filteredPosts
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var mapped = items.Select(p => ToResponse(p, currentUserId)).ToList();
+                return Ok(new PagedResponse<PostResponseDto>(mapped, total, page, pageSize));
+            }
+        }
+
+        var posts = _postService.GetAllPosts(page, pageSize);
+        var mappedDefault = posts.Items.Select(p => ToResponse(p, currentUserId)).ToList();
+
+        return Ok(ToPagedResponse(new PagedResult<PostResponseDto>(mappedDefault, posts.TotalCount), page, pageSize));
     }
 
     [HttpGet("{id}")]
@@ -48,6 +76,15 @@ public class PostsController : ControllerBase
     {
         var post = _postService.GetPostById(id);
         var currentUserId = TryGetUserId(out var userId) ? userId : (int?)null;
+
+        if (post != null && currentUserId.HasValue && post.UserId != currentUserId.Value)
+        {
+            var relation = _blockService.GetRelationship(currentUserId.Value, post.UserId);
+            if (relation.IBlocked || relation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+        }
 
         return post == null ? NotFound() : Ok(ToResponse(post, currentUserId));
     }
@@ -65,6 +102,12 @@ public class PostsController : ControllerBase
 
         if (authUserId.HasValue && authUserId.Value != userId)
         {
+            var blockRelation = _blockService.GetRelationship(authUserId.Value, userId);
+            if (blockRelation.IBlocked || blockRelation.BlockedMe)
+            {
+                return StatusCode(403, new AccessDeniedResponse { Message = BlockedMessage });
+            }
+
             var relation = _followService.GetRelationship(authUserId.Value, userId);
             var audience = user.PrivacySettings?.ProfileVisibility ?? Audience.Everyone;
 

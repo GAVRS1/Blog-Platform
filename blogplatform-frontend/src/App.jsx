@@ -32,7 +32,7 @@ const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const FollowersPage = lazy(() => import('@/pages/FollowersPage'));
 const FollowingPage = lazy(() => import('@/pages/FollowingPage'));
 const AppealPage = lazy(() => import('@/pages/AppealPage'));
-const MyBlocksPage = lazy(() => import('@/pages/MyBlocksPage'));
+const BlockedPage = lazy(() => import('@/pages/BlockedPage'));
 
 // Not Found
 const NotFound = () => (
@@ -58,7 +58,6 @@ const ProtectedSettings = withAuth(SettingsPage);
 const ProtectedAdmin = withAuth(AdminDashboard);
 const ProtectedFollowers = withAuth(FollowersPage);
 const ProtectedFollowing = withAuth(FollowingPage);
-const ProtectedBlocks = withAuth(MyBlocksPage);
 
 export default function App() {
   return (
@@ -184,6 +183,7 @@ function AppLayout() {
                     <Route path="/register/*" element={<RegisterWizard />} />
                     <Route path="/verify" element={<VerifyEmailPage />} />
                     <Route path="/appeal" element={<AppealPage />} />
+                    <Route path="/blocked" element={<BlockedPage />} />
 
                     {/* Private */}
                     <Route path="/" element={<ProtectedHome />} />
@@ -199,7 +199,6 @@ function AppLayout() {
                     <Route path="/notifications" element={<ProtectedNotifications />} />
                     <Route path="/settings" element={<ProtectedSettings />} />
                     <Route path="/admin" element={<ProtectedAdmin />} />
-                    <Route path="/blocks" element={<ProtectedBlocks />} />
 
                     {/* other */}
                     <Route path="/404" element={<NotFound />} />

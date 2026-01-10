@@ -63,6 +63,7 @@ export default function DialogPage() {
   const [profile, setProfile] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [blockRel, setBlockRel] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [viewerItems, setViewerItems] = useState([]);
@@ -76,6 +77,7 @@ export default function DialogPage() {
     loadPage(1, true);
     markReadAndSync();
     loadProfile();
+    loadBlockRelation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUserId]);
 
@@ -271,6 +273,10 @@ export default function DialogPage() {
 
   async function onSend(e) {
     e.preventDefault();
+    if (blockRel?.iBlocked || blockRel?.blockedMe) {
+      toast.error('Вы не можете отправлять сообщения этому пользователю');
+      return;
+    }
     if (!message && uploads.length === 0) return;
     setSending(true);
     try {
@@ -342,6 +348,7 @@ export default function DialogPage() {
     try {
       await blocksService.block(otherUserId);
       toast.success('Пользователь заблокирован');
+      await loadBlockRelation();
     } catch (e) {
       toast.error(e.response?.data || 'Не удалось заблокировать');
     } finally {
@@ -349,11 +356,22 @@ export default function DialogPage() {
     }
   };
 
+  async function loadBlockRelation() {
+    try {
+      const rel = await blocksService.relationship(otherUserId);
+      setBlockRel(rel);
+    } catch {
+      setBlockRel(null);
+    }
+  }
+
   const openViewer = (items, index) => {
     setViewerItems(items || []);
     setViewerIndex(index);
     setViewerOpen(true);
   };
+
+  const isBlocked = blockRel?.iBlocked || blockRel?.blockedMe;
 
   return (
     <motion.div
@@ -449,7 +467,7 @@ export default function DialogPage() {
       {/* composer */}
       <form onSubmit={onSend} className="mt-auto pt-3 flex items-center gap-2">
         <label className="btn btn-ghost btn-square min-h-[48px] h-12" title="Прикрепить файлы">
-          <input type="file" hidden multiple onChange={onFilesPicked} />
+          <input type="file" hidden multiple onChange={onFilesPicked} disabled={isBlocked} />
           <PaperClipIcon className="h-5 w-5" />
         </label>
         <div className="flex-1">
@@ -457,7 +475,7 @@ export default function DialogPage() {
             ref={textAreaRef}
             className="textarea textarea-bordered w-full resize-none leading-5 min-h-[48px]"
             rows={1}
-            placeholder="Напишите сообщение..."
+            placeholder={isBlocked ? 'Вы не можете отправлять сообщения этому пользователю' : 'Напишите сообщение...'}
             value={message}
             onChange={(e) => {
               const value = e.target.value;
@@ -477,7 +495,11 @@ export default function DialogPage() {
                 }
               }, 2000);
             }}
+            disabled={isBlocked}
           />
+          {isBlocked && (
+            <div className="text-xs opacity-60 mt-2">Вы не можете отправлять сообщения этому пользователю.</div>
+          )}
           {uploads.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2 items-center">
               <div className="text-xs opacity-70 mr-2">Файлы: {uploads.length}/{MAX_ATTACH}</div>
@@ -493,7 +515,7 @@ export default function DialogPage() {
         <button
           type="submit"
           className={`btn btn-primary btn-square min-h-[48px] h-12 ${sending ? 'loading' : ''}`}
-          disabled={sending}
+          disabled={sending || isBlocked}
           aria-label="Отправить сообщение"
           title="Отправить"
         >
