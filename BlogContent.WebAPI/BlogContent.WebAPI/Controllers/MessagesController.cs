@@ -79,6 +79,11 @@ public class MessagesController : ControllerBase
             return BadRequest("Recipient and message content are required.");
         }
 
+        if (request.RecipientId == userId)
+        {
+            return BadRequest("Нельзя отправлять сообщения самому себе.");
+        }
+
         var recipient = _userService.GetUserById(request.RecipientId);
         if (recipient == null)
         {

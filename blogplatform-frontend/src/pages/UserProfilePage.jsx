@@ -8,6 +8,7 @@ import ReportModal from '@/components/ReportModal';
 import { usersService } from '@/services/users';
 import { followsService } from '@/services/follows';
 import { blocksService } from '@/services/blocks';
+import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
 import { getUserStatusLabel, isUserBanned } from '@/utils/userStatus';
@@ -15,6 +16,7 @@ import { getUserStatusLabel, isUserBanned } from '@/utils/userStatus';
 export default function UserProfilePage() {
   const { id } = useParams();
   const userId = Number(id);
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState(null);
   const [counters, setCounters] = useState({ followers: 0, following: 0 });
   const [rel, setRel] = useState(null);
@@ -92,6 +94,7 @@ export default function UserProfilePage() {
   const blockedByMe = !!blockRel?.iBlocked;
   const blockedMe = !!blockRel?.blockedMe;
   const isRestricted = limitedProfile;
+  const isSelf = currentUser?.id === user?.id;
 
   return (
     <div className="space-y-6">
@@ -157,7 +160,7 @@ export default function UserProfilePage() {
 
             {!isRestricted && (
               <div className="flex flex-col gap-2 w-full sm:w-auto">
-                {!blockedByMe && !blockedMe && (
+                {!blockedByMe && !blockedMe && !isSelf && (
                   <Link to={`/messages/${user.id}`} className="btn btn-sm btn-outline">Написать</Link>
                 )}
                 <BlockButton userId={user.id} />
