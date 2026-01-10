@@ -4,6 +4,7 @@ const notificationTarget = new EventTarget();
 const statusTarget = new EventTarget();
 const presenceTarget = new EventTarget();
 const readsTarget = new EventTarget();
+const badgeTarget = new EventTarget();
 
 export function emitRealtimeMessage(message) {
   messageTarget.dispatchEvent(new CustomEvent('message', { detail: message }));
@@ -58,4 +59,15 @@ export function subscribeToRealtimeReads(handler) {
   const listener = (event) => handler(event.detail);
   readsTarget.addEventListener('reads', listener);
   return () => readsTarget.removeEventListener('reads', listener);
+}
+
+export function emitUnreadBadgeRefresh(payload) {
+  badgeTarget.dispatchEvent(new CustomEvent('badge-refresh', { detail: payload }));
+}
+
+export function subscribeToUnreadBadgeRefresh(handler) {
+  if (!handler) return () => {};
+  const listener = (event) => handler(event.detail);
+  badgeTarget.addEventListener('badge-refresh', listener);
+  return () => badgeTarget.removeEventListener('badge-refresh', listener);
 }
