@@ -139,7 +139,7 @@ export default function Sidebar({
                   openComposer();
                   onNavigate?.();
                 }}
-                className="btn btn-accent mt-1">
+                className="btn btn-outline btn-primary mt-1">
                 <span className="flex items-center gap-2">
                   <i className="fas fa-plus"></i>
                   <span>Создать пост</span>
