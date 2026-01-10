@@ -140,7 +140,7 @@ export default function PostCard({ post, onDeleted }) {
           {/* Если это мой пост — можно удалить (если у тебя есть такая логика) */}
           {post.isOwn && (
             <button
-              className={`btn btn-sm btn-outline btn-error ${deleteLoading ? 'loading' : ''}`}
+              className={`btn btn-sm btn-outline btn-error flex items-center justify-center ${deleteLoading ? 'loading' : ''}`}
               onClick={handleDelete}
               disabled={deleteLoading}
             >
