@@ -6,6 +6,26 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { subscribeToRealtimeNotifications, subscribeToRealtimeStatus } from '@/realtimeEvents';
 
+const notificationTypeLabels = {
+  Like: 'Лайк',
+  Comment: 'Комментарий',
+  Follow: 'Подписка'
+};
+
+const notificationTypeMessages = {
+  Like: 'Поставили лайк',
+  Comment: 'Оставили комментарий',
+  Follow: 'Подписались на вас'
+};
+
+const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
 export default function NotificationsPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -103,15 +123,16 @@ export default function NotificationsPage() {
     if (Number.isNaN(date.getTime())) {
       return '';
     }
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    return timeFormatter.format(date);
   };
+
+  const getNotificationTypeLabel = (type) => (
+    notificationTypeLabels[type] || 'Уведомление'
+  );
+
+  const getNotificationMessage = (notification) => (
+    notificationTypeMessages[notification?.type] || 'Новое уведомление'
+  );
 
   const getNotificationRoute = (notification) => {
     if (notification.postId) {
@@ -185,8 +206,8 @@ export default function NotificationsPage() {
                   className="flex-1 min-w-0 text-left break-words"
                   onClick={() => handleNotificationClick(n)}
                 >
-                  <span className="badge mr-2">{n.type}</span>
-                  {n.text || 'Уведомление'} · <span className="opacity-60">{formatTimestamp(n.createdAt)}</span>
+                  <span className="badge mr-2">{getNotificationTypeLabel(n.type)}</span>
+                  {getNotificationMessage(n)} · <span className="opacity-60">{formatTimestamp(n.createdAt)}</span>
                 </button>
                 <button
                   type="button"
