@@ -58,17 +58,119 @@ export default function PostCard({ post, onDeleted }) {
     }
   };
 
+  // Количество медиа-элементов
   const mediaCount = attachments.length;
-  const isSingleMedia = mediaCount === 1;
-  const mediaGridClass = useMemo(() => {
-    if (mediaCount === 1) {
-      return 'grid grid-cols-1';
+
+  // Вычисляем шаблон сетки на основе количества медиа
+  const gridTemplate = useMemo(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    // Mobile шаблоны (до 768px)
+    if (isMobile) {
+      switch (mediaCount) {
+        case 1:
+          return {
+            grid: 'grid-cols-1',
+            aspect: 'aspect-[4/5]',
+            className: 'w-full'
+          };
+        case 2:
+          return {
+            grid: 'grid-cols-2',
+            aspect: 'aspect-square',
+            className: 'w-full'
+          };
+        case 3:
+          return {
+            grid: 'grid-cols-2',
+            aspect: 'aspect-[4/5]',
+            className: 'col-span-1 row-span-1 first:col-span-2'
+          };
+        case 4:
+        case 5:
+        case 6:
+          return {
+            grid: 'grid-cols-2',
+            aspect: 'aspect-[4/5]',
+            className: 'w-full'
+          };
+        default: // 7+ медиа
+          return {
+            grid: 'grid-cols-2',
+            aspect: 'aspect-[4/5]',
+            className: 'w-full',
+            maxItems: 6 // Показываем максимум 6, остальные скрываем под +N
+          };
+      }
     }
-    if (mediaCount <= 3) {
-      return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(140px,auto)] sm:auto-rows-[minmax(160px,1fr)] gap-1 sm:gap-1.5';
+
+    // Desktop шаблоны (>= 768px)
+    switch (mediaCount) {
+      case 1:
+        return {
+          grid: 'grid-cols-1',
+          aspect: 'aspect-[16/9]',
+          className: 'w-full'
+        };
+      case 2:
+        return {
+          grid: 'grid-cols-2',
+          aspect: 'aspect-[4/3]',
+          className: 'w-full'
+        };
+      case 3:
+        return {
+          grid: 'grid-cols-6',
+          aspect: 'aspect-square',
+          className: 'col-span-4 row-span-2 first:col-span-4 first:row-span-2'
+        };
+      case 4:
+        return {
+          grid: 'grid-cols-2 grid-rows-2',
+          aspect: 'aspect-square',
+          className: 'w-full'
+        };
+      case 5:
+        return {
+          grid: 'grid-cols-4 grid-rows-2',
+          aspect: 'aspect-square',
+          className: 'col-span-2 row-span-2 first:col-span-2 first:row-span-2'
+        };
+      case 6:
+        return {
+          grid: 'grid-cols-3 grid-rows-2',
+          aspect: 'aspect-square',
+          className: 'w-full'
+        };
+      case 7:
+      case 8:
+      case 9:
+        return {
+          grid: 'grid-cols-3',
+          aspect: 'aspect-[4/3]',
+          className: 'w-full'
+        };
+      default: // 10 медиа
+        return {
+          grid: 'grid-cols-3 grid-rows-3',
+          aspect: 'aspect-[4/3]',
+          className: 'w-full',
+          maxItems: 9 // Показываем 9, на последней +1
+        };
     }
-    return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(140px,auto)] sm:auto-rows-[minmax(160px,1fr)] gap-1 sm:gap-1.5';
   }, [mediaCount]);
+
+  // Ограничиваем количество отображаемых элементов
+  const visibleAttachments = useMemo(() => {
+    const maxItems = gridTemplate.maxItems;
+    if (maxItems && attachments.length > maxItems) {
+      return attachments.slice(0, maxItems);
+    }
+    return attachments;
+  }, [attachments, gridTemplate]);
+
+  // Проверяем, нужно ли показывать оверлей с количеством скрытых элементов
+  const hiddenCount = attachments.length - visibleAttachments.length;
 
   return (
     <article className="card bg-base-100 shadow-sm hover:shadow transition">
@@ -95,27 +197,38 @@ export default function PostCard({ post, onDeleted }) {
 
         {/* Media */}
         {attachments.length > 0 && (
-          <div className={`mt-3 ${mediaGridClass}`}>
-            {attachments.map((m, idx) => (
-              <button
-                key={m.id || m.url}
-                type="button"
-                className={`text-left relative overflow-hidden rounded-xl bg-base-200 ${
-                  idx === 0 && attachments.length > 3
-                    ? 'md:col-span-2 md:row-span-2'
-                    : ''
-                } ${
-                  isVisualMedia(m)
-                    ? isSingleMedia
-                      ? 'w-full aspect-video'
-                      : 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]'
-                    : ''
-                }`}
-                onClick={() => openViewer(idx)}
-              >
-                <MediaPlayer media={m} type={m.type} url={m.url} className="h-full w-full object-cover" />
-              </button>
-            ))}
+          <div className={`mt-3 ${gridTemplate.grid} gap-2 max-h-[480px] md:max-h-[520px]`}>
+            {visibleAttachments.map((m, idx) => {
+              const isVisual = isVisualMedia(m);
+              return (
+                <div
+                  key={m.id || m.url}
+                  className={`relative overflow-hidden rounded-xl bg-base-200 ${gridTemplate.className} ${
+                    isVisual && gridTemplate.aspect ? gridTemplate.aspect : ''
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="absolute inset-0 w-full h-full"
+                    onClick={() => openViewer(idx)}
+                    aria-label={`Открыть медиа ${idx + 1}`}
+                  >
+                    <MediaPlayer
+                      media={m}
+                      type={m.type}
+                      url={m.url}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </button>
+                  {/* Оверлей с количеством скрытых элементов */}
+                  {hiddenCount > 0 && idx === visibleAttachments.length - 1 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-2xl font-bold cursor-pointer">
+                      +{hiddenCount}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
