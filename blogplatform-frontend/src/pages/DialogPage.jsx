@@ -356,7 +356,11 @@ export default function DialogPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[70vh] min-h-[420px] max-h-[70vh] flex flex-col">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-[calc(100vh-6rem)] flex flex-col"
+    >
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
@@ -443,8 +447,8 @@ export default function DialogPage() {
       </div>
 
       {/* composer */}
-      <form onSubmit={onSend} className="mt-3 flex items-end gap-2">
-        <label className="btn btn-ghost btn-square" title="Прикрепить файлы">
+      <form onSubmit={onSend} className="mt-auto pt-3 flex items-center gap-2">
+        <label className="btn btn-ghost btn-square min-h-[48px] h-12" title="Прикрепить файлы">
           <input type="file" hidden multiple onChange={onFilesPicked} />
           <PaperClipIcon className="h-5 w-5" />
         </label>
@@ -486,9 +490,14 @@ export default function DialogPage() {
             </div>
           )}
         </div>
-        <button className={`btn btn-primary gap-2 ${sending ? 'loading' : ''}`} disabled={sending}>
+        <button
+          type="submit"
+          className={`btn btn-primary btn-square min-h-[48px] h-12 ${sending ? 'loading' : ''}`}
+          disabled={sending}
+          aria-label="Отправить сообщение"
+          title="Отправить"
+        >
           <SendIcon className="h-5 w-5" />
-          Отправить
         </button>
       </form>
 
