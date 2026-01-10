@@ -125,7 +125,7 @@ function AppLayout() {
         <Toaster position="top-center" />
         {showNav && <TopBar />}
         {showNav && (
-          <div className="md:hidden sticky top-0 z-50 border-b border-base-300 bg-base-200 text-base-content shadow-sm">
+          <div className="md:hidden fixed top-0 inset-x-0 z-50 border-b border-base-300 bg-base-200 text-base-content shadow-sm">
             <div className="relative flex items-center justify-between px-3 py-2 overflow-hidden">
               <button
                 type="button"
@@ -135,7 +135,7 @@ function AppLayout() {
                 <i className="fas fa-bars"></i>
               </button>
               <div className={`font-semibold transition-opacity ${mobileSearchOpen ? 'opacity-0' : 'opacity-100'}`}>
-                Меню
+                BlogPlatform by.Gavrs
               </div>
               <button
                 type="button"
@@ -170,7 +170,7 @@ function AppLayout() {
             </div>
           </div>
         )}
-        <div className="mx-auto max-w-7xl px-2 md:px-4 lg:px-8">
+        <div className="mx-auto max-w-7xl px-2 pt-14 md:pt-0 md:px-4 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-[280px,minmax(0,1fr)] lg:grid-cols-[280px,minmax(0,1fr),280px] gap-4 pt-4">
             <aside className="hidden md:block">
               <Sidebar />
