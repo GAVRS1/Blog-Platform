@@ -45,7 +45,13 @@ const playMessageSound = () => {
 };
 
 export function connectRealtime(jwt, handlers = {}) {
-  const { onMessage, onNotification, onStatus, onPresence } = handlers;
+  const {
+    onMessage,
+    onNotification,
+    onStatus,
+    onPresence,
+    onReads
+  } = handlers;
   const baseOptions = {
     withCredentials: true,
   };
@@ -78,6 +84,10 @@ export function connectRealtime(jwt, handlers = {}) {
 
   chat.on('UserTyping', (payload) => {
     onPresence?.({ type: 'typing', ...payload });
+  });
+
+  chat.on('MessagesRead', (payload) => {
+    onReads?.(payload);
   });
 
   notify.on('NotificationReceived', (n) => {

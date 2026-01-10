@@ -56,12 +56,13 @@ public class InMemoryMessageService : IMessageService
                 return Enumerable.Empty<MessageDto>();
             }
 
-            snapshot = list.OrderBy(m => m.CreatedAt).ToList();
+            snapshot = list.OrderByDescending(m => m.CreatedAt).ToList();
         }
 
         return snapshot
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .OrderBy(m => m.CreatedAt)
             .Select(m => CloneForViewer(m, userId))
             .ToList();
     }

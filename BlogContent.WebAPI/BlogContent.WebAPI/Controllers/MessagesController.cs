@@ -6,8 +6,10 @@ using BlogContent.Core.Enums;
 using BlogContent.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using BlogContent.WebAPI.Services;
 using BlogContent.Services;
+using BlogContent.WebAPI.Hubs;
 
 namespace BlogContent.WebAPI.Controllers;
 
@@ -24,15 +26,18 @@ public class MessagesController : ControllerBase
     private readonly IMessageService _messageService;
     private readonly IUserService _userService;
     private readonly IFollowService _followService;
+    private readonly IHubContext<ChatHub> _chatHub;
 
     public MessagesController(
         IMessageService messageService,
         IUserService userService,
-        IFollowService followService)
+        IFollowService followService,
+        IHubContext<ChatHub> chatHub)
     {
         _messageService = messageService;
         _userService = userService;
         _followService = followService;
+        _chatHub = chatHub;
     }
 
     [HttpGet("inbox")]
@@ -62,7 +67,7 @@ public class MessagesController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult SendMessage([FromBody] SendMessageRequest request)
+    public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
     {
         if (!TryGetUserId(out var userId))
         {
@@ -91,12 +96,14 @@ public class MessagesController : ControllerBase
         }
 
         var saved = _messageService.SendMessage(userId, request.RecipientId, request.Content ?? string.Empty, request.Attachments);
+        await _chatHub.Clients.Users(userId.ToString(), request.RecipientId.ToString())
+            .SendAsync("MessageReceived", saved);
 
         return Ok(saved);
     }
 
     [HttpPost("read/{id}")]
-    public IActionResult MarkRead(int id)
+    public async Task<IActionResult> MarkRead(int id)
     {
         if (!TryGetUserId(out var userId))
         {
@@ -104,6 +111,19 @@ public class MessagesController : ControllerBase
         }
 
         var result = _messageService.MarkRead(userId, id);
+        if (result.Marked > 0)
+        {
+            var payload = new
+            {
+                ReaderId = userId,
+                SenderId = id,
+                result.UpdatedMessages
+            };
+
+            await _chatHub.Clients.Users(userId.ToString(), id.ToString())
+                .SendAsync("MessagesRead", payload);
+        }
+
         return Ok(result);
     }
 
