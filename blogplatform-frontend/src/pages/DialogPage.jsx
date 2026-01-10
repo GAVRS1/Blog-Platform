@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import {
   subscribeToRealtimeMessages,
-  subscribeToRealtimePresence,
   subscribeToRealtimeStatus
 } from '@/realtimeEvents';
 import { sendTyping } from '@/realtime';
@@ -32,7 +31,6 @@ export default function DialogPage() {
   const [sending, setSending] = useState(false);
   const [uploads, setUploads] = useState([]); // [{ url, mediaType, mimeType, sizeBytes, thumbnailUrl }]
   const [profile, setProfile] = useState(null);
-  const [presence, setPresence] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
@@ -89,32 +87,9 @@ export default function DialogPage() {
       }
     });
 
-    const unsubscribePresence = subscribeToRealtimePresence((event) => {
-      if (event?.userId !== otherUserId) return;
-      if (event.type === 'online') {
-        setPresence({ status: 'online', lastSeenUtc: null, isTyping: false });
-        return;
-      }
-      if (event.type === 'offline') {
-        setPresence((prev) => ({
-          status: 'offline',
-          lastSeenUtc: event.lastSeenUtc || prev?.lastSeenUtc || null,
-          isTyping: false
-        }));
-        return;
-      }
-      if (event.type === 'typing') {
-        setPresence((prev) => ({
-          ...(prev || {}),
-          isTyping: Boolean(event.isTyping)
-        }));
-      }
-    });
-
     return () => {
       unsubscribeMessages();
       unsubscribeStatus();
-      unsubscribePresence();
     };
   }, [otherUserId, user?.id]);
 
@@ -269,15 +244,6 @@ export default function DialogPage() {
     return fullName || username || 'Пользователь';
   };
 
-  const resolveStatus = () => {
-    if (presence?.isTyping) return 'пишет...';
-    if (presence?.status === 'online') return 'онлайн';
-    if (presence?.lastSeenUtc) {
-      return `был(а) в ${new Date(presence.lastSeenUtc).toLocaleString()}`;
-    }
-    return 'офлайн';
-  };
-
   const formatTime = (value) => {
     if (!value) return '';
     return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -327,7 +293,6 @@ export default function DialogPage() {
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
-          <div className="text-xs opacity-70">{resolveStatus()}</div>
         </div>
         <div className="dropdown dropdown-end relative">
           <label tabIndex={0} className="btn btn-ghost btn-sm btn-square" title="Меню">
