@@ -220,8 +220,7 @@ function AppLayout() {
               aria-hidden="true"
             />
             <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-base-200 shadow-xl overflow-y-auto">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
-                <span className="font-semibold">Навигация</span>
+              <div className="flex items-center justify-end px-4 py-3 border-b border-base-300">
                 <button
                   type="button"
                   className="btn btn-ghost btn-circle"
