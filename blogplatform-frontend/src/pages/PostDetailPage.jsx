@@ -117,14 +117,15 @@ export default function PostDetailPage() {
   const canLoadMore = comments.length < cTotal;
 
   const mediaCount = attachments.length;
+  const isSingleMedia = mediaCount === 1;
   const mediaGridClass = useMemo(() => {
     if (mediaCount === 1) {
-      return 'grid grid-cols-1 auto-rows-auto gap-1.5';
+      return 'grid grid-cols-1';
     }
     if (mediaCount <= 3) {
-      return 'grid grid-cols-2 sm:grid-cols-3 auto-rows-[minmax(140px,1fr)] sm:auto-rows-[minmax(180px,1fr)] gap-1.5';
+      return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(160px,auto)] sm:auto-rows-[minmax(180px,1fr)] gap-1 sm:gap-1.5';
     }
-    return 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(140px,1fr)] sm:auto-rows-[minmax(180px,1fr)] gap-1.5';
+    return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(160px,auto)] sm:auto-rows-[minmax(180px,1fr)] gap-1 sm:gap-1.5';
   }, [mediaCount]);
 
   return (
@@ -173,9 +174,15 @@ export default function PostDetailPage() {
                       type="button"
                       className={`text-left relative overflow-hidden rounded-xl bg-base-200 ${
                         idx === 0 && attachments.length > 3
-                          ? 'col-span-2 row-span-2 sm:col-span-1 sm:row-span-1'
+                          ? 'md:col-span-2 md:row-span-2'
                           : ''
-                      } ${isVisualMedia(m) ? 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]' : ''}`}
+                      } ${
+                        isVisualMedia(m)
+                          ? isSingleMedia
+                            ? 'w-full aspect-video'
+                            : 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]'
+                          : ''
+                      }`}
                       onClick={() => openViewer(idx)}
                     >
                       <MediaPlayer media={m} type={m.type} url={m.url} className="h-full w-full object-cover" />
