@@ -50,13 +50,17 @@ export default function RealtimeMount() {
     }
 
     if (!ref.current) {
-      ref.current = connectRealtime(token, {
-        onMessage: (m) => emitRealtimeMessage(normalizeMessage(m)),
-        onNotification: (n) => emitRealtimeNotification(n),
-        onStatus: emitRealtimeStatus,
-        onPresence: emitRealtimePresence,
-        onReads: (payload) => emitRealtimeReads(payload),
-      });
+      ref.current = connectRealtime(
+        token,
+        {
+          onMessage: (m) => emitRealtimeMessage(normalizeMessage(m)),
+          onNotification: (n) => emitRealtimeNotification(n),
+          onStatus: emitRealtimeStatus,
+          onPresence: emitRealtimePresence,
+          onReads: (payload) => emitRealtimeReads(payload),
+        },
+        { currentUserId: user?.id }
+      );
       ref.current.start();
     }
 
