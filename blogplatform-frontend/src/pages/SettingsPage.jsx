@@ -59,7 +59,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 overflow-x-hidden">
       <div>
         <h1 className="text-2xl font-bold mb-2">Настройки</h1>
         <p className="opacity-70">Приватность и уведомления</p>
@@ -120,7 +120,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
         <button className="btn btn-outline btn-error w-full sm:w-auto" onClick={authService.logout}>
           Выйти из аккаунта
         </button>

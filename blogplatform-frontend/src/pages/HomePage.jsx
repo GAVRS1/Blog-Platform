@@ -56,7 +56,7 @@ export default function HomePage() {
   const flat = data?.pages ? data.pages.flat() : [];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-x-hidden">
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonPost key={i} />)}
