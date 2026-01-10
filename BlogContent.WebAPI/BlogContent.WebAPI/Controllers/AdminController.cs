@@ -77,42 +77,6 @@ public class AdminController : ControllerBase
         return Ok(appeals);
     }
 
-    [HttpPost("createReport")]
-    public IActionResult CreateReport([FromBody] CreateReportRequest request)
-    {
-        if (!TryGetUserId(out var reporterUserId))
-        {
-            return Unauthorized();
-        }
-
-        var report = new Report
-        {
-            ReporterUserId = reporterUserId,
-            TargetUserId = request.TargetUserId,
-            PostId = request.PostId,
-            CommentId = request.CommentId,
-            Reason = request.Reason,
-            Details = request.Details,
-            Status = ReportStatus.Pending,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _moderationService.CreateReport(report);
-
-        return Ok(new ReportDto
-        {
-            Id = report.Id,
-            ReporterUserId = report.ReporterUserId,
-            TargetUserId = report.TargetUserId,
-            PostId = report.PostId,
-            CommentId = report.CommentId,
-            Reason = report.Reason,
-            Details = report.Details,
-            Status = report.Status,
-            CreatedAt = report.CreatedAt
-        });
-    }
-
     [HttpPost("createAction")]
     public IActionResult CreateAction([FromBody] CreateModerationActionRequest request)
     {
