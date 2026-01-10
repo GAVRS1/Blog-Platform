@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LikeButton from '@/components/LikeButton';
-import MediaPlayer from '@/components/MediaPlayer';
+import MediaCollage from '@/components/MediaCollage';
 import MediaViewer from '@/components/MediaViewer';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -21,11 +21,6 @@ export default function PostCard({ post, onDeleted }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const attachments = useMemo(() => post.attachments || post.media || [], [post]);
-  const isVisualMedia = (item) => {
-    const rawType = (item?.type || item?.mediaType || '').toString().toLowerCase();
-    return rawType.includes('image') || rawType.includes('video');
-  };
-
   const author = useMemo(() => ({
     id: post.userId,
     name: post.userFullName ?? post.username,
@@ -58,18 +53,6 @@ export default function PostCard({ post, onDeleted }) {
     }
   };
 
-  const mediaCount = attachments.length;
-  const isSingleMedia = mediaCount === 1;
-  const mediaGridClass = useMemo(() => {
-    if (mediaCount === 1) {
-      return 'grid grid-cols-1';
-    }
-    if (mediaCount <= 3) {
-      return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(140px,auto)] sm:auto-rows-[minmax(160px,1fr)] gap-1 sm:gap-1.5';
-    }
-    return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[minmax(140px,auto)] sm:auto-rows-[minmax(160px,1fr)] gap-1 sm:gap-1.5';
-  }, [mediaCount]);
-
   return (
     <article className="card bg-base-100 shadow-sm hover:shadow transition">
       <div className="card-body p-4 md:p-6">
@@ -95,27 +78,8 @@ export default function PostCard({ post, onDeleted }) {
 
         {/* Media */}
         {attachments.length > 0 && (
-          <div className={`mt-3 ${mediaGridClass}`}>
-            {attachments.map((m, idx) => (
-              <button
-                key={m.id || m.url}
-                type="button"
-                className={`text-left relative overflow-hidden rounded-xl bg-base-200 ${
-                  idx === 0 && attachments.length > 3
-                    ? 'md:col-span-2 md:row-span-2'
-                    : ''
-                } ${
-                  isVisualMedia(m)
-                    ? isSingleMedia
-                      ? 'w-full aspect-video'
-                      : 'aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/9]'
-                    : ''
-                }`}
-                onClick={() => openViewer(idx)}
-              >
-                <MediaPlayer media={m} type={m.type} url={m.url} className="h-full w-full object-cover" />
-              </button>
-            ))}
+          <div className="mt-3">
+            <MediaCollage items={attachments} onOpen={openViewer} />
           </div>
         )}
 
