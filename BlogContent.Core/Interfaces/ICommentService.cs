@@ -16,10 +16,12 @@ public interface ICommentService
     IEnumerable<CommentLike> GetLikesByCommentId(int commentId);
     PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize);
     IEnumerable<CommentReply> GetCommentReplies(int commentId);
+    CommentReply GetReplyById(int replyId);
     CommentLike GetCommentLike(int commentId, int userId);
     void AddCommentLike(CommentLike like);
     void RemoveCommentLike(int likeId);
     void AddReply(int commentId, string content, int userId);
     CommentLike CreateCommentLike(CommentLike like);
     CommentReply AddReplyWithReturn(CommentReply reply);
+    void DeleteReply(int replyId);
 }

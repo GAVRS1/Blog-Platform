@@ -14,6 +14,7 @@ public interface ICommentRepository
     IEnumerable<CommentLike> GetCommentLikesByCommentId(int commentId);
     IEnumerable<CommentReply> GetCommentReplies(int commentId);
     PagedResult<CommentReply> GetRepliesByCommentId(int commentId, int page, int pageSize);
+    CommentReply GetReplyById(int replyId);
     CommentLike GetCommentLike(int commentId, int userId);
     void AddCommentLike(CommentLike like);
     CommentLike AddCommentLikeWithReturn(CommentLike like);
@@ -23,4 +24,5 @@ public interface ICommentRepository
     void CreateComment(Comment comment);
     void UpdateComment(Comment comment);
     void DeleteComment(int id);
+    void DeleteReply(int replyId);
 }

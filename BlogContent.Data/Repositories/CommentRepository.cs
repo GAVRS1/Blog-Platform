@@ -86,6 +86,16 @@ public class CommentRepository(BlogContext context) : ICommentRepository
         }
     }
 
+    public void DeleteReply(int replyId)
+    {
+        CommentReply? reply = _context.CommentReplies.Find(replyId);
+        if (reply != null)
+        {
+            _context.CommentReplies.Remove(reply);
+            _context.SaveChanges();
+        }
+    }
+
     // Получить лайки комментария
     public IEnumerable<CommentLike> GetLikesByCommentId(int commentId)
     {
@@ -139,6 +149,17 @@ public class CommentRepository(BlogContext context) : ICommentRepository
             .ToList();
 
         return new PagedResult<CommentReply>(items, totalCount, page, pageSize);
+    }
+
+    public CommentReply GetReplyById(int replyId)
+    {
+        return _context.CommentReplies
+            .Include(r => r.Comment)
+                .ThenInclude(c => c.Post)
+            .Include(r => r.User)
+                .ThenInclude(u => u.Profile)
+            .AsNoTracking()
+            .FirstOrDefault(r => r.Id == replyId);
     }
 
     // Получить лайк пользователя для комментария
