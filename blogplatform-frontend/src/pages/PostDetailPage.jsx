@@ -10,7 +10,7 @@ import Comment from '@/components/Comment';
 import ReportModal from '@/components/ReportModal';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
-import { formatDateTime } from '@/utils/date';
+import { formatPostDateTime } from '@/utils/date';
 import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
@@ -132,9 +132,9 @@ export default function PostDetailPage() {
                   </Link>
                   <div className="min-w-0">
                     <Link to={`/users/${author.id}`} className="font-semibold hover:underline block truncate">
-                      @{author.name}
+                      {author.name}
                     </Link>
-                    <div className="text-xs opacity-60">{formatDateTime(post.createdAt)}</div>
+                    <div className="text-xs opacity-60">{formatPostDateTime(post.createdAt)}</div>
                   </div>
                 </div>
 

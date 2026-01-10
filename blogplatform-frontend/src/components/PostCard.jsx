@@ -6,7 +6,7 @@ import MediaCollage from '@/components/MediaCollage';
 import MediaViewer from '@/components/MediaViewer';
 import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
-import { formatDateTime } from '@/utils/date';
+import { formatPostDateTime } from '@/utils/date';
 import { postsService } from '@/services/posts';
 
 export default function PostCard({ post, onDeleted }) {
@@ -65,9 +65,9 @@ export default function PostCard({ post, onDeleted }) {
           </Link>
           <div className="min-w-0">
             <Link to={`/users/${author.id}`} className="font-semibold hover:underline block truncate">
-              @{author.name}
+              {author.name}
             </Link>
-            <div className="text-xs opacity-60">{formatDateTime(post.createdAt)}</div>
+            <div className="text-xs opacity-60">{formatPostDateTime(post.createdAt)}</div>
           </div>
         </div>
 
