@@ -44,7 +44,7 @@ export const NAV_ITEMS = [
     label: 'Блокировки',
     icon: 'fa-ban',
     roles: ['Admin'],
-    placements: ['desktop'],
+    placements: ['desktop', 'mobile'],
   },
   {
     key: 'admin',
@@ -52,7 +52,7 @@ export const NAV_ITEMS = [
     label: 'Админ-панель',
     icon: 'fa-shield-halved',
     roles: ['Admin'],
-    placements: ['desktop'],
+    placements: ['desktop', 'mobile'],
   },
 ];
 
