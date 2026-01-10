@@ -54,8 +54,10 @@ export default function FollowersPage() {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <Link to={`/users/${u.id}`} className="font-semibold hover:underline">@{u.username}</Link>
-                  <div className="text-xs opacity-70">{u.profile?.fullName}</div>
+                  <Link to={`/users/${u.id}`} className="font-semibold hover:underline">
+                    {u.profile?.fullName || u.username}
+                  </Link>
+                  <div className="text-xs opacity-70">@{u.username}</div>
                 </div>
                 <FollowButton userId={u.id} />
               </div>
