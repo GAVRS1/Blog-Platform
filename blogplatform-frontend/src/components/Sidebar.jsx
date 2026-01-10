@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS, isPublicNavPath } from '@/config/navigation';
 import { useUnreadBadges } from '@/hooks/useUnreadBadges';
 import { getAvatarUrl } from '@/utils/avatar';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const NavItem = ({ to, label, icon, badge, badgeClass, onClick }) => (
   <NavLink
@@ -43,6 +44,7 @@ export default function Sidebar({
   });
   const displayName = user?.profile?.fullName?.trim() || user?.username || '';
   const userHandle = user?.username ? `@${user.username}` : '';
+  const isMobilePlacement = placements.includes('mobile');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -62,6 +64,12 @@ export default function Sidebar({
   return (
     <aside className={containerClassName}>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+        {isMobilePlacement && (
+          <div className="flex items-center justify-between px-1">
+            <span className="text-sm font-semibold">Навигация</span>
+            <ThemeToggle mobile />
+          </div>
+        )}
         {/* Профиль */}
         {user && (
           <div className="card bg-base-100 shadow">
