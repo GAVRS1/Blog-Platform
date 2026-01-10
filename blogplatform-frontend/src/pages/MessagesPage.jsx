@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { getAvatarUrl } from '@/utils/avatar';
 import {
   subscribeToRealtimeMessages,
-  subscribeToRealtimePresence,
   subscribeToRealtimeStatus
 } from '@/realtimeEvents';
 
@@ -17,7 +16,6 @@ export default function MessagesPage() {
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState({});
-  const [presenceByUser, setPresenceByUser] = useState({});
   const [realtimeStatus, setRealtimeStatus] = useState({ type: 'unknown' });
   const { user } = useAuth();
   const isRealtimeUnavailable = useMemo(() => (
@@ -81,49 +79,6 @@ export default function MessagesPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    const unsubscribe = subscribeToRealtimePresence((event) => {
-      if (!event?.userId) return;
-      setPresenceByUser((prev) => {
-        const current = prev[event.userId] || {};
-        if (event.type === 'online') {
-          return {
-            ...prev,
-            [event.userId]: {
-              ...current,
-              status: 'online',
-              lastSeenUtc: null,
-              isTyping: false
-            }
-          };
-        }
-        if (event.type === 'offline') {
-          return {
-            ...prev,
-            [event.userId]: {
-              ...current,
-              status: 'offline',
-              lastSeenUtc: event.lastSeenUtc || current.lastSeenUtc || null,
-              isTyping: false
-            }
-          };
-        }
-        if (event.type === 'typing') {
-          return {
-            ...prev,
-            [event.userId]: {
-              ...current,
-              isTyping: Boolean(event.isTyping)
-            }
-          };
-        }
-        return prev;
-      });
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const unsubscribe = subscribeToRealtimeStatus((status) => {
       if (!status) return;
       setRealtimeStatus(status);
@@ -180,15 +135,6 @@ export default function MessagesPage() {
     return getAvatarUrl(profile?.profile?.profilePictureUrl);
   };
 
-  const resolveStatus = (presence) => {
-    if (presence?.isTyping) return 'пишет...';
-    if (presence?.status === 'online') return 'онлайн';
-    if (presence?.lastSeenUtc) {
-      return `был(а) в ${new Date(presence.lastSeenUtc).toLocaleString()}`;
-    }
-    return 'офлайн';
-  };
-
   const formatMessageTimestamp = (value) => {
     if (!value) return '';
     const date = new Date(value);
@@ -235,9 +181,6 @@ export default function MessagesPage() {
                     {x.unreadCount > 0 && (
                       <div className="badge badge-primary shrink-0">{x.unreadCount}</div>
                     )}
-                  </div>
-                  <div className="text-xs opacity-70 truncate">
-                    {resolveStatus(presenceByUser[x.otherUserId])}
                   </div>
                   <div className="flex items-center justify-between gap-3 min-w-0 text-sm opacity-70">
                     <div className="truncate">
