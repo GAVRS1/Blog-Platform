@@ -61,6 +61,9 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
   const minZoom = 1;
   const maxZoom = 3;
   const zoomStep = 0.2;
+  const isMobile = useMemo(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+  ), []);
 
   useEffect(() => {
     if (open) {
@@ -130,12 +133,21 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
               )}
               {current?.src && current.type === 'image' && (
                 <div className="max-h-[70vh] max-w-full overflow-auto">
-                  <img
-                    src={current.src}
-                    alt=""
-                    className="block max-h-[70vh] w-auto rounded-lg transition-transform duration-200 origin-center"
-                    style={{ transform: `scale(${zoom})` }}
-                  />
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={index}
+                      src={current.src}
+                      alt=""
+                      className={`block max-h-[70vh] w-auto rounded-lg origin-center ${
+                        isMobile ? 'transition-none' : 'transition-transform duration-200'
+                      }`}
+                      style={{ transform: `scale(${zoom})` }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: isMobile ? 0.12 : 0.25 }}
+                    />
+                  </AnimatePresence>
                 </div>
               )}
               {current?.src && current.type === 'video' && (
