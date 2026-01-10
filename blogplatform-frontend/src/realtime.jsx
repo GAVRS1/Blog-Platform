@@ -27,14 +27,16 @@ const playMessageSound = () => {
   const oscillator = context.createOscillator();
   const gainNode = context.createGain();
 
-  oscillator.type = 'sine';
-  oscillator.frequency.value = 880;
-  gainNode.gain.value = 0.08;
+  oscillator.type = 'triangle';
+  oscillator.frequency.value = 520;
+  gainNode.gain.setValueAtTime(0, context.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.05, context.currentTime + 0.04);
 
   oscillator.connect(gainNode);
   gainNode.connect(context.destination);
 
-  const stopAt = context.currentTime + 0.18;
+  const stopAt = context.currentTime + 0.2;
+  gainNode.gain.linearRampToValueAtTime(0, stopAt);
   oscillator.start();
   oscillator.stop(stopAt);
 
@@ -44,7 +46,7 @@ const playMessageSound = () => {
   };
 };
 
-export function connectRealtime(jwt, handlers = {}) {
+export function connectRealtime(jwt, handlers = {}, options = {}) {
   const {
     onMessage,
     onNotification,
@@ -52,6 +54,7 @@ export function connectRealtime(jwt, handlers = {}) {
     onPresence,
     onReads
   } = handlers;
+  const { currentUserId, playSound = true } = options;
   const baseOptions = {
     withCredentials: true,
   };
@@ -71,7 +74,9 @@ export function connectRealtime(jwt, handlers = {}) {
 
   chat.on('MessageReceived', (m) => {
     onMessage?.(m);
-    playMessageSound();
+    if (playSound && (!currentUserId || m?.senderId !== currentUserId)) {
+      playMessageSound();
+    }
   });
 
   chat.on('UserOnline', (payload) => {

@@ -20,6 +20,35 @@ import MediaPlayer from '@/components/MediaPlayer';
 import MediaViewer from '@/components/MediaViewer';
 
 const MAX_ATTACH = 10;
+const MAX_TEXTAREA_HEIGHT = 160;
+const PaperClipIcon = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <path
+      d="M8.5 12.5L12.8 8.2a3 3 0 114.2 4.2l-6.6 6.6a5 5 0 01-7.1-7.1l6.4-6.4"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+const SendIcon = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+    <path
+      d="M21.5 11.5l-17-7 4.5 7-4.5 7 17-7z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 11.5h6"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 export default function DialogPage() {
   const { id } = useParams();
@@ -39,8 +68,10 @@ export default function DialogPage() {
   const [viewerItems, setViewerItems] = useState([]);
 
   const containerRef = useRef(null);
+  const textAreaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const typingStateRef = useRef(false);
+  const pendingSentIdsRef = useRef(new Set());
   useEffect(() => {
     loadPage(1, true);
     markReadAndSync();
@@ -54,6 +85,10 @@ export default function DialogPage() {
       const isOwn = user?.id && incoming.senderId === user.id;
       const matchesDialog = incoming.senderId === otherUserId || incoming.recipientId === otherUserId;
       if (!matchesDialog) return;
+      if (isOwn && pendingSentIdsRef.current.has(incoming.id)) {
+        pendingSentIdsRef.current.delete(incoming.id);
+        return;
+      }
 
       setList((prev) => {
         if (!prev || prev.length === 0) {
@@ -117,6 +152,19 @@ export default function DialogPage() {
       }
     };
   }, [otherUserId]);
+
+  const resizeTextarea = () => {
+    const el = textAreaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const nextHeight = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT);
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
+  };
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [message]);
 
   async function loadPage(p, replace = false) {
     try {
@@ -231,7 +279,14 @@ export default function DialogPage() {
         content: message,
         attachments: uploads
       });
-      setList((prev) => [...(prev || []), saved]);
+      pendingSentIdsRef.current.add(saved.id);
+      setList((prev) => {
+        const existing = prev || [];
+        if (existing.some((item) => item.id === saved.id)) {
+          return existing;
+        }
+        return [...existing, saved];
+      });
       setMessage('');
       setUploads([]);
       if (typingStateRef.current) {
@@ -301,7 +356,7 @@ export default function DialogPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[70vh] min-h-[420px] max-h-[70vh] flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-bold">{resolveDisplayName()}</h1>
@@ -326,7 +381,7 @@ export default function DialogPage() {
         </div>
       </div>
 
-      <div ref={containerRef} className="flex-1 overflow-y-auto bg-base-100 rounded-lg p-4 space-y-2">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-y-auto bg-base-100 rounded-lg p-4 space-y-2">
         {hasMore && (
           <button className="btn btn-xs btn-outline w-full mb-2" onClick={() => loadPage(page + 1)}>
             Загрузить ещё
@@ -342,18 +397,20 @@ export default function DialogPage() {
         {groupedMessages.map((group) => (
           <div key={group.dateKey} className="space-y-2">
             <div className="divider text-xs opacity-70">{group.dateLabel}</div>
-            {group.items.map((m) => (
-              <div key={m.id} className={`chat ${m.isOwn ? 'chat-end' : (m.senderId === otherUserId ? 'chat-start' : 'chat-end')}`}>
+            {group.items.map((m) => {
+              const isOwn = m.senderId === user?.id;
+              return (
+              <div key={m.id} className={`chat ${isOwn ? 'chat-end' : 'chat-start'}`}>
                 <div className="chat-image avatar">
                   <div className="w-10 rounded-full">
                     <img
-                      src={resolveAvatarUrl(m.senderId === otherUserId)}
-                      alt={m.senderId === otherUserId ? resolveDisplayName() : user?.username || 'Вы'}
+                      src={resolveAvatarUrl(!isOwn)}
+                      alt={!isOwn ? resolveDisplayName() : user?.username || 'Вы'}
                     />
                   </div>
                 </div>
                 <div className="chat-header">
-                  {m.senderId === otherUserId ? resolveDisplayName() : 'Вы'}
+                  {!isOwn ? resolveDisplayName() : 'Вы'}
                   <time className="text-xs opacity-50 ml-2">{formatTime(m.createdAt)}</time>
                 </div>
                 <div className="chat-bubble">
@@ -371,15 +428,16 @@ export default function DialogPage() {
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
-                {m.isOwn && (
+                    )}
+                  </div>
+                {isOwn && (
                   <div className="chat-footer text-xs opacity-60">
                     {m.isRead ? 'Прочитано' : 'Не прочитано'}
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
@@ -388,17 +446,19 @@ export default function DialogPage() {
       <form onSubmit={onSend} className="mt-3 flex items-end gap-2">
         <label className="btn btn-ghost btn-square" title="Прикрепить файлы">
           <input type="file" hidden multiple onChange={onFilesPicked} />
-          📎
+          <PaperClipIcon className="h-5 w-5" />
         </label>
         <div className="flex-1">
           <textarea
-            className="textarea textarea-bordered w-full"
-            rows={2}
+            ref={textAreaRef}
+            className="textarea textarea-bordered w-full resize-none leading-5 min-h-[48px]"
+            rows={1}
             placeholder="Напишите сообщение..."
             value={message}
             onChange={(e) => {
               const value = e.target.value;
               setMessage(value);
+              resizeTextarea();
               if (!typingStateRef.current) {
                 typingStateRef.current = true;
                 sendTyping(otherUserId, true);
@@ -426,7 +486,10 @@ export default function DialogPage() {
             </div>
           )}
         </div>
-        <button className={`btn btn-primary ${sending ? 'loading' : ''}`} disabled={sending}>Отправить</button>
+        <button className={`btn btn-primary gap-2 ${sending ? 'loading' : ''}`} disabled={sending}>
+          <SendIcon className="h-5 w-5" />
+          Отправить
+        </button>
       </form>
 
       <ReportModal
