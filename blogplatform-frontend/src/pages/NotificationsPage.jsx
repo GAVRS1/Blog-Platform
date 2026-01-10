@@ -181,10 +181,10 @@ export default function NotificationsPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Уведомления</h1>
-        <div className="flex items-center gap-2">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4 min-w-0">
+        <h1 className="text-2xl font-bold min-w-0">Уведомления</h1>
+        <div className="flex items-center gap-2 min-w-0">
           <button className="btn btn-ghost btn-sm" onClick={markAll}>Отметить все прочитанными</button>
           <button className="btn btn-ghost btn-sm text-error" onClick={clearAll}>Очистить все</button>
         </div>

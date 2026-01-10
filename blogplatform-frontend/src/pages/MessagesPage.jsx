@@ -201,8 +201,8 @@ export default function MessagesPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="flex items-center justify-between mb-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4 min-w-0">
         <h1 className="text-2xl font-bold">Сообщения</h1>
       </div>
 
@@ -219,7 +219,7 @@ export default function MessagesPage() {
       {!loading && items?.length > 0 && (
         <div className="space-y-3">
           {items.map((x) => (
-            <Link key={x.otherUserId} to={`/messages/${x.otherUserId}`} className="card bg-base-100 hover:bg-base-200 transition">
+            <Link key={x.otherUserId} to={`/messages/${x.otherUserId}`} className="card bg-base-100 hover:bg-base-200 transition min-w-0">
               <div className="card-body grid grid-cols-[auto,1fr] items-center gap-4 min-w-0 py-4">
                 <div className="avatar">
                   <div className="rounded-full w-12">
