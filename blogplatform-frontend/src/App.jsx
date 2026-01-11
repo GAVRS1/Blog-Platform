@@ -174,8 +174,8 @@ function AppLayout() {
             <aside className="hidden md:block">
               <Sidebar />
             </aside>
-            <main className="flex justify-center">
-              <div className="w-full max-w-3xl">
+            <main className="flex justify-center min-h-0">
+              <div className="w-full max-w-3xl min-h-0 flex flex-col">
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
                     {/* Public */}
