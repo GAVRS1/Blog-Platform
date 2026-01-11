@@ -217,7 +217,12 @@ export default function DialogPage() {
       const data = await usersService.getById(otherUserId);
       setProfile(data);
     } catch {
-      setProfile(null);
+      try {
+        const publicData = await usersService.getPublicById(otherUserId);
+        setProfile(publicData);
+      } catch {
+        setProfile(null);
+      }
     }
   }
 

@@ -106,7 +106,11 @@ export default function MessagesPage() {
     if (missing.length === 0) return;
 
     let isActive = true;
-    Promise.all(missing.map((id) => usersService.getById(id).catch(() => null)))
+    Promise.all(missing.map((id) => (
+      usersService.getById(id).catch(() => (
+        usersService.getPublicById(id).catch(() => null)
+      ))
+    )))
       .then((responses) => {
         if (!isActive) return;
         setProfiles((prev) => {
