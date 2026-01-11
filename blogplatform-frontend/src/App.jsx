@@ -211,33 +211,38 @@ function AppLayout() {
           </div>
         </div>
 
-        {mobileSidebarOpen && (
-          <div className="md:hidden fixed inset-0 z-50">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setMobileSidebarOpen(false)}
-              aria-hidden="true"
-            />
-            <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-base-200 shadow-xl overflow-y-auto">
-              <div className="flex items-center justify-end px-4 py-3 border-b border-base-300">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-circle"
-                  onClick={() => setMobileSidebarOpen(false)}
-                  aria-label="Закрыть меню">
-                  <i className="fas fa-xmark"></i>
-                </button>
-              </div>
-              <div className="px-4 py-4">
-                <Sidebar
-                  placements={['mobile']}
-                  onNavigate={() => setMobileSidebarOpen(false)}
-                  containerClassName="static"
-                />
-              </div>
+        <AnimatePresence>
+          {mobileSidebarOpen && (
+            <div className="md:hidden fixed inset-0 z-50">
+              <div
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setMobileSidebarOpen(false)}
+                aria-hidden="true"
+              />
+              <motion.div
+                className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-base-200 shadow-xl overflow-y-auto"
+                initial={{ x: -320 }}
+                animate={{ x: 0 }}
+                exit={{ x: -320 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -120 || info.velocity.x < -500) {
+                    setMobileSidebarOpen(false);
+                  }
+                }}>
+                <div className="px-4 py-4">
+                  <Sidebar
+                    placements={['mobile']}
+                    onNavigate={() => setMobileSidebarOpen(false)}
+                    containerClassName="static"
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
 
         <CreatePostModal />
       </div>
