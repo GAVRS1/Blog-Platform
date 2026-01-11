@@ -224,6 +224,7 @@ function AppLayout() {
                 initial={{ x: -320 }}
                 animate={{ x: 0 }}
                 exit={{ x: -320 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
