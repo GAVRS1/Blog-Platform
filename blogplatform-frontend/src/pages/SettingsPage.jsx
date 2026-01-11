@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [showBlacklist, setShowBlacklist] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -93,100 +94,71 @@ export default function SettingsPage() {
         <p className="opacity-70">Приватность и уведомления</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PRIVACY */}
-        <div className="card bg-base-100 shadow h-full">
-          <div className="card-body h-full">
-            <h2 className="card-title">Приватность</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 gap-y-3">
-              <AudienceSelectField
-                label="Кто может писать сообщения"
-                value={privacy?.whoCanMessage}
-                onChange={(v) => setPrivacy(p => ({ ...p, whoCanMessage: v }))}
-              />
-              <AudienceSelectField
-                label="Кто может комментировать"
-                value={privacy?.whoCanComment}
-                onChange={(v) => setPrivacy(p => ({ ...p, whoCanComment: v }))}
-              />
-              <AudienceSelectField
-                label="Кто видит профиль"
-                value={privacy?.whoCanViewProfile}
-                onChange={(v) => setPrivacy(p => ({ ...p, whoCanViewProfile: v }))}
-              />
-            </div>
+      <div className="bg-base-100 border border-base-200 rounded-2xl divide-y divide-base-200">
+        <section className="p-5 sm:p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Приватность</h2>
+            <p className="text-sm opacity-70">Кто может взаимодействовать с вами</p>
           </div>
-        </div>
-
-        {/* NOTIFICATIONS */}
-        <div className="card bg-base-100 shadow h-full">
-          <div className="card-body h-full">
-            <h2 className="card-title">Уведомления</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <NotificationSelectField
-                label="Подписки"
-                value={notifs?.onFollows}
-                onChange={(v) => setNotifs(n => ({ ...n, onFollows: v }))}
-              />
-              <NotificationSelectField
-                label="Лайки"
-                value={notifs?.onLikes}
-                onChange={(v) => setNotifs(n => ({ ...n, onLikes: v }))}
-              />
-              <NotificationSelectField
-                label="Комментарии"
-                value={notifs?.onComments}
-                onChange={(v) => setNotifs(n => ({ ...n, onComments: v }))}
-              />
-              <NotificationSelectField
-                label="Сообщения"
-                value={notifs?.onMessages}
-                onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
-              />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 gap-y-3">
+            <AudienceSelectField
+              label="Кто может писать сообщения"
+              value={privacy?.whoCanMessage}
+              onChange={(v) => setPrivacy(p => ({ ...p, whoCanMessage: v }))}
+            />
+            <AudienceSelectField
+              label="Кто может комментировать"
+              value={privacy?.whoCanComment}
+              onChange={(v) => setPrivacy(p => ({ ...p, whoCanComment: v }))}
+            />
+            <AudienceSelectField
+              label="Кто видит профиль"
+              value={privacy?.whoCanViewProfile}
+              onChange={(v) => setPrivacy(p => ({ ...p, whoCanViewProfile: v }))}
+            />
           </div>
-        </div>
+        </section>
 
-        {/* BLACKLIST */}
-        <div className="card bg-base-100 shadow h-full">
-          <div className="card-body h-full">
-            <div className="flex items-center justify-between">
-              <h2 className="card-title">Чёрный список</h2>
-              <button className="btn btn-sm" onClick={refreshBlocks} disabled={loadingBlocks}>
-                {loadingBlocks ? 'Обновление...' : 'Обновить'}
-              </button>
-            </div>
-
-            {blockedUsers.length === 0 ? (
-              <div className="text-sm opacity-70 mt-4">Список пуст</div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {blockedUsers.map((blocked) => (
-                  <div key={blocked.id} className="flex items-center gap-3">
-                    <div className="avatar">
-                      <div className="w-10 rounded-full ring ring-error ring-offset-base-100 ring-offset-2">
-                        <img src={getAvatarUrl(blocked.profile?.profilePictureUrl)} alt="" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold truncate">{blocked.profile?.fullName || blocked.username}</div>
-                      <div className="text-xs opacity-70">@{blocked.username}</div>
-                      {blocked.reason && (
-                        <div className="text-xs opacity-60 truncate">Причина: {blocked.reason}</div>
-                      )}
-                    </div>
-                    <button
-                      className="btn btn-sm btn-warning"
-                      onClick={() => unblockUser(blocked.id)}
-                    >
-                      Удалить
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+        <section className="p-5 sm:p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Уведомления</h2>
+            <p className="text-sm opacity-70">Настройка уведомлений</p>
           </div>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <NotificationSelectField
+              label="Подписки"
+              value={notifs?.onFollows}
+              onChange={(v) => setNotifs(n => ({ ...n, onFollows: v }))}
+            />
+            <NotificationSelectField
+              label="Лайки"
+              value={notifs?.onLikes}
+              onChange={(v) => setNotifs(n => ({ ...n, onLikes: v }))}
+            />
+            <NotificationSelectField
+              label="Комментарии"
+              value={notifs?.onComments}
+              onChange={(v) => setNotifs(n => ({ ...n, onComments: v }))}
+            />
+            <NotificationSelectField
+              label="Сообщения"
+              value={notifs?.onMessages}
+              onChange={(v) => setNotifs(n => ({ ...n, onMessages: v }))}
+            />
+          </div>
+        </section>
+
+        <section className="p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Чёрный список</h2>
+              <p className="text-sm opacity-70">Пользователи, которым запрещён доступ</p>
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowBlacklist(true)}>
+              Открыть список
+            </button>
+          </div>
+        </section>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
@@ -197,6 +169,64 @@ export default function SettingsPage() {
           Сохранить
         </button>
       </div>
+
+      {showBlacklist && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <button
+            className="absolute inset-0 bg-black/50"
+            aria-label="Закрыть окно чёрного списка"
+            onClick={() => setShowBlacklist(false)}
+          />
+          <div className="relative w-full sm:max-w-2xl bg-base-100 rounded-t-2xl sm:rounded-2xl shadow-xl">
+            <div className="flex items-center justify-between p-5 border-b border-base-200">
+              <div>
+                <h3 className="text-lg font-semibold">Чёрный список</h3>
+                <p className="text-sm opacity-70">Управление заблокированными пользователями</p>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowBlacklist(false)}>
+                Закрыть
+              </button>
+            </div>
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm opacity-70">Обновить список пользователей</span>
+                <button className="btn btn-sm" onClick={refreshBlocks} disabled={loadingBlocks}>
+                  {loadingBlocks ? 'Обновление...' : 'Обновить'}
+                </button>
+              </div>
+
+              {blockedUsers.length === 0 ? (
+                <div className="text-sm opacity-70">Список пуст</div>
+              ) : (
+                <div className="space-y-3">
+                  {blockedUsers.map((blocked) => (
+                    <div key={blocked.id} className="flex items-center gap-3">
+                      <div className="avatar">
+                        <div className="w-10 rounded-full ring ring-error ring-offset-base-100 ring-offset-2">
+                          <img src={getAvatarUrl(blocked.profile?.profilePictureUrl)} alt="" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold truncate">{blocked.profile?.fullName || blocked.username}</div>
+                        <div className="text-xs opacity-70">@{blocked.username}</div>
+                        {blocked.reason && (
+                          <div className="text-xs opacity-60 truncate">Причина: {blocked.reason}</div>
+                        )}
+                      </div>
+                      <button
+                        className="btn btn-sm btn-warning"
+                        onClick={() => unblockUser(blocked.id)}
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
