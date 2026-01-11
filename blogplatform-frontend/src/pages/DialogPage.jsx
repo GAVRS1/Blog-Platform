@@ -382,7 +382,7 @@ export default function DialogPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-[calc(100vh-6rem)] flex flex-col"
+      className="h-[calc(100vh-3.5rem)] md:h-[calc(100vh-72px)] flex flex-col min-h-0"
     >
       <div className="flex items-center justify-between mb-2">
         <div>
@@ -470,7 +470,10 @@ export default function DialogPage() {
       </div>
 
       {/* composer */}
-      <form onSubmit={onSend} className="mt-auto pt-3 flex items-center gap-2">
+      <form
+        onSubmit={onSend}
+        className="sticky bottom-0 z-10 bg-base-200 border-t border-base-300 pt-3 flex items-center gap-2"
+      >
         <label className="btn btn-ghost btn-square min-h-[48px] h-12" title="Прикрепить файлы">
           <input type="file" hidden multiple onChange={onFilesPicked} disabled={isBlocked} />
           <PaperClipIcon className="h-5 w-5" />
