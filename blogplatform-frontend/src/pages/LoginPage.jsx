@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '@/services/auth';
+import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -12,6 +13,7 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { setUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -19,6 +21,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await authService.login(formData.email, formData.password);
+      const profile = await authService.me();
+      setUser(profile);
       toast.success('Добро пожаловать!');
       navigate('/');
     } catch (err) {

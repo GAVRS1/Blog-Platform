@@ -1,28 +1,13 @@
 // src/hooks/useAuth.js
-import { useEffect, useState } from 'react';
-import { authService } from '@/services/auth';
-import { AUTH_TOKEN_COOKIE, removeCookie } from '@/utils/cookies';
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
 
 export function useAuth() {
-  // undefined — загрузка; null — не залогинен; object — пользователь
-  const [user, setUser] = useState(undefined);
+  const context = useContext(AuthContext);
 
-  useEffect(() => {
-    let active = true;
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
 
-    authService.me()
-      .then((u) => { if (active) setUser(u); })
-      .catch((error) => {
-        if (active) {
-          if (error?.response?.status === 401) {
-            // best effort очистка токена, если доступен
-            removeCookie(AUTH_TOKEN_COOKIE, { path: '/' });
-          }
-          setUser(null);
-        }
-      });
-    return () => { active = false; };
-  }, []);
-
-  return { user, setUser };
+  return context;
 }
