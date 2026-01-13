@@ -158,6 +158,7 @@ public class Program
             });
         });
 
+        // Razor Pages not registered; SPA handles the UI.
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
