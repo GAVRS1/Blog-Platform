@@ -7,5 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: { alias: { '@': resolve(__dirname, 'src') } },
   build: { cssCodeSplit: false, outDir: 'dist' },
+  server: { host: true, port: 5173 },
+  preview: { host: true, port: 5173 },
   base: '/', 
 });
