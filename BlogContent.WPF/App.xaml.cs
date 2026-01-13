@@ -58,6 +58,7 @@ namespace BlogContent.WPF
 
             services.AddSingleton(apiOptions);
             services.AddSingleton<ApiTokenStore>();
+            services.AddSingleton<MediaUrlResolver>();
             HttpClient httpClient = new HttpClient();
             if (!string.IsNullOrWhiteSpace(apiOptions.BaseUrl))
             {
@@ -71,11 +72,9 @@ namespace BlogContent.WPF
             services.AddScoped<IPostService, PostsApiClient>();
             services.AddScoped<ICommentService, CommentsApiClient>();
             services.AddScoped<ILikeService, LikesApiClient>();
+            services.AddScoped<MediaApiClient>();
             services.AddTransient<UserPostsViewModel>();
             services.AddTransient<UserLikesViewModel>();
-            services.AddSingleton<FileService>(provider =>
-                new FileService(@"C:\Users\begin\source\repos\SaveContentPlatform")); // поменять перед запуском
-            services.AddSingleton<IFileService>(provider => provider.GetRequiredService<FileService>());
         }
 
         private void RegisterViewModels()
@@ -85,24 +84,25 @@ namespace BlogContent.WPF
             IPostService postService = ServiceProvider.GetRequiredService<IPostService>();
             ICommentService commentService = ServiceProvider.GetRequiredService<ICommentService>();
             ILikeService likeService = ServiceProvider.GetRequiredService<ILikeService>();
-            FileService fileService = ServiceProvider.GetRequiredService<FileService>();
+            MediaApiClient mediaApiClient = ServiceProvider.GetRequiredService<MediaApiClient>();
+            MediaUrlResolver mediaUrlResolver = ServiceProvider.GetRequiredService<MediaUrlResolver>();
 
             Current.Resources["StartViewModel"] = new StartViewModel(NavigationService);
             Current.Resources["LoginViewModel"] = new LoginViewModel(NavigationService, authService);
             Current.Resources["RegisterViewModel"] = new RegisterViewModel(NavigationService, authService);
-            Current.Resources["ProfileSetupViewModel"] = new ProfileSetupViewModel(NavigationService, authService, fileService);
+            Current.Resources["ProfileSetupViewModel"] = new ProfileSetupViewModel(NavigationService, authService, mediaApiClient);
 
             Current.Resources["HomeViewModelFactory"] = new Func<HomeViewModel>(() =>
-                new HomeViewModel(NavigationService, userService, postService, commentService, likeService, fileService));
+                new HomeViewModel(NavigationService, userService, postService, commentService, likeService));
 
             Current.Resources["UserProfileViewModelFactory"] = new Func<UserProfileViewModel>(() =>
-                new UserProfileViewModel(NavigationService, userService, postService, commentService, likeService, fileService));
+                new UserProfileViewModel(NavigationService, userService, postService, commentService, likeService, mediaUrlResolver));
 
             Current.Resources["UserPostsViewModelFactory"] = new Func<UserPostsViewModel>(() =>
-                new UserPostsViewModel(NavigationService, userService, postService, commentService, likeService, fileService));
+                new UserPostsViewModel(NavigationService, userService, postService, commentService, likeService));
 
             Current.Resources["UserLikesViewModelFactory"] = new Func<UserLikesViewModel>(() =>
-                new UserLikesViewModel(NavigationService, userService, postService, commentService, likeService, fileService));
+                new UserLikesViewModel(NavigationService, userService, postService, commentService, likeService));
         }
     }
 }

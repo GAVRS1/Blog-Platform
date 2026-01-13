@@ -24,9 +24,8 @@ public class HomeViewModel : NavigationBaseViewModel
                        IUserService userService,
                        IPostService postService,
                        ICommentService commentService,
-                       ILikeService likeService,
-                       IFileService fileService)
-        : base(navigationService, userService, postService, commentService, likeService, fileService)
+                       ILikeService likeService)
+        : base(navigationService, userService, postService, commentService, likeService)
     {
         // Инициализация коллекций
         Posts = new ObservableCollection<PostViewModel>();

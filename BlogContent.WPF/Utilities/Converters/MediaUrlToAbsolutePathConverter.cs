@@ -15,19 +15,10 @@ public class MediaUrlToAbsolutePathConverter : IValueConverter
 
         string mediaPath = value.ToString();
 
-        // Если путь уже абсолютный, возвращаем его
-        if (System.IO.Path.IsPathRooted(mediaPath))
-            return mediaPath;
-        
         try
         {
-            // Получаем FileService
-            FileService? fileService = App.ServiceProvider.GetService<FileService>();
-            if (fileService != null)
-            {
-                string fullPath = fileService.GetFullPath(mediaPath);
-                return fullPath;
-            }
+            MediaUrlResolver? urlResolver = App.ServiceProvider.GetService<MediaUrlResolver>();
+            return urlResolver?.ToAbsoluteUrl(mediaPath) ?? mediaPath;
         }
         catch (Exception ex)
         {

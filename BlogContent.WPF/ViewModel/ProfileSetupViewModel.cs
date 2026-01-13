@@ -1,5 +1,5 @@
 ﻿using BlogContent.Core.Interfaces;
-using BlogContent.WPF.Services;
+using BlogContent.WPF.Api;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using Microsoft.Win32;
@@ -13,7 +13,7 @@ public class ProfileSetupViewModel : ViewModelBase
 {
     private readonly NavigationService _navigationService;
     private readonly IAuthService _authService;
-    private readonly IFileService _fileService;
+    private readonly MediaApiClient _mediaApiClient;
 
     private string _registerEmail;
     private string _registerPassword;
@@ -125,11 +125,11 @@ public class ProfileSetupViewModel : ViewModelBase
     public ICommand BackCommand { get; }
     public ICommand CompleteRegistrationCommand { get; }
 
-    public ProfileSetupViewModel(NavigationService navigationService, IAuthService authService, IFileService fileService)
+    public ProfileSetupViewModel(NavigationService navigationService, IAuthService authService, MediaApiClient mediaApiClient)
     {
         _navigationService = navigationService;
         _authService = authService;
-        _fileService = fileService;
+        _mediaApiClient = mediaApiClient ?? throw new ArgumentNullException(nameof(mediaApiClient));
 
         // Получаем данные из статического класса
         _registerEmail = RegistrationData.Email;
@@ -218,7 +218,7 @@ public class ProfileSetupViewModel : ViewModelBase
 
         try
         {
-            string profileImagePath = CopyProfilePicture();
+            string profileImagePath = await UploadProfilePictureAsync();
 
             await _authService.VerifyRegistrationAsync(RegistrationData.TemporaryKey.Value, VerificationCode);
 
@@ -248,18 +248,15 @@ public class ProfileSetupViewModel : ViewModelBase
         }
     }
 
-    private string CopyProfilePicture()
+    private async Task<string> UploadProfilePictureAsync()
     {
         if (string.IsNullOrEmpty(ProfilePictureUrl) || !File.Exists(ProfilePictureUrl))
             return string.Empty;
 
         try
         {
-            string relativePath = _fileService.SaveFile(ProfilePictureUrl, "avatar");
-
-            _fileService.CreateThumbnail(ProfilePictureUrl, new System.Drawing.Size(150, 150));
-
-            return relativePath;
+            var uploadResult = await _mediaApiClient.UploadAsync(ProfilePictureUrl, "image", isPublic: true);
+            return uploadResult.Url.RelativeUrl;
         }
         catch (Exception)
         {
