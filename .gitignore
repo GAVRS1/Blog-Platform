@@ -1,0 +1,18 @@
+# .NET/WPF build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+.vs/
+*.user
+*.suo
+*.cache
+*.log
+TestResults/
+artifacts/
+coverage/
+
+# Node/Vite/Vue/React build artifacts (any level)
+**/node_modules/
+**/dist/
+**/dist-ssr/
