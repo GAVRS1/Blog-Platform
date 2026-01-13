@@ -3,6 +3,7 @@ using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 
 namespace BlogContent.WPF.ViewModel.InteractionPosts;
@@ -54,6 +55,13 @@ public class CommentViewModel : ViewModelBase
         private set => SetProperty(ref _isLikedByCurrentUser, value);
     }
 
+    private bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
+    }
+
     public int RepliesCount => _comment.Replies.Count;
     public bool HasReplies => RepliesCount > 0;
 
@@ -80,18 +88,18 @@ public class CommentViewModel : ViewModelBase
         _isLikedByCurrentUser = _comment.Likes?.Any(l => l.UserId == _currentUser.Id) ?? false;
 
         Replies = new ObservableCollection<CommentReplyViewModel>();
-        LoadReplies();
+        _ = LoadRepliesAsync();
 
-        LikeCommentCommand = new RelayCommand(_ => LikeComment());
+        LikeCommentCommand = new RelayCommand(async _ => await LikeCommentAsync());
         ToggleRepliesCommand = new RelayCommand(_ => ToggleReplies());
-        AddReplyCommand = new RelayCommand(_ => AddReply());
+        AddReplyCommand = new RelayCommand(async _ => await AddReplyAsync());
         ToggleReplyInputCommand = new RelayCommand(_ => ToggleReplyInput());
-        SubmitReplyCommand = new RelayCommand(_ => SubmitReply());
+        SubmitReplyCommand = new RelayCommand(async _ => await SubmitReplyAsync());
     }
 
-    private void LoadLikes()
+    private async Task LoadLikesAsync()
     {
-        IEnumerable<CommentLike> likes = _commentService.GetLikesByCommentId(_comment.Id);
+        IEnumerable<CommentLike> likes = await Task.Run(() => _commentService.GetLikesByCommentId(_comment.Id));
         LikesCount = likes.Count();
         IsLikedByCurrentUser = likes.Any(l => l.UserId == _currentUser.Id);
     }
@@ -101,50 +109,54 @@ public class CommentViewModel : ViewModelBase
         AreRepliesExpanded = !AreRepliesExpanded;
         if (AreRepliesExpanded && !Replies.Any())
         {
-            LoadReplies();
+            _ = LoadRepliesAsync();
         }
     }
 
     private void ToggleReplyInput() => IsReplying = !IsReplying;
 
-    private void LikeComment()
+    private async Task LikeCommentAsync()
     {
+        IsLoading = true;
         if (IsLikedByCurrentUser)
         {
-            _commentService.UnlikeComment(_comment.Id, _currentUser.Id);
+            await Task.Run(() => _commentService.UnlikeComment(_comment.Id, _currentUser.Id));
             LikesCount--;
         }
         else
         {
-            _commentService.LikeComment(_comment.Id, _currentUser.Id);
+            await Task.Run(() => _commentService.LikeComment(_comment.Id, _currentUser.Id));
             LikesCount++;
         }
         IsLikedByCurrentUser = !IsLikedByCurrentUser;
+        await LoadLikesAsync();
+        IsLoading = false;
     }
 
-    private void AddReply()
+    private async Task AddReplyAsync()
     {
         if (!string.IsNullOrWhiteSpace(ReplyText))
         {
-            _commentService.AddReply(_comment.Id, ReplyText, _currentUser.Id);
+            await Task.Run(() => _commentService.AddReply(_comment.Id, ReplyText, _currentUser.Id));
             ReplyText = string.Empty;
-            LoadReplies();
+            await LoadRepliesAsync();
         }
     }
 
-    public void SubmitReply()
+    public async Task SubmitReplyAsync()
     {
         if (!string.IsNullOrWhiteSpace(ReplyText))
         {
-            AddReply();
+            await AddReplyAsync();
             IsReplying = false;
         }
     }
 
-    private void LoadReplies()
+    private async Task LoadRepliesAsync()
     {
+        IsLoading = true;
         Replies.Clear();
-        IOrderedEnumerable<CommentReply> replies = _commentService.GetRepliesByCommentId(_comment.Id, 1, int.MaxValue)
+        IOrderedEnumerable<CommentReply> replies = (await Task.Run(() => _commentService.GetRepliesByCommentId(_comment.Id, 1, int.MaxValue)))
             .Items
             .OrderBy(r => r.CreatedAt);
 
@@ -152,6 +164,11 @@ public class CommentViewModel : ViewModelBase
         {
             Replies.Add(new CommentReplyViewModel(reply));
         }
+        _comment.Replies = replies.ToList();
+        OnPropertyChanged(nameof(RepliesCount));
+        OnPropertyChanged(nameof(HasReplies));
+        OnPropertyChanged(nameof(RepliesCountText));
+        IsLoading = false;
     }
 }
 

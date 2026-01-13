@@ -73,6 +73,23 @@ public class CommentsController : ControllerBase
         return Ok(ToPagedResponse(comments, page, pageSize, userId));
     }
 
+    [HttpGet("{id}")]
+    public IActionResult GetById(int id)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var comment = _commentService.GetCommentByIdWithDetails(id);
+        if (comment == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(comment.ToResponseDto(userId));
+    }
+
     [HttpPost]
     public IActionResult Create([FromBody] CommentDto dto)
     {

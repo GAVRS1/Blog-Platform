@@ -110,15 +110,18 @@ public class PostViewModel : ViewModelBase
         }
     }
 
-    public void LoadComments()
+    public async Task LoadCommentsAsync()
     {
         Comments.Clear();
 
-        IEnumerable<Comment> comments = _commentService.GetCommentsByPostIdWithDetails(_originalPost.Id);
+        IEnumerable<Comment> comments = await Task.Run(() => _commentService.GetCommentsByPostIdWithDetails(_originalPost.Id));
         foreach (Comment? comment in comments.OrderByDescending(c => c.CreatedAt))
         {
             Comments.Add(new CommentViewModel(comment, _currentUser, _commentService));
         }
+
+        _originalPost.Comments = comments.ToList();
+        OnPropertyChanged(nameof(CommentsCountText));
     }
 
     public void UpdateLikeButton()

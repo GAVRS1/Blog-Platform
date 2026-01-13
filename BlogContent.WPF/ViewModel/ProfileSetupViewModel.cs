@@ -1,6 +1,4 @@
-﻿using BlogContent.Core.Models;
-using BlogContent.Core.Security;
-using BlogContent.Core.Interfaces;
+﻿using BlogContent.Core.Interfaces;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
@@ -14,7 +12,7 @@ namespace BlogContent.WPF.ViewModel;
 public class ProfileSetupViewModel : ViewModelBase
 {
     private readonly NavigationService _navigationService;
-    private readonly IUserService _userService;
+    private readonly IAuthService _authService;
     private readonly IFileService _fileService;
 
     private string _registerEmail;
@@ -28,6 +26,8 @@ public class ProfileSetupViewModel : ViewModelBase
     private bool _hasProfilePicture;
     private string _errorMessage;
     private bool _hasError;
+    private bool _isLoading;
+    private string _verificationCode;
 
     public string Username
     {
@@ -109,14 +109,26 @@ public class ProfileSetupViewModel : ViewModelBase
         set => SetProperty(ref _hasError, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
+    public string VerificationCode
+    {
+        get => _verificationCode;
+        set => SetProperty(ref _verificationCode, value);
+    }
+
     public ICommand BrowseImageCommand { get; }
     public ICommand BackCommand { get; }
     public ICommand CompleteRegistrationCommand { get; }
 
-    public ProfileSetupViewModel(NavigationService navigationService, IUserService userService, IFileService fileService)
+    public ProfileSetupViewModel(NavigationService navigationService, IAuthService authService, IFileService fileService)
     {
         _navigationService = navigationService;
-        _userService = userService;
+        _authService = authService;
         _fileService = fileService;
 
         // Получаем данные из статического класса
@@ -125,7 +137,7 @@ public class ProfileSetupViewModel : ViewModelBase
 
         BrowseImageCommand = new RelayCommand(_ => BrowseImage());
         BackCommand = new RelayCommand(_ => _navigationService.Navigate("Register"));
-        CompleteRegistrationCommand = new RelayCommand(_ => CompleteRegistration(), _ => CanCompleteRegistration());
+        CompleteRegistrationCommand = new RelayCommand(async _ => await CompleteRegistrationAsync(), _ => CanCompleteRegistration());
 
         // Установим текущую дату по умолчанию (с ограничением на минимальный возраст 12 лет)
         BirthDate = DateTime.Now.AddYears(-12);
@@ -146,14 +158,23 @@ public class ProfileSetupViewModel : ViewModelBase
         
     }
 
-    private void CompleteRegistration()
+    private async Task CompleteRegistrationAsync()
     {
         ErrorMessage = string.Empty;
+        IsLoading = true;
 
         // Проверяем наличие данных первого этапа
         if (string.IsNullOrEmpty(_registerEmail) || string.IsNullOrEmpty(_registerPassword))
         {
             ErrorMessage = "Данные регистрации недоступны. Пожалуйста, начните регистрацию заново.";
+            IsLoading = false;
+            return;
+        }
+
+        if (RegistrationData.TemporaryKey == null)
+        {
+            ErrorMessage = "Сессия подтверждения не найдена. Пожалуйста, повторите регистрацию.";
+            IsLoading = false;
             return;
         }
 
@@ -161,18 +182,21 @@ public class ProfileSetupViewModel : ViewModelBase
         if (string.IsNullOrEmpty(Username))
         {
             ErrorMessage = "Пожалуйста, введите ник";
+            IsLoading = false;
             return;
         }
 
         if (string.IsNullOrEmpty(FullName))
         {
             ErrorMessage = "Пожалуйста, введите ФИО";
+            IsLoading = false;
             return;
         }
 
         if (!BirthDate.HasValue)
         {
             ErrorMessage = "Пожалуйста, выберите дату рождения";
+            IsLoading = false;
             return;
         }
 
@@ -181,6 +205,14 @@ public class ProfileSetupViewModel : ViewModelBase
         if (BirthDate > minBirthDate)
         {
             ErrorMessage = "Для регистрации вам должно быть не менее 12 лет";
+            IsLoading = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(VerificationCode))
+        {
+            ErrorMessage = "Введите код подтверждения из письма.";
+            IsLoading = false;
             return;
         }
 
@@ -188,29 +220,20 @@ public class ProfileSetupViewModel : ViewModelBase
         {
             string profileImagePath = CopyProfilePicture();
 
-            // Создание нового пользователя со всеми необходимыми данными
-            User user = new User
-            {
-                Email = _registerEmail,
-                Username = Username,
-                PasswordHash = PasswordHasher.HashPassword(_registerPassword),
-                Status = Core.Enums.UserStatus.Active, // Автоматически устанавливаем статус Active
-                Profile = new Profile
-                {
-                    Username = Username,
-                    FullName = FullName,
-                    BirthDate = DateOnly.FromDateTime(BirthDate.Value),
-                    Age = CalculateAge(BirthDate.Value),
-                    Bio = Bio ?? string.Empty,
-                    ProfilePictureUrl = profileImagePath
-                }
-            };
+            await _authService.VerifyRegistrationAsync(RegistrationData.TemporaryKey.Value, VerificationCode);
 
-            // Сохранение пользователя в базе данных
-            _userService.CreateUser(user);
+            await _authService.CompleteRegistrationAsync(
+                RegistrationData.TemporaryKey.Value,
+                _registerPassword,
+                Username,
+                FullName,
+                BirthDate,
+                Bio,
+                profileImagePath);
 
             RegistrationData.Email = null;
             RegistrationData.Password = null;
+            RegistrationData.TemporaryKey = null;
 
             _navigationService.SetParameter("RegistrationSuccess", true);
             _navigationService.Navigate("Login");
@@ -219,18 +242,10 @@ public class ProfileSetupViewModel : ViewModelBase
         {
             ErrorMessage = $"Ошибка при регистрации: {ex.Message}";
         }
-    }
-
-    private int CalculateAge(DateTime birthDate)
-    {
-        var today = DateTime.Today;
-        var age = today.Year - birthDate.Year;
-
-        // Проверяем, был ли уже день рождения в этом году
-        if (birthDate.Date > today.AddYears(-age))
-            age--;
-
-        return age;
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private string CopyProfilePicture()

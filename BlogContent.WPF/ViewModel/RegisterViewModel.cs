@@ -17,6 +17,7 @@ public class RegisterViewModel : ViewModelBase
     private string _confirmPassword;
     private string _errorMessage;
     private bool _hasError;
+    private bool _isLoading;
 
     public string Email
     {
@@ -52,6 +53,12 @@ public class RegisterViewModel : ViewModelBase
         set => SetProperty(ref _hasError, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
     public ICommand NextStepCommand { get; }
     public ICommand NavigateToLoginCommand { get; }
     public ICommand NavigateToStartCommand { get; }
@@ -61,7 +68,7 @@ public class RegisterViewModel : ViewModelBase
         _navigationService = navigationService;
         _authService = authService;
 
-        NextStepCommand = new RelayCommand(_ => GoToNextStep(), _ => CanGoToNextStep());
+        NextStepCommand = new RelayCommand(async _ => await GoToNextStepAsync(), _ => CanGoToNextStep());
         NavigateToLoginCommand = new RelayCommand(_ => _navigationService.Navigate("Login"));
         NavigateToStartCommand = new RelayCommand(_ => _navigationService.Navigate("Start"));
     }
@@ -73,30 +80,35 @@ public class RegisterViewModel : ViewModelBase
                !string.IsNullOrEmpty(ConfirmPassword);
     }
 
-    private void GoToNextStep()
+    private async Task GoToNextStepAsync()
     {
         // Очистить предыдущие ошибки
         ErrorMessage = string.Empty;
+        IsLoading = true;
 
         // Валидация электронной почты
         if (!IsValidEmail(Email))
         {
             ErrorMessage = "Пожалуйста, введите корректный адрес электронной почты";
+            IsLoading = false;
             return;
         }
 
         // Проверка существования пользователя
         try
         {
-            if (_authService.UserExists(Email))
+            bool userExists = await Task.Run(() => _authService.UserExists(Email));
+            if (userExists)
             {
                 ErrorMessage = "Пользователь с таким email уже существует";
+                IsLoading = false;
                 return;
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Ошибка проверки пользователя: {ex.Message}";
+            IsLoading = false;
             return;
         }
 
@@ -104,6 +116,7 @@ public class RegisterViewModel : ViewModelBase
         if (Password.Length < 6)
         {
             ErrorMessage = "Пароль должен содержать не менее 6 символов";
+            IsLoading = false;
             return;
         }
 
@@ -111,14 +124,23 @@ public class RegisterViewModel : ViewModelBase
         if (Password != ConfirmPassword)
         {
             ErrorMessage = "Пароли не совпадают";
+            IsLoading = false;
             return;
         }
 
         try
         {
+            Guid temporaryKey = await _authService.StartRegistrationAsync(Email);
+            if (temporaryKey == Guid.Empty)
+            {
+                ErrorMessage = "Не удалось начать регистрацию. Проверьте данные.";
+                return;
+            }
+
             // Сохраняем данные в статическом классе
             RegistrationData.Email = Email;
             RegistrationData.Password = Password;
+            RegistrationData.TemporaryKey = temporaryKey;
 
             // Переходим к следующему шагу
             _navigationService.Navigate("ProfileSetup");
@@ -126,6 +148,10 @@ public class RegisterViewModel : ViewModelBase
         catch (Exception ex)
         {
             ErrorMessage = $"Ошибка при подготовке данных регистрации: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 

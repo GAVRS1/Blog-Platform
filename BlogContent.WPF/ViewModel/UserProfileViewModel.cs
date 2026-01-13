@@ -30,8 +30,8 @@ public class UserProfileViewModel : NavigationBaseViewModel
         {
             UserPosts = new ObservableCollection<PostViewModel>();
 
-            LoadUserProfile();
-            LoadUserPosts();
+            _ = LoadUserProfileAsync();
+            _ = LoadUserPostsAsync();
             
             // Установим флаг активной страницы
             IsProfilePage = true;
@@ -93,7 +93,7 @@ public class UserProfileViewModel : NavigationBaseViewModel
 
         public ObservableCollection<PostViewModel> UserPosts { get; private set; }
 
-        private void LoadUserProfile()
+        private async Task LoadUserProfileAsync()
         {
             // Получаем пользователя, чей профиль открыт
             _profileUser = (User)_navigationService.GetParameter("ProfileUser");
@@ -118,9 +118,10 @@ public class UserProfileViewModel : NavigationBaseViewModel
             // Загружаем фото профиля
             try
             {
+                ErrorMessage = string.Empty;
                 if (!string.IsNullOrEmpty(_profileUser.Profile.ProfilePictureUrl))
                 {
-                    string fullPath = _fileService.GetFullPath(_profileUser.Profile.ProfilePictureUrl);
+                    string fullPath = await Task.Run(() => _fileService.GetFullPath(_profileUser.Profile.ProfilePictureUrl));
 
                     if (System.IO.File.Exists(fullPath))
                     {
@@ -143,19 +144,22 @@ public class UserProfileViewModel : NavigationBaseViewModel
             }
             catch (Exception ex)
             {
+                ErrorMessage = $"Не удалось загрузить фото профиля: {ex.Message}";
                 ProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
             }
         }
 
-        private void LoadUserPosts()
+        private async Task LoadUserPostsAsync()
         {
             if (_profileUser == null) return;
 
             try
             {
+                ErrorMessage = string.Empty;
+                IsLoading = true;
                 UserPosts.Clear();
 
-                IEnumerable<Post> userPosts = _postService.GetPostsByUser(_profileUser.Id, 1, int.MaxValue).Items;
+                IEnumerable<Post> userPosts = (await Task.Run(() => _postService.GetPostsByUser(_profileUser.Id, 1, int.MaxValue))).Items;
 
                 if (userPosts == null || !userPosts.Any())
                 {
@@ -177,7 +181,12 @@ public class UserProfileViewModel : NavigationBaseViewModel
             }
             catch (Exception ex)
             {
+                ErrorMessage = $"Не удалось загрузить посты пользователя: {ex.Message}";
                 HasNoPosts = true;
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
     }

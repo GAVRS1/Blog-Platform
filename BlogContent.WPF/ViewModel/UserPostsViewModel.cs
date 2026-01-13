@@ -44,22 +44,20 @@ public class UserPostsViewModel : NavigationBaseViewModel
         // Инициализация команд
         LikePostCommand = new RelayCommand(postId => LikePost((int)postId));
         CommentPostCommand = new RelayCommand(postId => ShowComments((int)postId));
-        DeletePostCommand = new RelayCommand(postId => DeletePost((int)postId));
+        DeletePostCommand = new RelayCommand(async postId => await DeletePostAsync((int)postId));
         AddCommentCommand = new RelayCommand(postVM => AddComment((PostViewModel)postVM));
         // Отмечаем, что мы находимся на странице "Мои посты"
         UserPostsPage = true;
 
         // Загружаем посты пользователя
-        LoadUserPosts();
+        _ = LoadUserPostsAsync();
     }
 
-    private void LoadUserPosts()
+    private async Task LoadUserPostsAsync()
     {
-
         if (_currentUser == null)
         {
-            MessageBox.Show("Не удалось получить данные пользователя. Попробуйте выйти и войти снова.",
-                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ErrorMessage = "Не удалось получить данные пользователя. Попробуйте выйти и войти снова.";
             return;
         }
 
@@ -67,23 +65,25 @@ public class UserPostsViewModel : NavigationBaseViewModel
 
         try
         {
+            ErrorMessage = string.Empty;
+            IsLoading = true;
             // Получаем посты текущего пользователя
-            IOrderedEnumerable<Post> userPosts = _postService.GetPostsByUser(_currentUser.Id, 1, int.MaxValue)
+            IOrderedEnumerable<Post> userPosts = (await Task.Run(() => _postService.GetPostsByUser(_currentUser.Id, 1, int.MaxValue)))
                                        .Items
                                        .OrderByDescending(p => p.CreatedAt);
 
             foreach (Post post in userPosts)
             {
                 if (post.User == null)
-                    post.User = _userService.GetUserById(post.UserId);
+                    post.User = await Task.Run(() => _userService.GetUserById(post.UserId));
                 
 
                 if (post.Likes == null || !post.Likes.Any())
-                    post.Likes = _likeService.GetLikesByPostId(post.Id).ToList(); 
+                    post.Likes = await Task.Run(() => _likeService.GetLikesByPostId(post.Id).ToList()); 
                 
 
                 if (post.Comments == null || !post.Comments.Any())
-                    post.Comments = _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList();
+                    post.Comments = await Task.Run(() => _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList());
 
 
                 PostViewModel postViewModel = new PostViewModel(post, _currentUser, _commentService);
@@ -95,15 +95,19 @@ public class UserPostsViewModel : NavigationBaseViewModel
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Произошла ошибка при загрузке постов: {ex.Message}",
-                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ErrorMessage = $"Произошла ошибка при загрузке постов: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
-    private void LikePost(int postId)
+    private async void LikePost(int postId)
     {
         try
         {
+            ErrorMessage = string.Empty;
             // Находим пост в коллекции
             PostViewModel? postViewModel = UserPosts.FirstOrDefault(p => p.Id == postId);
 
@@ -112,32 +116,16 @@ public class UserPostsViewModel : NavigationBaseViewModel
                 // Если пост уже лайкнут текущим пользователем - удаляем лайк
                 if (postViewModel.IsLikedByCurrentUser)
                 {
-                    // Находим лайк пользователя
-                    Like? likeToRemove = postViewModel.OriginalPost.Likes.FirstOrDefault(l => l.UserId == _currentUser.Id);
+                    await Task.Run(() => _postService.RemoveLike(postId, _currentUser.Id));
 
-                    if (likeToRemove != null)
-                    {
-                        // Удаляем лайк
-                        _likeService.DeleteLike(likeToRemove.Id);
-
-                        // Обновляем отображение
-                        postViewModel.IsLikedByCurrentUser = false;
-                        postViewModel.LikesCount--;
-                        postViewModel.UpdateLikeButton();
-                    }
+                    // Обновляем отображение
+                    postViewModel.IsLikedByCurrentUser = false;
+                    postViewModel.LikesCount = Math.Max(0, postViewModel.LikesCount - 1);
+                    postViewModel.UpdateLikeButton();
                 }
                 else
                 {
-                    // Создаем новый лайк
-                    Like newLike = new Like
-                    {
-                        PostId = postId,
-                        UserId = _currentUser.Id,
-                        Post = postViewModel.OriginalPost,
-                        User = _currentUser
-                    };
-
-                    _likeService.CreateLike(newLike);
+                    await Task.Run(() => _postService.AddLike(postId, _currentUser.Id));
 
                     // Обновляем отображение
                     postViewModel.IsLikedByCurrentUser = true;
@@ -148,27 +136,29 @@ public class UserPostsViewModel : NavigationBaseViewModel
         }
         catch (Exception)
         {
+            ErrorMessage = "Не удалось обновить лайк.";
         }
     }
 
-    private void ShowComments(int postId)
+    private async void ShowComments(int postId)
     {
         PostViewModel? postViewModel = UserPosts.FirstOrDefault(p => p.Id == postId);
         if (postViewModel != null)
         {
             postViewModel.AreCommentsExpanded = !postViewModel.AreCommentsExpanded;
             if (postViewModel.AreCommentsExpanded)
-                postViewModel.LoadComments();
+                await postViewModel.LoadCommentsAsync();
             
         }
     }
 
-    private void AddComment(PostViewModel postViewModel)
+    private async void AddComment(PostViewModel postViewModel)
     {
         if (postViewModel != null && !string.IsNullOrWhiteSpace(postViewModel.NewCommentText))
         {
             try
             {
+                ErrorMessage = string.Empty;
                 Comment newComment = new Comment
                 {
                     Content = postViewModel.NewCommentText,
@@ -177,20 +167,22 @@ public class UserPostsViewModel : NavigationBaseViewModel
                     UserId = _currentUser.Id
                 };
 
-                _commentService.CreateComment(newComment);
+                await Task.Run(() => _commentService.CreateComment(newComment));
                 postViewModel.NewCommentText = string.Empty;
-                postViewModel.LoadComments();
+                await postViewModel.LoadCommentsAsync();
             }
             catch (Exception)
             {
+                ErrorMessage = "Не удалось добавить комментарий.";
             }
         }
     }
 
-    private void DeletePost(int postId)
+    private async Task DeletePostAsync(int postId)
     {
         try
         {
+            ErrorMessage = string.Empty;
             MessageBoxResult result = MessageBox.Show("Вы действительно хотите удалить этот пост?",
                                        "Подтверждение удаления",
                                        MessageBoxButton.YesNo,
@@ -199,7 +191,7 @@ public class UserPostsViewModel : NavigationBaseViewModel
             if (result == MessageBoxResult.Yes)
             {
                 // Удаляем пост
-                _postService.DeletePost(postId);
+                await Task.Run(() => _postService.DeletePost(postId));
 
                 // Удаляем пост из коллекции
                 PostViewModel? postToRemove = UserPosts.FirstOrDefault(p => p.Id == postId);
@@ -212,10 +204,9 @@ public class UserPostsViewModel : NavigationBaseViewModel
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Произошла ошибка при удалении поста: {ex.Message}",
-                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ErrorMessage = $"Произошла ошибка при удалении поста: {ex.Message}";
         }
     }
 
-    protected override void ReloadContent() => LoadUserPosts();
+    protected override void ReloadContent() => _ = LoadUserPostsAsync();
 }

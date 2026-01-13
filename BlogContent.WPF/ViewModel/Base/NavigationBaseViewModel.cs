@@ -22,6 +22,9 @@ public class NavigationBaseViewModel : ViewModelBase
     private string _userProfilePictureUrl;
     private string _userFullName;
     private bool _isAdmin;
+    private bool _isLoading;
+    private string _errorMessage;
+    private bool _hasError;
 
     // Флаги активных страниц для выделения в меню
     private bool _isHomePage;
@@ -79,6 +82,28 @@ public class NavigationBaseViewModel : ViewModelBase
         set => SetProperty(ref _isAdmin, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        set
+        {
+            SetProperty(ref _errorMessage, value);
+            HasError = !string.IsNullOrEmpty(value);
+        }
+    }
+
+    public bool HasError
+    {
+        get => _hasError;
+        set => SetProperty(ref _hasError, value);
+    }
+
     // Команды навигации
     public ICommand NavigateToHomeCommand { get; }
     public ICommand ViewProfileCommand { get; }
@@ -118,21 +143,21 @@ public class NavigationBaseViewModel : ViewModelBase
         CreatePostCommand = new RelayCommand(_ => ShowCreatePostDialog());
         LogoutCommand = new RelayCommand(_ => Logout());
 
-        // Инициализируем текущего пользователя
-        _currentUser = _userService.GetCurrentUser();
-
-        // Загружаем данные пользователя при инициализации
-        LoadCurrentUserData();
+        _ = LoadCurrentUserDataAsync();
     }
 
-    protected virtual void LoadCurrentUserData()
+    protected virtual async Task LoadCurrentUserDataAsync()
     {
         try
         {
+            ErrorMessage = string.Empty;
+            IsLoading = true;
+
+            _currentUser = await Task.Run(() => _userService.GetCurrentUser());
             if (_currentUser != null)
             {
                 // Обновляем информацию о пользователе
-                _currentUser = _userService.GetUserById(_currentUser.Id);
+                _currentUser = await Task.Run(() => _userService.GetUserById(_currentUser.Id));
                 UserFullName = _currentUser.Profile?.FullName;
                 IsAdmin = _currentUser.Status == Core.Enums.UserStatus.Admin;
 
@@ -150,7 +175,11 @@ public class NavigationBaseViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка при загрузке данных пользователя: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ErrorMessage = $"Ошибка при загрузке данных пользователя: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -210,10 +239,14 @@ public class NavigationBaseViewModel : ViewModelBase
         UserLikesPage = false;
     }
 
+    protected virtual void ReloadContent()
+    {
+    }
+
     protected void UpdateCurrentUser(User user)
     {
         _currentUser = user;
         _navigationService.SetParameter("CurrentUser", user);
-        LoadCurrentUserData();
+        _ = LoadCurrentUserDataAsync();
     }
 }

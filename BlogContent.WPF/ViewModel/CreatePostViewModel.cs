@@ -22,6 +22,7 @@ public class CreatePostViewModel : ViewModelBase
     private string _mediaUrl;
     private string _errorMessage;
     private bool _hasError;
+    private bool _isLoading;
     private BitmapImage _mediaPreview;
     private string _mediaInfo;
     private bool _hasMedia;
@@ -107,6 +108,12 @@ public class CreatePostViewModel : ViewModelBase
         set => SetProperty(ref _hasError, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
     // Свойства для управления интерфейсом
     public bool IsMediaSectionVisible => !IsArticle;
     public string MediaSectionTitle => SelectedContentType switch
@@ -161,7 +168,7 @@ public class CreatePostViewModel : ViewModelBase
         SelectedContentType = ContentType.Article;
 
         // Инициализация команд
-        CreatePostCommand = new RelayCommand(_ => CreatePost(), _ => CanCreatePost());
+        CreatePostCommand = new RelayCommand(async _ => await CreatePostAsync(), _ => CanCreatePost());
         BrowseMediaCommand = new RelayCommand(_ => BrowseMedia());
         RemoveMediaCommand = new RelayCommand(_ => RemoveMedia());
         CancelCommand = new RelayCommand(_ => Close(false));
@@ -181,9 +188,10 @@ public class CreatePostViewModel : ViewModelBase
         return true;
     }
 
-    private void CreatePost()
+    private async Task CreatePostAsync()
     {
         ErrorMessage = string.Empty;
+        IsLoading = true;
 
         try
         {
@@ -224,12 +232,16 @@ public class CreatePostViewModel : ViewModelBase
                 }
             }
 
-            _postService.CreatePost(post);
+            await Task.Run(() => _postService.CreatePost(post));
             Close(true);
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Ошибка при создании публикации: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
