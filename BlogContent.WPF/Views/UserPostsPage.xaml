@@ -18,24 +18,16 @@
         <local:SharedLayout.PageContent>
             <Grid>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
+                    <StackPanel MaxWidth="760" HorizontalAlignment="Center">
                         <TextBlock Text="Мои публикации" 
-                                   FontSize="20" 
-                                   FontWeight="Bold" 
-                                   Margin="0,0,0,15"/>
+                                   Style="{StaticResource SectionTitleStyle}"/>
 
                         <!-- Список публикаций -->
-                        <ItemsControl ItemsSource="{Binding UserPosts}">
+                        <ItemsControl x:Name="UserPostsItems" ItemsSource="{Binding UserPosts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Карточка поста -->
-                                    <Border Background="White" 
-                                            CornerRadius="8" 
-                                            Padding="15" 
-                                            Margin="0,0,0,15"
-                                            BorderBrush="#DDDDDD"
-                                            BorderThickness="1"
-                                            Effect="{StaticResource ShadowEffect}">
+                                    <Border Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <!-- Заголовок и метка времени -->
                                             <Grid>
@@ -46,19 +38,18 @@
 
                                                 <TextBlock Grid.Column="0" 
                                                            Text="{Binding Title}" 
-                                                           FontSize="18" 
+                                                           FontSize="16" 
                                                            FontWeight="SemiBold" 
-                                                           Margin="0,0,0,5"/>
+                                                           Margin="0,0,0,6"/>
 
                                                 <TextBlock Grid.Column="1" 
                                                            Text="{Binding CreatedAtFormatted}" 
-                                                           FontSize="12" 
-                                                           Foreground="#65676B"/>
+                                                           Style="{StaticResource MetaTextStyle}"/>
                                             </Grid>
 
                                             <!-- Текст поста -->
                                             <TextBlock Text="{Binding Content}" 
-                                                       TextWrapping="Wrap" 
+                                                       Style="{StaticResource BodyTextStyle}"
                                                        Margin="0,0,0,15"/>
 
                                             <!-- Медиа-контент -->
@@ -97,12 +88,13 @@
                                                                VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding LikesCount}" 
                                                                Margin="5,0,0,0" 
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center"
+                                                               Style="{StaticResource MetaTextStyle}"/>
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Column="1" 
                                                            Text="{Binding CommentsCountText}" 
-                                                           Foreground="#65676B" 
+                                                           Style="{StaticResource MetaTextStyle}"
                                                            HorizontalAlignment="Right"/>
                                             </Grid>
 
@@ -122,33 +114,22 @@
                                                         Content="{Binding LikeButtonText}" 
                                                         Command="{Binding DataContext.LikePostCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                         CommandParameter="{Binding Id}" 
-                                                        Background="Transparent" 
-                                                        BorderThickness="0" 
                                                         Foreground="{Binding LikeButtonColor}" 
-                                                        Cursor="Hand" 
-                                                        Height="36"/>
+                                                        Style="{StaticResource GhostButtonStyle}"/>
 
                                                 <!-- Кнопка комментария -->
                                                 <Button Grid.Column="1" 
                                                         Content="💬 Комментировать" 
                                                         Command="{Binding DataContext.CommentPostCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                         CommandParameter="{Binding Id}" 
-                                                        Background="Transparent" 
-                                                        BorderThickness="0" 
-                                                        Foreground="#65676B" 
-                                                        Cursor="Hand" 
-                                                        Height="36"/>
+                                                        Style="{StaticResource GhostButtonStyle}"/>
 
                                                 <!-- Кнопка удаления -->
                                                 <Button Grid.Column="2" 
                                                         Content="🗑️ Удалить" 
                                                         Command="{Binding DataContext.DeletePostCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                         CommandParameter="{Binding Id}" 
-                                                        Background="Transparent" 
-                                                        BorderThickness="0" 
-                                                        Foreground="#65676B" 
-                                                        Cursor="Hand" 
-                                                        Height="36"/>
+                                                        Style="{StaticResource GhostButtonStyle}"/>
                                             </Grid>
 
                                             <!-- Блок комментариев -->
@@ -184,9 +165,9 @@
 
                                                                 <!-- Содержимое комментария -->
                                                                 <StackPanel Grid.Column="1">
-                                                                    <Border Background="#F0F2F5" 
-                                                                            CornerRadius="10" 
-                                                                            Padding="12,8">
+                                                                <Border Background="{StaticResource SurfaceMutedBrush}" 
+                                                                        CornerRadius="10" 
+                                                                        Padding="12,8">
                                                                         <StackPanel>
                                                                             <TextBlock Text="{Binding Username}" 
                                                                                        FontWeight="SemiBold" 
@@ -198,15 +179,12 @@
                                                                             <StackPanel Orientation="Horizontal" 
                                                                                         Margin="0,5,0,0">
                                                                                 <TextBlock Text="{Binding CreatedAtFormatted}" 
-                                                                                           FontSize="11" 
-                                                                                           Foreground="#65676B"/>
+                                                                                           Style="{StaticResource MetaTextStyle}"/>
 
                                                                                 <!-- Кнопка лайка -->
                                                                                 <Button Command="{Binding LikeCommentCommand}"
-                                                                                        Background="Transparent"
-                                                                                        BorderThickness="0"
-                                                                                        Foreground="#65676B"
-                                                                                        Margin="15,0,0,0"
+                                                                                        Style="{StaticResource GhostButtonStyle}"
+                                                                                        Margin="10,0,0,0"
                                                                                         Padding="0">
                                                                                     <StackPanel Orientation="Horizontal">
                                                                                         <TextBlock Text="❤️" VerticalAlignment="Center"/>
@@ -219,18 +197,14 @@
                                                                                 <!-- Кнопка ответа -->
                                                                                 <Button Content="Ответить" 
                                                                                         Command="{Binding ToggleReplyInputCommand}"
-                                                                                        Background="Transparent"
-                                                                                        BorderThickness="0"
-                                                                                        Foreground="#65676B"
-                                                                                        Margin="15,0,0,0"/>
+                                                                                        Style="{StaticResource GhostButtonStyle}"
+                                                                                        Margin="10,0,0,0"/>
 
                                                                                 <!-- Кнопка показа/скрытия ответов если есть -->
                                                                                 <Button Content="{Binding RepliesCountText}" 
                                                                                         Command="{Binding ToggleRepliesCommand}"
-                                                                                        Background="Transparent"
-                                                                                        BorderThickness="0"
-                                                                                        Foreground="#65676B"
-                                                                                        Margin="15,0,0,0"
+                                                                                        Style="{StaticResource GhostButtonStyle}"
+                                                                                        Margin="10,0,0,0"
                                                                                         Visibility="{Binding HasReplies, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                                             </StackPanel>
                                                                         </StackPanel>
@@ -262,7 +236,7 @@
                                                                         <!-- Поле ввода и кнопка отправки -->
                                                                         <Grid Grid.Column="1">
                                                                             <TextBox Text="{Binding ReplyText, UpdateSourceTrigger=PropertyChanged}" 
-                                                                                     Background="#F0F2F5" 
+                                                                                     Background="{StaticResource SurfaceMutedBrush}" 
                                                                                      BorderThickness="0" 
                                                                                      Padding="8,6" 
                                                                                      VerticalContentAlignment="Center">
@@ -276,7 +250,7 @@
                                                                             <Button Command="{Binding SubmitReplyCommand}"
                                                                                     Content="+" 
                                                                                     HorizontalAlignment="Right"
-                                                                                    Background="#4267B2"
+                                                                                    Background="{StaticResource PrimaryColor}"
                                                                                     Foreground="White"
                                                                                     BorderThickness="0"
                                                                                     Width="30"
@@ -313,10 +287,10 @@
                                                                                     </Border>
 
                                                                                     <!-- Содержимое ответа -->
-                                                                                    <Border Grid.Column="1" 
-                                                                                            Background="#F0F2F5" 
-                                                                                            CornerRadius="10" 
-                                                                                            Padding="10,6">
+                                                                    <Border Grid.Column="1" 
+                                                                            Background="{StaticResource SurfaceMutedBrush}" 
+                                                                            CornerRadius="10" 
+                                                                            Padding="10,6">
                                                                                         <StackPanel>
                                                                                             <TextBlock Text="{Binding Username}" 
                                                                                                       FontWeight="SemiBold" 
@@ -327,7 +301,7 @@
                                                                                                       FontSize="12"/>
                                                                                             <TextBlock Text="{Binding CreatedAtFormatted}" 
                                                                                                       FontSize="10" 
-                                                                                                      Foreground="#65676B"
+                                                                                                      Foreground="{StaticResource MutedTextBrush}"
                                                                                                       Margin="0,3,0,0"/>
                                                                                         </StackPanel>
                                                                                     </Border>
@@ -366,7 +340,7 @@
                                                     <!-- Поле ввода комментария -->
                                                     <Grid Grid.Column="1">
                                                         <TextBox Text="{Binding NewCommentText, UpdateSourceTrigger=PropertyChanged}" 
-                                                                 Background="#F0F2F5" 
+                                                                 Background="{StaticResource SurfaceMutedBrush}" 
                                                                  BorderThickness="0" 
                                                                  Padding="12,8" 
                                                                  VerticalContentAlignment="Center"
@@ -382,7 +356,7 @@
                                                         <Button Content="+" 
                                                                 Command="{Binding DataContext.AddCommentCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                                 CommandParameter="{Binding}" 
-                                                                Background="#4267B2" 
+                                                                Background="{StaticResource PrimaryColor}" 
                                                                 BorderThickness="0" 
                                                                 HorizontalAlignment="Right" 
                                                                 Width="36" 
@@ -398,11 +372,14 @@
                         </ItemsControl>
 
                         <!-- Сообщение если нет публикаций -->
-                        <TextBlock Text="У вас пока нет публикаций" 
-                                   Foreground="#65676B"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,30,0,0"
-                                   Visibility="{Binding HasNoPosts, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <StackPanel HorizontalAlignment="Center"
+                                    Margin="0,30,0,0"
+                                    Visibility="{Binding HasNoPosts, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="📝" FontSize="32" HorizontalAlignment="Center"/>
+                            <TextBlock Text="У вас ещё нет публикаций."
+                                       Style="{StaticResource EmptyStateTextStyle}"
+                                       Margin="0,10,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

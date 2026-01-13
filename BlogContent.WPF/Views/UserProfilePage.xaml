@@ -19,16 +19,9 @@
         <local:SharedLayout.PageContent>
             <Grid>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
+                    <StackPanel MaxWidth="760" HorizontalAlignment="Center">
                         <!-- Верхняя секция профиля с аватаром и основной информацией -->
-                        <Border Background="White" 
-                                CornerRadius="8" 
-                                Padding="25" 
-                                Margin="0,0,0,15"
-                                BorderBrush="#DDDDDD"
-                                BorderThickness="1"
-                                Effect="{StaticResource ShadowEffect}">
-
+                        <Border Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -37,15 +30,12 @@
 
                                 <!-- Аватар пользователя  -->
                                 <Border Grid.Column="0" 
-                                        Width="150" 
-                                        Height="150" 
-                                        CornerRadius="75" 
-                                        Background="LightGray" 
+                                        Style="{StaticResource LargeAvatarStyle}" 
                                         Margin="0,0,20,0">
                                     <Image Source="{Binding ProfilePicture}" 
                                            Stretch="UniformToFill">
                                         <Image.Clip>
-                                            <EllipseGeometry Center="75,75" RadiusX="75" RadiusY="75"/>
+                                            <EllipseGeometry Center="40,40" RadiusX="40" RadiusY="40"/>
                                         </Image.Clip>
                                     </Image>
                                 </Border>
@@ -53,55 +43,37 @@
                                 <!-- Информация о пользователе -->
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="{Binding FullName}" 
-                                               FontSize="24" 
+                                               FontSize="22" 
                                                FontWeight="Bold" 
-                                               Margin="0,0,0,5"/>
+                                               Foreground="{StaticResource TitleTextBrush}"
+                                               Margin="0,0,0,4"/>
 
                                     <TextBlock Text="{Binding Username}" 
-                                               FontSize="16" 
-                                               Foreground="#65676B" 
-                                               Margin="0,0,0,15"/>
+                                               FontSize="14" 
+                                               Foreground="{StaticResource MutedTextBrush}" 
+                                               Margin="0,0,0,12"/>
 
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <!-- Статистика: Публикации -->
-                                        <StackPanel Grid.Column="0" 
-                                                    Orientation="Horizontal" 
-                                                    Margin="0,0,20,0">
-                                            <TextBlock Text="📝" 
-                                                       FontSize="16" 
-                                                       VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                                            <TextBlock Text="📝" FontSize="14" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding PostsCount}" 
                                                        FontWeight="SemiBold" 
-                                                       Margin="5,0,3,0" 
+                                                       Margin="6,0,4,0" 
                                                        VerticalAlignment="Center"/>
-                                            <TextBlock Text="публикаций" 
-                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="публикаций" VerticalAlignment="Center"/>
                                         </StackPanel>
-
-                                        <!-- Статистика: Комментарии -->
-                                        <StackPanel Grid.Column="1" 
-                                                    Orientation="Horizontal">
-                                            <TextBlock Text="💬" 
-                                                       FontSize="16" 
-                                                       VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="💬" FontSize="14" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding CommentsCount}" 
                                                        FontWeight="SemiBold" 
-                                                       Margin="5,0,3,0" 
+                                                       Margin="6,0,4,0" 
                                                        VerticalAlignment="Center"/>
-                                            <TextBlock Text="комментариев" 
-                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="комментариев" VerticalAlignment="Center"/>
                                         </StackPanel>
-                                    </Grid>
+                                    </StackPanel>
 
                                     <!-- Дата рождения и возраст -->
-                                    <StackPanel Orientation="Horizontal" 
-                                                Margin="0,0,0,10">
+                                    <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="🎂" 
                                                    VerticalAlignment="Center" 
                                                    Margin="0,0,5,0"/>
@@ -110,7 +82,7 @@
                                                    Margin="0,0,5,0"/>
                                         <TextBlock Text="{Binding Age, StringFormat=({0} лет)}" 
                                                    VerticalAlignment="Center" 
-                                                   Foreground="#65676B"/>
+                                                   Foreground="{StaticResource MutedTextBrush}"/>
                                     </StackPanel>
 
                                     <!-- Кнопка "Назад" -->
@@ -118,63 +90,47 @@
                                             Command="{Binding NavigateToHomeCommand}"
                                             HorizontalAlignment="Left" 
                                             Margin="0,15,0,0"
-                                            Padding="12,8"
-                                            Background="#4267B2"
-                                            Foreground="White"/>
+                                            Style="{StaticResource OutlineButtonStyle}"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
                         <!-- Секция с биографией пользователя -->
-                        <Border Background="White" 
-                                CornerRadius="8" 
-                                Padding="25" 
-                                Margin="0,0,0,15"
-                                BorderBrush="#DDDDDD"
-                                BorderThickness="1"
-                                Effect="{StaticResource ShadowEffect}">
+                        <Border Style="{StaticResource CardStyle}">
 
                             <StackPanel>
                                 <TextBlock Text="О себе" 
-                                           FontSize="18" 
-                                           FontWeight="Bold" 
-                                           Margin="0,0,0,10"/>
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,8"/>
 
                                 <TextBlock Text="{Binding Bio}" 
-                                           TextWrapping="Wrap" 
-                                           Foreground="#1C1E21"
+                                           Style="{StaticResource BodyTextStyle}"
                                            Visibility="{Binding Bio, Converter={StaticResource NullOrEmptyToVisibilityConverter}, ConverterParameter=invert}"/>
 
                                 <!-- Если биография пуста -->
                                 <TextBlock Text="Пользователь не указал информацию о себе" 
-                                           TextWrapping="Wrap" 
-                                           Foreground="#65676B"
+                                           Style="{StaticResource EmptyStateTextStyle}"
                                            Visibility="{Binding Bio, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
                             </StackPanel>
                         </Border>
 
                         <!-- Последние публикации -->
-                        <Border Background="White" 
-                                CornerRadius="8" 
-                                Padding="25" 
-                                Margin="0,0,0,15"
-                                BorderBrush="#DDDDDD"
-                                BorderThickness="1"
-                                Effect="{StaticResource ShadowEffect}">
+                        <Border Style="{StaticResource CardStyle}">
 
                             <StackPanel>
                                 <TextBlock Text="Последние публикации" 
-                                           FontSize="18" 
-                                           FontWeight="Bold" 
-                                           Margin="0,0,0,15"/>
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,12"/>
 
                                 <!-- Список последних публикаций  -->
                                 <ItemsControl ItemsSource="{Binding UserPosts}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#F0F2F5" 
-                                                    CornerRadius="8" 
-                                                    Padding="15" 
+                                            <Border Background="{StaticResource SurfaceMutedBrush}" 
+                                                    CornerRadius="10" 
+                                                    Padding="12" 
                                                     Margin="0,0,0,10">
 
                                                 <StackPanel>
@@ -183,13 +139,12 @@
                                                                Margin="0,0,0,5"/>
 
                                                     <TextBlock Text="{Binding Content}" 
-                                                               TextWrapping="Wrap" 
+                                                               Style="{StaticResource BodyTextStyle}"
                                                                MaxHeight="60"
                                                                TextTrimming="CharacterEllipsis"/>
 
                                                     <TextBlock Text="{Binding CreatedAtFormatted}" 
-                                                               FontSize="11" 
-                                                               Foreground="#65676B" 
+                                                               Style="{StaticResource MetaTextStyle}"
                                                                Margin="0,5,0,0"/>
                                                 </StackPanel>
                                             </Border>
@@ -199,7 +154,7 @@
 
                                 <!-- Сообщение если нет публикаций -->
                                 <TextBlock Text="У пользователя пока нет публикаций" 
-                                           Foreground="#65676B"
+                                           Style="{StaticResource EmptyStateTextStyle}"
                                            Margin="0,10,0,0"
                                            Visibility="{Binding HasNoPosts, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </StackPanel>
