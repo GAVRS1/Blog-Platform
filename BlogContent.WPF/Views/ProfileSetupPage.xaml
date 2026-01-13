@@ -134,6 +134,15 @@
                                Stretch="UniformToFill"/>
                     </Border>
 
+                    <!-- Код подтверждения -->
+                    <TextBlock Text="Код подтверждения:" Margin="0,0,0,5" FontWeight="Medium"/>
+                    <TextBox Text="{Binding VerificationCode, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="40" 
+                             Padding="10,0" 
+                             VerticalContentAlignment="Center" 
+                             Margin="0,0,0,15"
+                             BorderBrush="#DDDDDD"/>
+
                     <!-- Кнопки навигации -->
                     <Grid Margin="0,10,0,0">
                         <Grid.ColumnDefinitions>

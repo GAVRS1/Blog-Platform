@@ -1,4 +1,4 @@
-﻿using BlogContent.Services;
+﻿using BlogContent.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Windows.Data;

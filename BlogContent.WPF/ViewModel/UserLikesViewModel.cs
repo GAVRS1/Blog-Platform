@@ -51,35 +51,37 @@ public class UserLikesViewModel : NavigationBaseViewModel
         UserLikesPage = true;
 
         // Загружаем лайкнутые посты
-        LoadLikedPosts();
+        _ = LoadLikedPostsAsync();
     }
 
-    private void LoadLikedPosts()
+    private async Task LoadLikedPostsAsync()
     {
 
         LikedPosts.Clear();
 
         try
         {
+            ErrorMessage = string.Empty;
+            IsLoading = true;
             // Получаем лайки пользователя
-            IEnumerable<Like> userLikes = _likeService.GetLikesByUserId(_currentUser.Id);
+            IEnumerable<Like> userLikes = await Task.Run(() => _likeService.GetLikesByUserId(_currentUser.Id));
 
             // Получаем посты, которые лайкнул пользователь
             var likedPostIds = userLikes.Select(l => l.PostId).ToList();
-            IOrderedEnumerable<Post> posts = _postService.GetPostsById(likedPostIds)
+            IOrderedEnumerable<Post> posts = (await Task.Run(() => _postService.GetPostsById(likedPostIds)))
                                   .OrderByDescending(p => p.CreatedAt);
 
             foreach (Post? post in posts)
             {
                 if (post.User == null)
-                    post.User = _userService.GetUserById(post.UserId);
+                    post.User = await Task.Run(() => _userService.GetUserById(post.UserId));
                 
 
                 if (post.Likes == null || !post.Likes.Any())
-                    post.Likes = _likeService.GetLikesByPostId(post.Id).ToList();
+                    post.Likes = await Task.Run(() => _likeService.GetLikesByPostId(post.Id).ToList());
 
                 if (post.Comments == null || !post.Comments.Any())
-                    post.Comments = _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList();
+                    post.Comments = await Task.Run(() => _commentService.GetCommentsByPostId(post.Id, 1, int.MaxValue).Items.ToList());
 
 
                 PostViewModel postViewModel = new PostViewModel(post, _currentUser, _commentService);
@@ -90,15 +92,19 @@ public class UserLikesViewModel : NavigationBaseViewModel
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Произошла ошибка при загрузке понравившихся постов: {ex.Message}",
-                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ErrorMessage = $"Произошла ошибка при загрузке понравившихся постов: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
-    private void LikePost(int postId)
+    private async void LikePost(int postId)
     {
         try
         {
+            ErrorMessage = string.Empty;
             // Находим пост в коллекции
             PostViewModel? postViewModel = LikedPosts.FirstOrDefault(p => p.Id == postId);
 
@@ -107,51 +113,46 @@ public class UserLikesViewModel : NavigationBaseViewModel
                 // Если пост уже лайкнут текущим пользователем - удаляем лайк
                 if (postViewModel.IsLikedByCurrentUser)
                 {
-                    // Находим лайк пользователя
-                    Like? likeToRemove = postViewModel.OriginalPost.Likes.FirstOrDefault(l => l.UserId == _currentUser.Id);
+                    await Task.Run(() => _postService.RemoveLike(postId, _currentUser.Id));
 
-                    if (likeToRemove != null)
-                    {
-                        // Удаляем лайк
-                        _likeService.DeleteLike(likeToRemove.Id);
+                    // Обновляем отображение
+                    postViewModel.IsLikedByCurrentUser = false;
+                    postViewModel.LikesCount = Math.Max(0, postViewModel.LikesCount - 1);
+                    postViewModel.UpdateLikeButton();
 
-                        // Обновляем отображение
-                        postViewModel.IsLikedByCurrentUser = false;
-                        postViewModel.LikesCount--;
-                        postViewModel.UpdateLikeButton();
+                    // Удаляем пост из коллекции, так как это страница лайков
+                    LikedPosts.Remove(postViewModel);
 
-                        // Удаляем пост из коллекции, так как это страница лайков
-                        LikedPosts.Remove(postViewModel);
-
-                        // Обновляем флаг отсутствия лайкнутых постов
-                        HasNoLikes = !LikedPosts.Any();
-                    }
+                    // Обновляем флаг отсутствия лайкнутых постов
+                    HasNoLikes = !LikedPosts.Any();
                 }
             }
         }
         catch (Exception ex)
         {
+            ErrorMessage = $"Не удалось обновить лайк: {ex.Message}";
         }
     }
 
-    private void ShowComments(int postId)
+    private async void ShowComments(int postId)
     {
         PostViewModel? postViewModel = LikedPosts.FirstOrDefault(p => p.Id == postId);
         if (postViewModel != null)
         {
             postViewModel.AreCommentsExpanded = !postViewModel.AreCommentsExpanded;
             if (postViewModel.AreCommentsExpanded)
-                postViewModel.LoadComments();
+                await postViewModel.LoadCommentsAsync();
             
         }
     }
 
-    private void AddComment(PostViewModel postViewModel)
+    private async void AddComment(PostViewModel postViewModel)
     {
         if (postViewModel != null && !string.IsNullOrWhiteSpace(postViewModel.NewCommentText))
         {
             try
             {
+                ErrorMessage = string.Empty;
                 Comment newComment = new Comment
                 {
                     Content = postViewModel.NewCommentText,
@@ -160,21 +161,23 @@ public class UserLikesViewModel : NavigationBaseViewModel
                     UserId = _currentUser.Id
                 };
 
-                _commentService.CreateComment(newComment);
+                await Task.Run(() => _commentService.CreateComment(newComment));
                 postViewModel.NewCommentText = string.Empty;
-                postViewModel.LoadComments();
+                await postViewModel.LoadCommentsAsync();
             }
             catch (Exception ex)
             {
+                ErrorMessage = $"Не удалось добавить комментарий: {ex.Message}";
             }
         }
     }
 
-    private void ViewUserProfile(int userId)
+    private async void ViewUserProfile(int userId)
     {
         try
         {
-            User user = _userService.GetUserById(userId);
+            ErrorMessage = string.Empty;
+            User user = await Task.Run(() => _userService.GetUserById(userId));
 
             _navigationService.SetParameter("ProfileUser", user);
 
@@ -183,9 +186,10 @@ public class UserLikesViewModel : NavigationBaseViewModel
         }
         catch (Exception ex)
         {
+            ErrorMessage = $"Не удалось открыть профиль пользователя: {ex.Message}";
         }
     }
 
-    protected override void ReloadContent() => LoadLikedPosts();
+    protected override void ReloadContent() => _ = LoadLikedPostsAsync();
 
 }

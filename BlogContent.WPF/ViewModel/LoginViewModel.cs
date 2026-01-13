@@ -11,11 +11,11 @@ public class LoginViewModel : ViewModelBase
 {
     private readonly NavigationService _navigationService;
     private readonly IAuthService _authService;
-    private readonly IUserService _userService;
     private string _email;
     private string _password;
     private string _errorMessage;
     private bool _hasError;
+    private bool _isLoading;
 
     public string Email
     {
@@ -45,17 +45,22 @@ public class LoginViewModel : ViewModelBase
         set => SetProperty(ref _hasError, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
     public ICommand LoginCommand { get; }
     public ICommand NavigateToRegisterCommand { get; }
     public ICommand NavigateToStartCommand { get; }
 
-    public LoginViewModel(NavigationService navigationService, IAuthService authService, IUserService userService)
+    public LoginViewModel(NavigationService navigationService, IAuthService authService)
     {
         _navigationService = navigationService;
         _authService = authService;
-        _userService = userService;
 
-        LoginCommand = new RelayCommand(_ => Login(), _ => CanLogin());
+        LoginCommand = new RelayCommand(async _ => await LoginAsync(), _ => CanLogin());
         NavigateToRegisterCommand = new RelayCommand(_ => _navigationService.Navigate("Register"));
         NavigateToStartCommand = new RelayCommand(_ => _navigationService.Navigate("Start"));
 
@@ -69,18 +74,18 @@ public class LoginViewModel : ViewModelBase
 
     private bool CanLogin() => !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 
-    private void Login()
+    private async Task LoginAsync()
     {
         try
         {
-            Core.Models.User? user = _authService.Login(Email, Password);
+            ErrorMessage = string.Empty;
+            IsLoading = true;
+
+            Core.Models.User? user = await Task.Run(() => _authService.Login(Email, Password));
             if (user != null)
             {
-                // Получаем полные данные пользователя по ID
-                Core.Models.User fullUser = _userService.GetUserById(user.Id);
-
-                _navigationService.CurrentUser = fullUser;
-                _navigationService.SetParameter("ProfileUser", fullUser);
+                _navigationService.CurrentUser = user;
+                _navigationService.SetParameter("ProfileUser", user);
 
                 // Навигация на главную страницу
                 _navigationService.NavigateTo("Home", false);
@@ -93,6 +98,10 @@ public class LoginViewModel : ViewModelBase
         catch (Exception ex)
         {
             ErrorMessage = $"Ошибка при входе: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 }

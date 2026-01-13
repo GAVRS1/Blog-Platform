@@ -39,16 +39,18 @@ public class HomeViewModel : NavigationBaseViewModel
         LikeCommentCommand = new RelayCommand(LikeComment);
         AddReplyCommand = new RelayCommand(AddReply);
         
-        LoadPosts();
+        _ = LoadPostsAsync();
         // Отмечаем, что мы на домашней странице
         IsHomePage = true;
 
     }
 
-    private void LoadPosts()
+    private async Task LoadPostsAsync()
     {
         try
         {
+            ErrorMessage = string.Empty;
+            IsLoading = true;
             Posts.Clear();
 
             if (_currentUser == null)
@@ -57,28 +59,24 @@ public class HomeViewModel : NavigationBaseViewModel
             }
 
             // Получаем все посты с включенными зависимостями
-            List<Post>? allPosts = _postService.GetAllPostsWithUsers()?.ToList();
+            List<Post>? allPosts = await Task.Run(() => _postService.GetAllPostsWithUsers()?.ToList());
 
             if (allPosts != null && allPosts.Count > 0)
             {
-                List<int> postUserIds = allPosts.Select(p => p.UserId).Distinct().ToList();
-                Dictionary<int, User> allUsers = _userService.GetUsersByIds(postUserIds).ToDictionary(u => u.Id);
-
                 IOrderedEnumerable<Post> orderedPosts = allPosts.OrderByDescending(p => p.CreatedAt);
 
                 foreach (Post post in orderedPosts)
                 {
-
-                    if (allUsers.TryGetValue(post.UserId, out var user))
-                        post.User = user;
-                    else
+                    if (post.User == null)
+                    {
                         continue;
+                    }
 
                     // Загружаем лайки для поста
-                    post.Likes = _likeService.GetLikesByPostId(post.Id).ToList();
+                    post.Likes = await Task.Run(() => _likeService.GetLikesByPostId(post.Id).ToList());
 
                     // Загружаем комментарии с пользователями
-                    post.Comments = _commentService.GetCommentsByPostIdWithUsers(post.Id).ToList();
+                    post.Comments = await Task.Run(() => _commentService.GetCommentsByPostIdWithUsers(post.Id).ToList());
 
                     PostViewModel postViewModel = new PostViewModel(post, _currentUser, _commentService);
                     Posts.Add(postViewModel);
@@ -91,26 +89,34 @@ public class HomeViewModel : NavigationBaseViewModel
         }
         catch (Exception)
         {
+            ErrorMessage = "Не удалось загрузить посты.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
-    private void ViewUserProfile(int userId)
+    private async void ViewUserProfile(int userId)
     {
         try
         {
-            User user = _userService.GetUserById(userId);
+            ErrorMessage = string.Empty;
+            User user = await Task.Run(() => _userService.GetUserById(userId));
 
             _navigationService.SetParameter("ProfileUser", user);
             _navigationService.Navigate("UserProfile");
         }
         catch (Exception)
         {
+            ErrorMessage = "Не удалось открыть профиль пользователя.";
         }
     }
-    private void ShowComments(int postId)
+    private async void ShowComments(int postId)
     {
         try
         {
+            ErrorMessage = string.Empty;
             // Находим пост в коллекции
             PostViewModel? postViewModel = Posts.FirstOrDefault(p => p.Id == postId);
 
@@ -121,20 +127,22 @@ public class HomeViewModel : NavigationBaseViewModel
 
                 // Если комментарии раскрыты, загружаем их
                 if (postViewModel.AreCommentsExpanded)
-                    postViewModel.LoadComments();
+                    await postViewModel.LoadCommentsAsync();
                 
             }
         }
         catch (Exception)
         {
+            ErrorMessage = "Не удалось загрузить комментарии.";
         }
     }
-    private void AddComment(PostViewModel postViewModel)
+    private async void AddComment(PostViewModel postViewModel)
     {
         if (postViewModel != null && !string.IsNullOrWhiteSpace(postViewModel.NewCommentText))
         {
             try
             {
+                ErrorMessage = string.Empty;
                 // Создаем новый комментарий
                 Comment newComment = new Comment
                 {
@@ -147,23 +155,25 @@ public class HomeViewModel : NavigationBaseViewModel
                 };
 
                 // Сохраняем комментарий
-                _commentService.CreateComment(newComment);
+                await Task.Run(() => _commentService.CreateComment(newComment));
 
                 // Очищаем поле ввода
                 postViewModel.NewCommentText = string.Empty;
 
                 // Обновляем список комментариев
-                postViewModel.LoadComments();
+                await postViewModel.LoadCommentsAsync();
             }
             catch (Exception)
             {
+                ErrorMessage = "Не удалось добавить комментарий.";
             }
         }
     }
-    private void LikePost(int postId)
+    private async void LikePost(int postId)
     {
         try
         {
+            ErrorMessage = string.Empty;
             // Находим пост в коллекции
             PostViewModel? postViewModel = Posts.FirstOrDefault(p => p.Id == postId);
 
@@ -171,32 +181,16 @@ public class HomeViewModel : NavigationBaseViewModel
             {
                 if (postViewModel.IsLikedByCurrentUser)
                 {
-                    // Находим лайк пользователя
-                    Like? likeToRemove = postViewModel.OriginalPost.Likes.FirstOrDefault(l => l.UserId == _currentUser.Id);
+                    await Task.Run(() => _postService.RemoveLike(postId, _currentUser.Id));
 
-                    if (likeToRemove != null)
-                    {
-                        // Удаляем лайк
-                        _likeService.DeleteLike(likeToRemove.Id);
-
-                        // Обновляем отображение
-                        postViewModel.IsLikedByCurrentUser = false;
-                        postViewModel.LikesCount--;
-                        postViewModel.UpdateLikeButton();
-                    }
+                    // Обновляем отображение
+                    postViewModel.IsLikedByCurrentUser = false;
+                    postViewModel.LikesCount = Math.Max(0, postViewModel.LikesCount - 1);
+                    postViewModel.UpdateLikeButton();
                 }
                 else
                 {
-                    // Создаем новый лайк
-                    Like newLike = new Like
-                    {
-                        PostId = postId,
-                        UserId = _currentUser.Id,
-                        Post = postViewModel.OriginalPost,
-                        User = _currentUser
-                    };
-
-                    _likeService.CreateLike(newLike);
+                    await Task.Run(() => _postService.AddLike(postId, _currentUser.Id));
 
                     // Обновляем отображение
                     postViewModel.IsLikedByCurrentUser = true;
@@ -205,51 +199,51 @@ public class HomeViewModel : NavigationBaseViewModel
                 }
             }
         }
-        catch (Exception )
+        catch (Exception)
         {
+            ErrorMessage = "Не удалось обновить лайк.";
         }
     }
-    private void LikeComment(object parameter)
+    private async void LikeComment(object parameter)
     {
         if (parameter is int commentId)
         {
             try
             {
-                Comment comment = _commentService.GetCommentById(commentId);
+                ErrorMessage = string.Empty;
+                Comment comment = await Task.Run(() => _commentService.GetCommentById(commentId));
                 if (comment != null)
                 {
                     if (comment.Likes.Any(l => l.UserId == _currentUser.Id))
                     {
-                        CommentLike like = comment.Likes.First(l => l.UserId == _currentUser.Id);
-                        _commentService.RemoveCommentLike(like.Id);
+                        await Task.Run(() => _commentService.UnlikeComment(commentId, _currentUser.Id));
                     }
                     else
                     {
-                        CommentLike newLike = new CommentLike
-                        {
-                            CommentId = commentId,
-                            UserId = _currentUser.Id,
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        _commentService.AddCommentLike(newLike);
+                        await Task.Run(() => _commentService.LikeComment(commentId, _currentUser.Id));
                     }
 
                     PostViewModel? postVm = Posts.FirstOrDefault(p => p.Id == comment.PostId);
-                    postVm?.LoadComments();
+                    if (postVm != null)
+                    {
+                        await postVm.LoadCommentsAsync();
+                    }
                 }
             }
             catch (Exception)
             {
+                ErrorMessage = "Не удалось обновить лайк комментария.";
             }
         }
     }
 
-    private void AddReply(object parameter)
+    private async void AddReply(object parameter)
     {
         if (parameter is int commentId)
         {
             try
             {
+                ErrorMessage = string.Empty;
                 InteractionPosts.CommentViewModel? commentVm = Posts.SelectMany(p => p.Comments)
                                    .FirstOrDefault(c => c.Id == commentId);
 
@@ -262,12 +256,15 @@ public class HomeViewModel : NavigationBaseViewModel
                         UserId = _currentUser.Id,
                         CreatedAt = DateTime.UtcNow
                     };
-                    _commentService.AddReply(reply);
+                    await Task.Run(() => _commentService.AddReply(reply.CommentId, reply.Content, reply.UserId));
 
                     // Обновляем пост, к которому принадлежит комментарий
-                    Comment comment = _commentService.GetCommentById(commentId);
+                    Comment comment = await Task.Run(() => _commentService.GetCommentById(commentId));
                     PostViewModel? postVm = Posts.FirstOrDefault(p => p.Id == comment.PostId);
-                    postVm?.LoadComments();
+                    if (postVm != null)
+                    {
+                        await postVm.LoadCommentsAsync();
+                    }
 
                     // Очищаем текст ответа
                     commentVm.ReplyText = string.Empty;
@@ -275,8 +272,9 @@ public class HomeViewModel : NavigationBaseViewModel
             }
             catch (Exception)
             {
+                ErrorMessage = "Не удалось добавить ответ.";
             }
         }
     }
-    protected override void ReloadContent() => LoadPosts();
+    protected override void ReloadContent() => _ = LoadPostsAsync();
 }

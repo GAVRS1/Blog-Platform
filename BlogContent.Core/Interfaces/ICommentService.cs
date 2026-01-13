@@ -20,6 +20,8 @@ public interface ICommentService
     CommentLike GetCommentLike(int commentId, int userId);
     void AddCommentLike(CommentLike like);
     void RemoveCommentLike(int likeId);
+    void LikeComment(int commentId, int userId);
+    void UnlikeComment(int commentId, int userId);
     void AddReply(int commentId, string content, int userId);
     CommentLike CreateCommentLike(CommentLike like);
     CommentReply AddReplyWithReturn(CommentReply reply);

@@ -9,11 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
   </ItemGroup>
 
@@ -23,8 +20,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlogContent.Core\BlogContent.Core.csproj" />
-    <ProjectReference Include="..\BlogContent.Data\BlogContent.Data.csproj" />
-    <ProjectReference Include="..\BlogContent.Services\BlogContent.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\*.cs" Link="Api\DTOs\%(Filename)%(Extension)" />
+    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\MediaUploadBatchRequest.cs" />
+    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\MediaUploadRequest.cs" />
+    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\PostDto.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

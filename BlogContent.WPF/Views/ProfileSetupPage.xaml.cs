@@ -1,4 +1,5 @@
-﻿using BlogContent.Services;
+﻿using BlogContent.Core.Interfaces;
+using BlogContent.WPF.Services;
 using BlogContent.WPF.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Controls;
@@ -10,9 +11,9 @@ public partial class ProfileSetupPage : Page
     {
         InitializeComponent();
 
-        UserService userService = App.ServiceProvider.GetRequiredService<UserService>();
+        IAuthService authService = App.ServiceProvider.GetRequiredService<IAuthService>();
         FileService fileService = App.ServiceProvider.GetRequiredService<FileService>();
 
-        DataContext = new ProfileSetupViewModel(App.NavigationService, userService, fileService);
+        DataContext = new ProfileSetupViewModel(App.NavigationService, authService, fileService);
     }
 }

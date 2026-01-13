@@ -1,10 +1,9 @@
 ﻿using BlogContent.Core.Interfaces;
-using BlogContent.Data;
-using BlogContent.Data.Repositories;
-using BlogContent.Services;
+using BlogContent.WPF.Api;
 using BlogContent.WPF.Services;
 using BlogContent.WPF.ViewModel;
 using BlogContent.WPF.Views;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
@@ -20,11 +19,6 @@ namespace BlogContent.WPF
             try
             {
                 base.OnStartup(e);
-
-                using (BlogContext context = new BlogContext())
-                {
-                    context.Database.EnsureCreated();
-                }
 
                 ServiceCollection services = new ServiceCollection();
                 ConfigureServices(services);
@@ -47,22 +41,36 @@ namespace BlogContent.WPF
 
         private void ConfigureServices(ServiceCollection services)
         {
-            services.AddScoped<BlogContext>();
-
             services.AddSingleton<NavigationService>(NavigationService);
 
             services.AddTransient<MediaPlayerControl>();
             services.AddTransient<AudioPlayerControl>();
-            services.AddScoped<IPostRepository, PostRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<ICommentRepository, CommentRepository>();
-            services.AddScoped<ILikeRepository, LikeRepository>();
 
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IPostService, PostService>();
-            services.AddScoped<ICommentService, CommentService>();
-            services.AddScoped<ILikeService, LikeService>();
+            IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .Build();
+
+            ApiClientOptions apiOptions = new ApiClientOptions
+            {
+                BaseUrl = configuration["Api:BaseUrl"] ?? string.Empty
+            };
+
+            services.AddSingleton(apiOptions);
+            services.AddSingleton<ApiTokenStore>();
+            HttpClient httpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(apiOptions.BaseUrl))
+            {
+                httpClient.BaseAddress = new Uri(apiOptions.BaseUrl);
+            }
+
+            services.AddSingleton(httpClient);
+
+            services.AddScoped<IAuthService, AuthApiClient>();
+            services.AddScoped<IUserService, UsersApiClient>();
+            services.AddScoped<IPostService, PostsApiClient>();
+            services.AddScoped<ICommentService, CommentsApiClient>();
+            services.AddScoped<ILikeService, LikesApiClient>();
             services.AddTransient<UserPostsViewModel>();
             services.AddTransient<UserLikesViewModel>();
             services.AddSingleton<FileService>(provider =>
@@ -80,9 +88,9 @@ namespace BlogContent.WPF
             FileService fileService = ServiceProvider.GetRequiredService<FileService>();
 
             Current.Resources["StartViewModel"] = new StartViewModel(NavigationService);
-            Current.Resources["LoginViewModel"] = new LoginViewModel(NavigationService, authService, userService);
+            Current.Resources["LoginViewModel"] = new LoginViewModel(NavigationService, authService);
             Current.Resources["RegisterViewModel"] = new RegisterViewModel(NavigationService, authService);
-            Current.Resources["ProfileSetupViewModel"] = new ProfileSetupViewModel(NavigationService, userService, fileService);
+            Current.Resources["ProfileSetupViewModel"] = new ProfileSetupViewModel(NavigationService, authService, fileService);
 
             Current.Resources["HomeViewModelFactory"] = new Func<HomeViewModel>(() =>
                 new HomeViewModel(NavigationService, userService, postService, commentService, likeService, fileService));
