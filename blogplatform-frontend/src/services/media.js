@@ -59,7 +59,7 @@ export const mediaService = {
    * @param {'image'|'video'|'audio'|'file'|'other'} type
    */
   async uploadPublic(file, type = 'image') {
-    return this.upload(file, type, { isPublic: true });
+    return mediaService.upload(file, type, { isPublic: true });
   },
 
   /**
