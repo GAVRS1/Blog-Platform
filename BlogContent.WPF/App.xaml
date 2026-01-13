@@ -1,4 +1,4 @@
-﻿<Application x:Class="BlogContent.WPF.App"
+<Application x:Class="BlogContent.WPF.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:BlogContent.WPF" xmlns:converters="clr-namespace:BlogContent.WPF.Utilities.Converters">
