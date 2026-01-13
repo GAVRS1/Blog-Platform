@@ -32,7 +32,7 @@ function RegisterWizardShell() {
         <div className="card-body p-6 md:p-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold">Регистрация</h1>
+              <h1 className="text-xl sm:text-2xl font-bold whitespace-nowrap">Регистрация</h1>
             </div>
             <div className="grid grid-cols-3 gap-2 w-full md:w-auto">
               {steps.map((step) => (
