@@ -23,13 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\*.cs" Link="Api\DTOs\%(Filename)%(Extension)" />
-    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\MediaUploadBatchRequest.cs" />
-    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\MediaUploadRequest.cs" />
-    <Compile Remove="..\BlogContent.WebAPI\BlogContent.WebAPI\DTOs\PostDto.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
