@@ -22,7 +22,7 @@
                                    Style="{StaticResource SectionTitleStyle}"/>
 
                         <!-- Список понравившихся публикаций -->
-                        <ItemsControl x:Name="LikedPostsItems" ItemsSource="{Binding LikedPosts}">
+                        <ItemsControl ItemsSource="{Binding LikedPosts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Карточка поста -->

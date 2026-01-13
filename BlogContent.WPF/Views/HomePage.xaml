@@ -20,7 +20,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="760" HorizontalAlignment="Center">
                         <!-- Лента постов -->
-                        <ItemsControl x:Name="FeedItems" ItemsSource="{Binding Posts}">
+                        <ItemsControl ItemsSource="{Binding Posts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardStyle}">
@@ -366,7 +366,7 @@
 
                         <StackPanel HorizontalAlignment="Center"
                                     Margin="0,30,0,0"
-                                    Visibility="{Binding ElementName=FeedItems, Path=HasItems, Converter={StaticResource InvertBooleanConverter}}">
+                                    Visibility="{Binding HasNoPosts, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="🗞️" FontSize="32" HorizontalAlignment="Center"/>
                             <TextBlock Text="Лента пуста. Подпишитесь на кого-нибудь или создайте пост."
                                        Style="{StaticResource EmptyStateTextStyle}"
