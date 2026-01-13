@@ -20,6 +20,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace BlogContent.WebAPI;
 
@@ -38,7 +39,9 @@ public class Program
                 "Provide it in appsettings.json or via environment variable 'ConnectionStrings__DefaultConnection'.");
         }
 
-        builder.Services.AddDbContext<BlogContext>(options => options.UseNpgsql(connectionString));
+        builder.Services.AddDbContext<BlogContext>(options =>
+            options.UseNpgsql(connectionString)
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
         // Repositories
         builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -122,7 +125,6 @@ public class Program
                     }
                 };
             });
-
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminOnly", policy =>
@@ -171,7 +173,6 @@ public class Program
             var dbContext = scope.ServiceProvider.GetRequiredService<BlogContext>();
 
             dbContext.Database.Migrate();
-            dbContext.Database.ExecuteSqlRaw("ALTER TABLE \"Posts\" ADD COLUMN IF NOT EXISTS \"AudioUrl\" text");
         }
 
         // ✅ Swagger удалён полностью
