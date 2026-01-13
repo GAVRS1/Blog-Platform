@@ -176,8 +176,6 @@ public class Program
             dbContext.Database.Migrate();
         }
 
-        // ✅ Swagger удалён полностью
-
         app.UseHttpsRedirection();
 
         var storageOptions = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
