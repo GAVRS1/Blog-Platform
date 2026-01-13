@@ -73,7 +73,7 @@ public abstract class ApiClientBase
         await EnsureSuccessAsync(response);
     }
 
-    private HttpRequestMessage CreateRequest(HttpMethod method, string path, bool requireAuth)
+    protected HttpRequestMessage CreateRequest(HttpMethod method, string path, bool requireAuth)
     {
         var request = new HttpRequestMessage(method, Options.BuildApiPath(path));
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -86,7 +86,7 @@ public abstract class ApiClientBase
         return request;
     }
 
-    private async Task<T?> ReadResponseAsync<T>(HttpResponseMessage response)
+    protected async Task<T?> ReadResponseAsync<T>(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
         {
@@ -101,7 +101,7 @@ public abstract class ApiClientBase
         return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
     }
 
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response)
+    protected static async Task EnsureSuccessAsync(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode)
         {

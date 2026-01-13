@@ -1,6 +1,6 @@
 ﻿using BlogContent.Core.Interfaces;
 using BlogContent.Core.Models;
-using BlogContent.WPF.Services;
+using BlogContent.WPF.Api;
 using BlogContent.WPF.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -17,9 +17,9 @@ public partial class CreatePost : Window
         InitializeComponent();
 
         IPostService postService = App.ServiceProvider.GetRequiredService<IPostService>();
-        FileService fileService = App.ServiceProvider.GetRequiredService<FileService>();
+        MediaApiClient mediaApiClient = App.ServiceProvider.GetRequiredService<MediaApiClient>();
 
-        CreatePostViewModel viewModel = new CreatePostViewModel(postService, fileService, currentUser)
+        CreatePostViewModel viewModel = new CreatePostViewModel(postService, mediaApiClient, currentUser)
         {
             CloseAction = result => 
             {

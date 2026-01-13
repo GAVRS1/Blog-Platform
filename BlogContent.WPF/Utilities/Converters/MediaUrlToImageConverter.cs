@@ -23,38 +23,23 @@ public class MediaUrlToImageConverter : IValueConverter
 
             string imagePath = value.ToString();
 
-            if (imagePath.StartsWith("/Assets/"))
-                return new BitmapImage(new Uri(imagePath, UriKind.Relative));
-
-
-            FileService? fileService = App.ServiceProvider.GetService<FileService>();
-            if (fileService != null)
+            if (imagePath.StartsWith("/Assets/", StringComparison.OrdinalIgnoreCase)
+                || imagePath.StartsWith("\\Assets\\", StringComparison.OrdinalIgnoreCase))
             {
-                string fullPath = fileService.GetFullPath(imagePath);
-
-                if (System.IO.File.Exists(fullPath))
-                {
-                    BitmapImage image = new BitmapImage();
-                    image.BeginInit();
-                    image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                    image.CacheOption = BitmapCacheOption.OnLoad;
-                    image.UriSource = new Uri(fullPath);
-                    image.EndInit();
-                    image.Freeze(); 
-                    return image;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"File not found: {fullPath}");
-                }
+                return new BitmapImage(new Uri(imagePath, UriKind.Relative));
             }
 
-            // Если не удалось найти файл или получить FileService, возвращаем изображение по умолчанию
-            string defaultImg = "\\Assets\\Images\\default_avatar.png";
-            if (parameter != null && parameter.ToString().ToLower() == "post_image")
-                defaultImg = "\\Assets\\Images\\default_avatar.png";
+            MediaUrlResolver? urlResolver = App.ServiceProvider.GetService<MediaUrlResolver>();
+            string resolvedUrl = urlResolver?.ToAbsoluteUrl(imagePath) ?? imagePath;
 
-            return new BitmapImage(new Uri(defaultImg, UriKind.Relative));
+            BitmapImage image = new BitmapImage();
+            image.BeginInit();
+            image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.UriSource = new Uri(resolvedUrl, UriKind.RelativeOrAbsolute);
+            image.EndInit();
+            image.Freeze();
+            return image;
         }
         catch (Exception ex)
         {

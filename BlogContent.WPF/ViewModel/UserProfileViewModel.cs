@@ -9,6 +9,7 @@ namespace BlogContent.WPF.ViewModel;
 
 public class UserProfileViewModel : NavigationBaseViewModel
     {
+        private readonly MediaUrlResolver _mediaUrlResolver;
         private User _profileUser;
         private BitmapImage _profilePicture;
         private string _username;
@@ -25,9 +26,10 @@ public class UserProfileViewModel : NavigationBaseViewModel
                                    IPostService postService, 
                                    ICommentService commentService,
                                    ILikeService likeService,
-                                   IFileService fileService) 
-            : base(navigationService, userService, postService, commentService, likeService, fileService)
+                                   MediaUrlResolver mediaUrlResolver) 
+            : base(navigationService, userService, postService, commentService, likeService)
         {
+            _mediaUrlResolver = mediaUrlResolver ?? throw new ArgumentNullException(nameof(mediaUrlResolver));
             UserPosts = new ObservableCollection<PostViewModel>();
 
             _ = LoadUserProfileAsync();
@@ -119,27 +121,19 @@ public class UserProfileViewModel : NavigationBaseViewModel
             try
             {
                 ErrorMessage = string.Empty;
-                if (!string.IsNullOrEmpty(_profileUser.Profile.ProfilePictureUrl))
+                var imageUrl = _mediaUrlResolver.ToAbsoluteUrl(_profileUser.Profile.ProfilePictureUrl);
+                if (string.IsNullOrWhiteSpace(imageUrl))
                 {
-                    string fullPath = await Task.Run(() => _fileService.GetFullPath(_profileUser.Profile.ProfilePictureUrl));
-
-                    if (System.IO.File.Exists(fullPath))
-                    {
-                        BitmapImage image = new BitmapImage();
-                        image.BeginInit();
-                        image.CacheOption = BitmapCacheOption.OnLoad;
-                        image.UriSource = new Uri(fullPath);
-                        image.EndInit();
-                        ProfilePicture = image;
-                    }
-                    else
-                    {
-                        ProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
-                    }
+                    ProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
                 }
                 else
                 {
-                    ProfilePicture = new BitmapImage(new Uri("\\Assets\\Images\\default_avatar.png", UriKind.Relative));
+                    BitmapImage image = new BitmapImage();
+                    image.BeginInit();
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.UriSource = new Uri(imageUrl, UriKind.RelativeOrAbsolute);
+                    image.EndInit();
+                    ProfilePicture = image;
                 }
             }
             catch (Exception ex)

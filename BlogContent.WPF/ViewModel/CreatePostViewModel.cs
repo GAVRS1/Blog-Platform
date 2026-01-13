@@ -1,6 +1,7 @@
 ﻿using BlogContent.Core.Enums;
 using BlogContent.Core.Models;
 using BlogContent.Core.Interfaces;
+using BlogContent.WPF.Api;
 using BlogContent.WPF.Utilities;
 using BlogContent.WPF.ViewModel.Base;
 using Microsoft.Win32;
@@ -14,7 +15,7 @@ public class CreatePostViewModel : ViewModelBase
 {
     private readonly IPostService _postService;
     private readonly User _currentUser;
-    private readonly IFileService _fileService;
+    private readonly MediaApiClient _mediaApiClient;
 
     private string _title;
     private string _content;
@@ -158,10 +159,10 @@ public class CreatePostViewModel : ViewModelBase
     // Делегат для закрытия окна
     public Action<bool> CloseAction { get; set; }
 
-    public CreatePostViewModel(IPostService postService, IFileService fileService, User currentUser)
+    public CreatePostViewModel(IPostService postService, MediaApiClient mediaApiClient, User currentUser)
     {
         _postService = postService ?? throw new ArgumentNullException(nameof(postService));
-        _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+        _mediaApiClient = mediaApiClient ?? throw new ArgumentNullException(nameof(mediaApiClient));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
 
         // Установка типа контента по умолчанию
@@ -208,26 +209,27 @@ public class CreatePostViewModel : ViewModelBase
             // Обработка медиа-файлов
             if (SelectedContentType != ContentType.Article && !string.IsNullOrEmpty(MediaUrl))
             {
-                string fileType = SelectedContentType switch
+                string? mediaType = SelectedContentType switch
                 {
-                    ContentType.Photo => "post_image",
-                    ContentType.Video => "post_video",
-                    ContentType.Music => "post_audio",
-                    _ => string.Empty
+                    ContentType.Photo => "image",
+                    ContentType.Video => "video",
+                    ContentType.Music => "audio",
+                    _ => null
                 };
 
-                string relativePath = _fileService.SaveFile(MediaUrl, fileType, _currentUser.Id);
+                var uploadResult = await _mediaApiClient.UploadAsync(MediaUrl, mediaType, isPublic: false);
+                string storedUrl = uploadResult.Url.RelativeUrl;
 
                 switch (SelectedContentType)
                 {
                     case ContentType.Photo:
-                        post.ImageUrl = relativePath;
+                        post.ImageUrl = storedUrl;
                         break;
                     case ContentType.Video:
-                        post.VideoUrl = relativePath;
+                        post.VideoUrl = storedUrl;
                         break;
                     case ContentType.Music:
-                        post.AudioUrl = relativePath;
+                        post.AudioUrl = storedUrl;
                         break;
                 }
             }

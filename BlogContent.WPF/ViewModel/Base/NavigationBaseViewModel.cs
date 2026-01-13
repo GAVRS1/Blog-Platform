@@ -4,7 +4,6 @@ using BlogContent.WPF.Services;
 using BlogContent.WPF.Utilities;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 
 namespace BlogContent.WPF.ViewModel.Base;
 
@@ -15,10 +14,7 @@ public class NavigationBaseViewModel : ViewModelBase
     protected readonly IPostService _postService;
     protected readonly ICommentService _commentService;
     protected readonly ILikeService _likeService;
-    protected readonly IFileService _fileService;
-
     protected User _currentUser;
-    private BitmapImage _userProfilePicture;
     private string _userProfilePictureUrl;
     private string _userFullName;
     private bool _isAdmin;
@@ -62,12 +58,6 @@ public class NavigationBaseViewModel : ViewModelBase
     {
         get => _userProfilePictureUrl;
         set => SetProperty(ref _userProfilePictureUrl, value);
-    }
-
-    public BitmapImage UserProfilePicture
-    {
-        get => _userProfilePicture;
-        set => SetProperty(ref _userProfilePicture, value);
     }
 
     public string UserFullName
@@ -125,15 +115,13 @@ public class NavigationBaseViewModel : ViewModelBase
         IUserService userService,
         IPostService postService,
         ICommentService commentService,
-        ILikeService likeService,
-        IFileService fileService)
+        ILikeService likeService)
     {
         _navigationService = navigationService;
         _userService = userService;
         _postService = postService;
         _commentService = commentService;
         _likeService = likeService;
-        _fileService = fileService;
 
         // Инициализация команд
         NavigateToHomeCommand = new RelayCommand(_ => NavigateToHome());
@@ -161,16 +149,7 @@ public class NavigationBaseViewModel : ViewModelBase
                 UserFullName = _currentUser.Profile?.FullName;
                 IsAdmin = _currentUser.Status == Core.Enums.UserStatus.Admin;
 
-                // Загружаем аватар
-                if (!string.IsNullOrEmpty(_currentUser.Profile?.ProfilePictureUrl))
-                {
-                    string fullPath = _fileService.GetFullPath(_currentUser.Profile.ProfilePictureUrl);
-                    if (_fileService.FileExists(fullPath))
-                    {
-                        UserProfilePictureUrl = fullPath;
-                        UserProfilePicture = new BitmapImage(new Uri(fullPath));
-                    }
-                }
+                UserProfilePictureUrl = _currentUser.Profile?.ProfilePictureUrl ?? string.Empty;
             }
         }
         catch (Exception ex)

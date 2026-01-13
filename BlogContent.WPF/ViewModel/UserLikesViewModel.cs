@@ -5,7 +5,6 @@ using BlogContent.WPF.ViewModel.Base;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows;
-using BlogContent.WPF.Services;
 
 namespace BlogContent.WPF.ViewModel;
 
@@ -36,9 +35,8 @@ public class UserLikesViewModel : NavigationBaseViewModel
                              IUserService userService,
                              IPostService postService,
                              ICommentService commentService,
-                             ILikeService likeService,
-                             IFileService fileService)
-        : base(navigationService, userService, postService, commentService, likeService, fileService)
+                             ILikeService likeService)
+        : base(navigationService, userService, postService, commentService, likeService)
     {
         LikedPosts = new ObservableCollection<PostViewModel>();
 
