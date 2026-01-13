@@ -23,7 +23,7 @@
                                    Style="{StaticResource SectionTitleStyle}"/>
 
                         <!-- Список публикаций -->
-                        <ItemsControl x:Name="UserPostsItems" ItemsSource="{Binding UserPosts}">
+                        <ItemsControl ItemsSource="{Binding UserPosts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Карточка поста -->

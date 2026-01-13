@@ -11,6 +11,13 @@ public class HomeViewModel : NavigationBaseViewModel
 {
     // Коллекции данных
     public ObservableCollection<PostViewModel> Posts { get; private set; }
+    private bool _hasNoPosts;
+
+    public bool HasNoPosts
+    {
+        get => _hasNoPosts;
+        set => SetProperty(ref _hasNoPosts, value);
+    }
 
     // Команды, специфичные для HomePage
     public ICommand ViewUserProfileCommand { get; }
@@ -93,6 +100,7 @@ public class HomeViewModel : NavigationBaseViewModel
         finally
         {
             IsLoading = false;
+            HasNoPosts = !Posts.Any();
         }
     }
 
