@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
@@ -35,8 +36,19 @@ public class AuthController : ControllerBase
             return Conflict("Пользователь с таким email уже существует");
         }
 
-        var temporaryKey = await _authService.StartRegistrationAsync(request.Email, cancellationToken);
-        return Ok(new { temporaryKey });
+        try
+        {
+            var temporaryKey = await _authService.StartRegistrationAsync(request.Email, cancellationToken);
+            return Ok(new { temporaryKey });
+        }
+        catch (SmtpException)
+        {
+            return BadRequest("Не удалось отправить письмо подтверждения. Проверьте настройки SMTP.");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("register/verify")]
