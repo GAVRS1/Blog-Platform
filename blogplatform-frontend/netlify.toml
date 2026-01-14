@@ -4,7 +4,7 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE = "https://localhost:7141"
+  VITE_API_BASE = "https://evening-event-notifications-brown.trycloudflare.com"
 
 [[redirects]]
   from = "/api/*"
