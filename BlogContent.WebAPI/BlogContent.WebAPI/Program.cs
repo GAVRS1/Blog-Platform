@@ -158,7 +158,6 @@ public class Program
             });
         });
 
-        // Razor Pages not registered; SPA handles the UI.
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
@@ -168,7 +167,6 @@ public class Program
 
         var app = builder.Build();
 
-        // Ensure database schema is up-to-date before handling requests
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<BlogContext>();
@@ -176,7 +174,11 @@ public class Program
             dbContext.Database.Migrate();
         }
 
-        app.UseHttpsRedirection();
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
 
         var storageOptions = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
         var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
