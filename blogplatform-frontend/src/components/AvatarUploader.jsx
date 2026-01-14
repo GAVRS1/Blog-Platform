@@ -79,7 +79,7 @@ export default function AvatarUploader({ onUploaded, initialUrl, usePublicUpload
             <img src={preview} alt="avatar" className="object-cover w-full h-full" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src="/avatar.png" alt="avatar" className="object-cover w-full h-full" />
+            <img src="/avatar.svg" alt="avatar" className="object-cover w-full h-full" />
           )}
         </div>
       </div>

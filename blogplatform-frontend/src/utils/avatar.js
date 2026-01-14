@@ -3,7 +3,7 @@ import { API_BASE } from '../api/config';
 export const getAvatarUrl = (avatarPath) => {
   // Если путь пустой или null, возвращаем дефолтный аватар
   if (!avatarPath) {
-    return '/avatar.png';
+    return '/avatar.svg';
   }
 
   // Если это уже полный URL, возвращаем как есть
