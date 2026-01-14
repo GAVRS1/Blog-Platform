@@ -4,7 +4,7 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE = "https://finals-replacement-camel-acknowledge.trycloudflare.com"
+  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
 
 [[redirects]]
   from = "/api/*"
