@@ -102,9 +102,31 @@ public class PostRepository(BlogContext context) : IPostRepository
         Post? post = _context.Posts.Find(id);
         if (post != null)
         {
+            var commentIds = _context.Comments
+                .Where(c => c.PostId == id)
+                .Select(c => c.Id)
+                .ToList();
+            var reports = _context.Reports
+                .Where(r => r.PostId == id || (r.CommentId != null && commentIds.Contains(r.CommentId.Value)))
+                .ToList();
+
+            if (reports.Count != 0)
+            {
+                var reportIds = reports.Select(r => r.Id).ToList();
+                var moderationActions = _context.ModerationActions
+                    .Where(ma => ma.ReportId != null && reportIds.Contains(ma.ReportId.Value))
+                    .ToList();
+
+                foreach (var action in moderationActions)
+                {
+                    action.ReportId = null;
+                }
+            }
+
             var likes = _context.Likes.Where(l => l.PostId == id);
             var comments = _context.Comments.Where(c => c.PostId == id);
 
+            _context.Reports.RemoveRange(reports);
             _context.Likes.RemoveRange(likes);
             _context.Comments.RemoveRange(comments);
             _context.Posts.Remove(post);
