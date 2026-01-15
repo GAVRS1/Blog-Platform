@@ -6,10 +6,11 @@
 [context.production.environment]
   VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
 
-[[redirects]]
-  from = "/api/*"
-  to = "https://localhost:7141/api/:splat"
-  status = 200
+[context.deploy-preview.environment]
+  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
+
+[context.branch-deploy.environment]
+  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
 
 [[redirects]]
   from = "/*"
