@@ -38,5 +38,21 @@ export const adminService = {
   resolveAppeal: async (appealId, status, resolution) => {
     const { data } = await api.post('/Admin/resolveAppeal', { appealId, status, resolution });
     return data; // { resolved: true }
+  },
+  deleteReportedPost: async (reportId) => {
+    const { data } = await api.delete(`/Admin/deleteReportedPost/${reportId}`);
+    return data;
+  },
+  deleteReportedComment: async (reportId) => {
+    const { data } = await api.delete(`/Admin/deleteReportedComment/${reportId}`);
+    return data;
+  },
+  forceBanUser: async (userId, reason) => {
+    const { data } = await api.post('/Admin/forceBan', { userId: Number(userId), reason });
+    return data;
+  },
+  forceUnbanUser: async (userId, reason) => {
+    const { data } = await api.post('/Admin/forceUnban', { userId: Number(userId), reason });
+    return data;
   }
 };

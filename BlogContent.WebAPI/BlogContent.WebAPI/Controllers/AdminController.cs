@@ -15,11 +15,19 @@ public class AdminController : ControllerBase
 {
     private readonly IModerationService _moderationService;
     private readonly IUserService _userService;
+    private readonly IPostService _postService;
+    private readonly ICommentService _commentService;
 
-    public AdminController(IModerationService moderationService, IUserService userService)
+    public AdminController(
+        IModerationService moderationService,
+        IUserService userService,
+        IPostService postService,
+        ICommentService commentService)
     {
         _moderationService = moderationService;
         _userService = userService;
+        _postService = postService;
+        _commentService = commentService;
     }
 
     [HttpGet("listReports")]
@@ -229,6 +237,182 @@ public class AdminController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+    }
+
+    [HttpDelete("deleteReportedPost/{reportId}")]
+    public IActionResult DeleteReportedPost(int reportId)
+    {
+        if (!TryGetUserId(out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        var report = _moderationService.GetReportById(reportId);
+        if (report == null)
+        {
+            return NotFound("Жалоба не найдена.");
+        }
+
+        if (!report.PostId.HasValue)
+        {
+            return BadRequest("В жалобе отсутствует пост.");
+        }
+
+        _postService.DeletePost(report.PostId.Value);
+
+        var action = new ModerationAction
+        {
+            AdminUserId = adminUserId,
+            TargetUserId = report.TargetUserId,
+            ReportId = report.Id,
+            ActionType = ModerationActionType.ContentRemoval,
+            Reason = report.Reason,
+            CreatedAt = DateTime.UtcNow
+        };
+        _moderationService.CreateAction(action);
+
+        report.Status = ReportStatus.Approved;
+        _moderationService.UpdateReport(report);
+
+        return Ok(new ReportDto
+        {
+            Id = report.Id,
+            ReporterUserId = report.ReporterUserId,
+            TargetUserId = report.TargetUserId,
+            PostId = report.PostId,
+            CommentId = report.CommentId,
+            Reason = report.Reason,
+            Details = report.Details,
+            Status = report.Status,
+            CreatedAt = report.CreatedAt
+        });
+    }
+
+    [HttpDelete("deleteReportedComment/{reportId}")]
+    public IActionResult DeleteReportedComment(int reportId)
+    {
+        if (!TryGetUserId(out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        var report = _moderationService.GetReportById(reportId);
+        if (report == null)
+        {
+            return NotFound("Жалоба не найдена.");
+        }
+
+        if (!report.CommentId.HasValue)
+        {
+            return BadRequest("В жалобе отсутствует комментарий.");
+        }
+
+        _commentService.DeleteComment(report.CommentId.Value);
+
+        var action = new ModerationAction
+        {
+            AdminUserId = adminUserId,
+            TargetUserId = report.TargetUserId,
+            ReportId = report.Id,
+            ActionType = ModerationActionType.ContentRemoval,
+            Reason = report.Reason,
+            CreatedAt = DateTime.UtcNow
+        };
+        _moderationService.CreateAction(action);
+
+        report.Status = ReportStatus.Approved;
+        _moderationService.UpdateReport(report);
+
+        return Ok(new ReportDto
+        {
+            Id = report.Id,
+            ReporterUserId = report.ReporterUserId,
+            TargetUserId = report.TargetUserId,
+            PostId = report.PostId,
+            CommentId = report.CommentId,
+            Reason = report.Reason,
+            Details = report.Details,
+            Status = report.Status,
+            CreatedAt = report.CreatedAt
+        });
+    }
+
+    [HttpPost("forceBan")]
+    public IActionResult ForceBan([FromBody] ForceUserModerationRequest request)
+    {
+        if (!TryGetUserId(out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        if (request.UserId <= 0)
+        {
+            return BadRequest("Некорректный идентификатор пользователя.");
+        }
+
+        _userService.BanUser(request.UserId);
+
+        var action = new ModerationAction
+        {
+            AdminUserId = adminUserId,
+            TargetUserId = request.UserId,
+            ReportId = null,
+            ActionType = ModerationActionType.Ban,
+            Reason = request.Reason ?? "Принудительная блокировка",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _moderationService.CreateAction(action);
+
+        return Ok(new ModerationActionDto
+        {
+            Id = action.Id,
+            AdminUserId = action.AdminUserId,
+            TargetUserId = action.TargetUserId,
+            ReportId = action.ReportId,
+            ActionType = action.ActionType,
+            Reason = action.Reason,
+            CreatedAt = action.CreatedAt
+        });
+    }
+
+    [HttpPost("forceUnban")]
+    public IActionResult ForceUnban([FromBody] ForceUserModerationRequest request)
+    {
+        if (!TryGetUserId(out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        if (request.UserId <= 0)
+        {
+            return BadRequest("Некорректный идентификатор пользователя.");
+        }
+
+        _userService.UnbanUser(request.UserId);
+
+        var action = new ModerationAction
+        {
+            AdminUserId = adminUserId,
+            TargetUserId = request.UserId,
+            ReportId = null,
+            ActionType = ModerationActionType.Unban,
+            Reason = request.Reason ?? "Принудительная разблокировка",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _moderationService.CreateAction(action);
+
+        return Ok(new ModerationActionDto
+        {
+            Id = action.Id,
+            AdminUserId = action.AdminUserId,
+            TargetUserId = action.TargetUserId,
+            ReportId = action.ReportId,
+            ActionType = action.ActionType,
+            Reason = action.Reason,
+            CreatedAt = action.CreatedAt
+        });
     }
 
     private bool TryGetUserId(out int userId)
