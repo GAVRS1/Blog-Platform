@@ -73,6 +73,7 @@ export default function PostDetailPage() {
     name: post.userFullName ?? post.username,
     avatar: getAvatarUrl(post.userAvatar)
   }) : null, [post]);
+  const authorProfileLink = author?.id === user?.id ? '/profile' : `/users/${author?.id}`;
 
   const attachments = useMemo(() => post?.attachments || post?.media || [], [post]);
   const onLikeChange = (r) => {
@@ -125,13 +126,13 @@ export default function PostDetailPage() {
             <>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <Link to={`/users/${author.id}`} className="avatar">
+                  <Link to={authorProfileLink} className="avatar">
                     <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
                       <img src={author.avatar} alt={author.name} />
                     </div>
                   </Link>
                   <div className="min-w-0">
-                    <Link to={`/users/${author.id}`} className="font-semibold hover:underline block truncate">
+                    <Link to={authorProfileLink} className="font-semibold hover:underline block truncate">
                       {author.name}
                     </Link>
                     <div className="text-xs opacity-60">{formatPostDateTime(post.createdAt)}</div>

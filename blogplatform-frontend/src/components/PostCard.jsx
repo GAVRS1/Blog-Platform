@@ -8,9 +8,11 @@ import toast from 'react-hot-toast';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatPostDateTime } from '@/utils/date';
 import { postsService } from '@/services/posts';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function PostCard({ post, onDeleted }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [local, setLocal] = useState(() => ({
@@ -36,6 +38,7 @@ export default function PostCard({ post, onDeleted }) {
     setViewerIndex(index);
     setViewerOpen(true);
   };
+  const authorProfileLink = author?.id === user?.id ? '/profile' : `/users/${author?.id}`;
 
   const handleDelete = async () => {
     if (deleteLoading) return;
@@ -58,13 +61,13 @@ export default function PostCard({ post, onDeleted }) {
       <div className="card-body p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Link to={`/users/${author.id}`} className="avatar">
+          <Link to={authorProfileLink} className="avatar">
             <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
               <img src={author.avatar} alt={author.name} />
             </div>
           </Link>
           <div className="min-w-0">
-            <Link to={`/users/${author.id}`} className="font-semibold hover:underline block truncate">
+            <Link to={authorProfileLink} className="font-semibold hover:underline block truncate">
               {author.name}
             </Link>
             <div className="text-xs opacity-60">{formatPostDateTime(post.createdAt)}</div>
