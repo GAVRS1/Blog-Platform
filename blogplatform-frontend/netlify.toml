@@ -4,13 +4,13 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
+  VITE_API_BASE = "https://localhost:7141"
 
 [context.deploy-preview.environment]
-  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
+  VITE_API_BASE = "https://localhost:7141"
 
 [context.branch-deploy.environment]
-  VITE_API_BASE = "https://possible-epic-cooling-antivirus.trycloudflare.com"
+  VITE_API_BASE = "https://localhost:7141"
 
 [[redirects]]
   from = "/*"
