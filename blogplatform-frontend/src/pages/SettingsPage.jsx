@@ -161,7 +161,7 @@ export default function SettingsPage() {
         </section>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <button className="btn btn-outline btn-error w-full sm:w-auto" onClick={authService.logout}>
           Выйти из аккаунта
         </button>
