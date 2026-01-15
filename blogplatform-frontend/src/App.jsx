@@ -1,5 +1,5 @@
 // src/App.jsx
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from '@/context/ThemeProvider';
@@ -70,43 +70,20 @@ export default function App() {
 }
 
 function ConsentWrappedApp() {
-  const { status, accept, decline } = useCookieConsent();
-  const [modalOpen, setModalOpen] = useState(status === 'pending');
-  const locked = status === 'pending';
-
-  useEffect(() => {
-    if (status === 'pending') {
-      setModalOpen(true);
-    }
-  }, [status]);
+  const { status, accept } = useCookieConsent();
 
   const handleAccept = () => {
     accept();
-    setModalOpen(false);
-  };
-
-  const handleDecline = () => {
-    decline();
-    setModalOpen(false);
   };
 
   return (
     <>
       <CookieConsentModal
-        open={modalOpen || status === 'pending'}
-        status={status}
+        open={status === 'pending'}
         onAccept={handleAccept}
-        onDecline={handleDecline}
-        onRequestClose={() => !locked && setModalOpen(false)}
       />
 
-      {status === 'accepted' ? (
-        <AppLayout />
-      ) : status === 'declined' ? (
-        <ConsentBlocked onReview={() => setModalOpen(true)} />
-      ) : (
-        <ConsentPending />
-      )}
+      <AppLayout />
     </>
   );
 }
@@ -255,39 +232,6 @@ function PageSkeleton() {
   return (
     <div className="min-h-[60vh] grid place-items-center">
       <span className="loading loading-spinner loading-lg text-primary"></span>
-    </div>
-  );
-}
-
-function ConsentBlocked({ onReview }) {
-  return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-      <div className="max-w-2xl text-center space-y-4">
-        <h1 className="text-3xl font-bold">Доступ ограничен без cookies</h1>
-        <p className="text-base opacity-80">
-          Вы отклонили использование cookies. Мы не можем загрузить ленту, сообщения и другие разделы,
-          пока не получим функциональные cookies для авторизации и защиты сессии.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button type="button" className="btn btn-primary w-full sm:w-auto" onClick={onReview}>
-            Изменить решение
-          </button>
-          <a className="btn btn-outline w-full sm:w-auto" href="/appeal">
-            Связаться с поддержкой
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ConsentPending() {
-  return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-      <div className="text-center space-y-2">
-        <p className="text-lg font-semibold">Требуется выбор по cookies</p>
-        <p className="opacity-70">Мы приостанавливаем навигацию, пока вы не примете или не отклоните cookies.</p>
-      </div>
     </div>
   );
 }
