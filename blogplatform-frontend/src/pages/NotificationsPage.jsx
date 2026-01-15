@@ -13,13 +13,7 @@ import {
 const notificationTypeLabels = {
   Like: 'Лайк',
   Comment: 'Комментарий',
-  Follow: 'Подписка'
-};
-
-const notificationTypeMessages = {
-  Like: 'Поставили лайк',
-  Comment: 'Оставили комментарий',
-  Follow: 'Подписались на вас'
+  Follow: 'Подписчик'
 };
 
 const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -117,7 +111,7 @@ export default function NotificationsPage() {
     try {
       await notificationsService.delete(notificationId);
       setItems((prev) => prev?.filter((item) => item.id !== notificationId));
-      toast.success('Уведомление удалено');
+      toast.success('Удалено');
     } catch (e) {
       toast.error(e.response?.data || 'Не удалось удалить уведомление');
     }
@@ -132,17 +126,24 @@ export default function NotificationsPage() {
   };
 
   const getNotificationTypeLabel = (type) => (
-    notificationTypeLabels[type] || 'Уведомление'
+    notificationTypeLabels[type] || 'Событие'
   );
 
   const getNotificationMessage = (notification) => {
-    const baseMessage = notificationTypeMessages[notification?.type] || 'Новое уведомление';
-    const senderName = notification?.senderDisplayName?.trim();
-    if (senderName) {
-      return `${senderName}: ${baseMessage}`;
+    const senderName = notification?.senderDisplayName?.trim() || 'Неизвестный пользователь';
+    if (notification?.type === 'Like') {
+      const isComment = notification.subjectType === 'comment';
+      const isPost = notification.subjectType === 'post' || notification.postId;
+      const targetLabel = isComment ? 'комментарии' : (isPost ? 'посте' : 'посте');
+      return `Новый лайк на ${targetLabel}: ${senderName}`;
     }
-
-    return notification?.text || baseMessage;
+    if (notification?.type === 'Comment') {
+      return `Новый комментарий: ${senderName}`;
+    }
+    if (notification?.type === 'Follow') {
+      return `Новый подписчик: ${senderName}`;
+    }
+    return notification?.text || `Новое событие: ${senderName}`;
   };
 
   const getNotificationRoute = (notification) => {
