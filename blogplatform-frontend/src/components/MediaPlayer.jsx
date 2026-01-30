@@ -1,7 +1,7 @@
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useMemo, useState } from 'react';
-import { API_BASE } from '../api/config';
+import { resolveMediaUrl } from '@/utils/media';
 
 export default function MediaPlayer({ media, url, type, className = '' }) {
   const [error, setError] = useState(false);
@@ -26,27 +26,7 @@ export default function MediaPlayer({ media, url, type, className = '' }) {
 
   if (!resolved.rawUrl || error) return null;
 
-  // Правильная обработка URL
-  const getMediaUrl = (mediaUrl) => {
-    if (!mediaUrl) return null;
-
-    // Если URL уже полный, используем как есть
-    if (mediaUrl.startsWith('http')) return mediaUrl;
-
-    // Убираем лишние слеши и формируем правильный URL
-    const cleaned = mediaUrl.replace(/\\/g, '/');
-    const base = API_BASE || '';
-    if (cleaned.startsWith('/uploads')) {
-      return `${base}${cleaned}`;
-    }
-    if (cleaned.startsWith('uploads/')) {
-      return `${base}/${cleaned}`;
-    }
-    const normalized = cleaned.replace(/^\/+/, '');
-    return `${base}/uploads/${normalized}`;
-  };
-
-  const src = getMediaUrl(resolved.rawUrl);
+  const src = resolveMediaUrl(resolved.rawUrl);
 
   if (!src) return null;
 
