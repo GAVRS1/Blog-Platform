@@ -86,10 +86,8 @@ export default function AdminDashboard() {
       {!loading && tab === 'reports' && (
         <ReportsTable
           data={data}
-          onAction={handleAction}
+          onConfirm={handleConfirmReport}
           onResolve={handleReportResolution}
-          onDeletePost={handleDeleteReportedPost}
-          onDeleteComment={handleDeleteReportedComment}
         />
       )}
       {!loading && tab === 'actions' && (
@@ -105,16 +103,24 @@ export default function AdminDashboard() {
     </motion.div>
   );
 
-  async function handleAction(type, row) {
+  async function handleConfirmReport(row, action) {
     try {
-      const payload = {
-        actionType: type,
-        targetUserId: row.targetUserId,
-        reportId: row.id,
-        reason: 'Админ-действие из панели'
-      };
-      await adminService.createAction(payload);
-      toast.success('Действие выполнено');
+      if (action === 'ban') {
+        const payload = {
+          actionType: 'Ban',
+          targetUserId: row.targetUserId,
+          reportId: row.id,
+          reason: 'Админ-действие из панели'
+        };
+        await adminService.createAction(payload);
+      } else if (action === 'deletePost') {
+        await adminService.deleteReportedPost(row.id);
+      } else if (action === 'deleteComment') {
+        await adminService.deleteReportedComment(row.id);
+      }
+
+      await adminService.resolveReport(row.id, 'Approved');
+      toast.success('Жалоба подтверждена');
       await load(data.page);
     } catch (e) {
       toast.error(e.response?.data || 'Не удалось выполнить действие');
@@ -141,26 +147,6 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleDeleteReportedPost(row) {
-    try {
-      await adminService.deleteReportedPost(row.id);
-      toast.success('Пост удалён');
-      await load(data.page);
-    } catch (e) {
-      toast.error(e.response?.data || 'Не удалось удалить пост');
-    }
-  }
-
-  async function handleDeleteReportedComment(row) {
-    try {
-      await adminService.deleteReportedComment(row.id);
-      toast.success('Комментарий удалён');
-      await load(data.page);
-    } catch (e) {
-      toast.error(e.response?.data || 'Не удалось удалить комментарий');
-    }
-  }
-
   async function handleForceBan() {
     try {
       await adminService.forceBanUser(forceAction.userId, forceAction.reason);
@@ -184,40 +170,89 @@ export default function AdminDashboard() {
   }
 }
 
-function ReportsTable({ data, onAction, onResolve, onDeletePost, onDeleteComment }) {
+function ReportsTable({ data, onConfirm, onResolve }) {
+  const [selectedActions, setSelectedActions] = useState({});
+
+  const handleActionChange = (id, value) => {
+    setSelectedActions(prev => ({ ...prev, [id]: value }));
+  };
+
+  const getDefaultAction = (report) => {
+    if (report.targetUserId) return 'ban';
+    if (report.postId) return 'deletePost';
+    if (report.commentId) return 'deleteComment';
+    return 'approve';
+  };
+
+  const getAvailableActions = (report) => {
+    const options = [];
+    if (report.targetUserId) options.push({ value: 'ban', label: 'Бан пользователя' });
+    if (report.postId) options.push({ value: 'deletePost', label: 'Удалить пост' });
+    if (report.commentId) options.push({ value: 'deleteComment', label: 'Удалить комментарий' });
+    if (!options.length) options.push({ value: 'approve', label: 'Подтвердить жалобу' });
+    return options;
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="table">
+    <div className="overflow-x-auto rounded-2xl border border-base-200 bg-base-100">
+      <table className="table table-zebra text-sm min-w-[980px]">
         <thead>
           <tr>
-            <th>ID</th><th>Reporter</th><th>User</th><th>Post</th><th>Comment</th><th>Status</th><th>Reason</th><th>Создано</th><th>Действия</th>
+            <th>Репортёр</th>
+            <th>Пользователь</th>
+            <th>Пост</th>
+            <th>Комментарий</th>
+            <th>Статус</th>
+            <th>Причина</th>
+            <th>Создано</th>
+            <th>Действие</th>
           </tr>
         </thead>
         <tbody>
           {data.items.map(r => (
             <tr key={r.id}>
-              <td>{r.id}</td>
-              <td>#{r.reporterUserId}</td>
-              <td>{r.targetUserId ? `#${r.targetUserId}` : '-'}</td>
-              <td>{r.postId ? <a className="link" href={`/posts/${r.postId}`}>#{r.postId}</a> : '-'}</td>
-              <td>{r.commentId || '-'}</td>
+              <td>
+                {r.reporterUserId ? (
+                  <Link className="link" to={`/users/${r.reporterUserId}`}>Профиль</Link>
+                ) : (
+                  '-'
+                )}
+              </td>
+              <td>
+                {r.targetUserId ? (
+                  <Link className="link" to={`/users/${r.targetUserId}`}>Профиль</Link>
+                ) : (
+                  '-'
+                )}
+              </td>
+              <td>
+                {r.postId ? <a className="link" href={`/posts/${r.postId}`}>Открыть</a> : '-'}
+              </td>
+              <td>{r.commentId ? 'Есть' : '-'}</td>
               <td>{r.status}</td>
               <td className="max-w-[240px] truncate" title={r.reason}>{r.reason}</td>
               <td>{new Date(r.createdAt).toLocaleString()}</td>
-              <td className="space-x-2">
-                <button className="btn btn-xs btn-success" onClick={() => onResolve(r, 'Approved')}>Одобрить</button>
-                {r.targetUserId && (
-                  <>
-                    <button className="btn btn-xs btn-error" onClick={() => onAction('Ban', r)}>Заблокировать</button>
-                  </>
-                )}
-                {r.postId && (
-                  <button className="btn btn-xs" onClick={() => onDeletePost(r)}>Удалить пост</button>
-                )}
-                {r.commentId && (
-                  <button className="btn btn-xs" onClick={() => onDeleteComment(r)}>Удалить комментарий</button>
-                )}
-                <button className="btn btn-xs" onClick={() => onResolve(r, 'Rejected')}>Отклонить</button>
+              <td>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <select
+                    className="select select-bordered select-xs min-w-[180px]"
+                    value={selectedActions[r.id] ?? getDefaultAction(r)}
+                    onChange={e => handleActionChange(r.id, e.target.value)}
+                  >
+                    {getAvailableActions(r).map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="btn btn-xs btn-success"
+                      onClick={() => onConfirm(r, selectedActions[r.id] ?? getDefaultAction(r))}
+                    >
+                      Подтвердить
+                    </button>
+                    <button className="btn btn-xs" onClick={() => onResolve(r, 'Rejected')}>Отклонить</button>
+                  </div>
+                </div>
               </td>
             </tr>
           ))}
@@ -231,12 +266,12 @@ function ReportsTable({ data, onAction, onResolve, onDeletePost, onDeleteComment
 function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnban }) {
   return (
     <div className="space-y-4">
-      <div className="bg-base-200 rounded-lg p-4">
+      <div className="bg-base-200 rounded-2xl p-4">
         <h3 className="font-semibold mb-3">Принудительные действия</h3>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[180px,1fr,auto,auto] md:items-center">
           <input
-            className="input input-bordered input-sm w-40"
-            placeholder="User ID"
+            className="input input-bordered input-sm"
+            placeholder="Пользователь"
             value={forceAction.userId}
             onChange={e => onForceChange({ ...forceAction, userId: e.target.value })}
           />
@@ -254,20 +289,35 @@ function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnb
           </button>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="table">
+      <div className="overflow-x-auto rounded-2xl border border-base-200 bg-base-100">
+        <table className="table table-zebra text-sm min-w-[840px]">
           <thead>
             <tr>
-              <th>ID</th><th>Admin</th><th>Type</th><th>User</th><th>Reason</th><th>Создано</th>
+              <th>Админ</th>
+              <th>Тип</th>
+              <th>Пользователь</th>
+              <th>Причина</th>
+              <th>Создано</th>
             </tr>
           </thead>
           <tbody>
             {data.items.map(a => (
               <tr key={a.id}>
-                <td>{a.id}</td>
-                <td>#{a.adminUserId}</td>
+                <td>
+                  {a.adminUserId ? (
+                    <Link className="link" to={`/users/${a.adminUserId}`}>Профиль</Link>
+                  ) : (
+                    '-'
+                  )}
+                </td>
                 <td>{a.actionType}</td>
-                <td>{a.targetUserId || '-'}</td>
+                <td>
+                  {a.targetUserId ? (
+                    <Link className="link" to={`/users/${a.targetUserId}`}>Профиль</Link>
+                  ) : (
+                    '-'
+                  )}
+                </td>
                 <td className="max-w-[240px] truncate" title={a.reason}>{a.reason}</td>
                 <td>{new Date(a.createdAt).toLocaleString()}</td>
               </tr>
@@ -288,19 +338,28 @@ function AppealsTable({ data, onResolve }) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="table">
+    <div className="overflow-x-auto rounded-2xl border border-base-200 bg-base-100">
+      <table className="table table-zebra text-sm min-w-[980px]">
         <thead>
           <tr>
-            <th>ID</th><th>User</th><th>ActionId</th><th>Status</th><th>Message</th><th>Создано</th><th>Resolution</th><th>Решение</th>
+            <th>Пользователь</th>
+            <th>Статус</th>
+            <th>Сообщение</th>
+            <th>Создано</th>
+            <th>Решение</th>
+            <th>Действия</th>
           </tr>
         </thead>
         <tbody>
           {data.items.map(a => (
             <tr key={a.id}>
-              <td>{a.id}</td>
-              <td>#{a.userId}</td>
-              <td>{a.moderationActionId}</td>
+              <td>
+                {a.userId ? (
+                  <Link className="link" to={`/users/${a.userId}`}>Профиль</Link>
+                ) : (
+                  '-'
+                )}
+              </td>
               <td>{a.status}</td>
               <td className="max-w-[300px] truncate" title={a.message}>{a.message}</td>
               <td>{new Date(a.createdAt).toLocaleString()}</td>
@@ -313,7 +372,7 @@ function AppealsTable({ data, onResolve }) {
                 />
               </td>
               <td className="space-x-2">
-                <button className="btn btn-xs btn-success" onClick={() => onResolve(a, 'Approved', resolutions[a.id] || '')}>Одобрить</button>
+                <button className="btn btn-xs btn-success" onClick={() => onResolve(a, 'Approved', resolutions[a.id] || '')}>Подтвердить</button>
                 <button className="btn btn-xs btn-error" onClick={() => onResolve(a, 'Rejected', resolutions[a.id] || '')}>Отклонить</button>
               </td>
             </tr>
