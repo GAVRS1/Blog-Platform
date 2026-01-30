@@ -213,14 +213,14 @@ function ReportsTable({ data, onConfirm, onResolve }) {
             <tr key={r.id}>
               <td>
                 {r.reporterUserId ? (
-                  <Link className="link" to={`/users/${r.reporterUserId}`}>Профиль</Link>
+                  <Link className="link" to={`/users/${r.reporterUserId}`}>Юзер</Link>
                 ) : (
                   '-'
                 )}
               </td>
               <td>
                 {r.targetUserId ? (
-                  <Link className="link" to={`/users/${r.targetUserId}`}>Профиль</Link>
+                  <Link className="link" to={`/users/${r.targetUserId}`}>Юзер</Link>
                 ) : (
                   '-'
                 )}
@@ -305,7 +305,7 @@ function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnb
               <tr key={a.id}>
                 <td>
                   {a.adminUserId ? (
-                    <Link className="link" to={`/users/${a.adminUserId}`}>Профиль</Link>
+                    <Link className="link" to={`/users/${a.adminUserId}`}>Юзер</Link>
                   ) : (
                     '-'
                   )}
@@ -313,7 +313,7 @@ function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnb
                 <td>{a.actionType}</td>
                 <td>
                   {a.targetUserId ? (
-                    <Link className="link" to={`/users/${a.targetUserId}`}>Профиль</Link>
+                    <Link className="link" to={`/users/${a.targetUserId}`}>Юзер</Link>
                   ) : (
                     '-'
                   )}
@@ -355,7 +355,7 @@ function AppealsTable({ data, onResolve }) {
             <tr key={a.id}>
               <td>
                 {a.userId ? (
-                  <Link className="link" to={`/users/${a.userId}`}>Профиль</Link>
+                  <Link className="link" to={`/users/${a.userId}`}>Юзер</Link>
                 ) : (
                   '-'
                 )}

@@ -46,18 +46,7 @@ public class AdminController : ControllerBase
         var reports = reportQuery
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(report => new ReportDto
-            {
-                Id = report.Id,
-                ReporterUserId = report.ReporterUserId,
-                TargetUserId = report.TargetUserId,
-                PostId = report.PostId,
-                CommentId = report.CommentId,
-                Reason = report.Reason,
-                Details = report.Details,
-                Status = report.Status,
-                CreatedAt = report.CreatedAt
-            })
+            .Select(BuildReportDto)
             .ToList();
 
         return Ok(new PagedResponse<ReportDto>(reports, total, page, pageSize));
@@ -139,7 +128,7 @@ public class AdminController : ControllerBase
             }
         }
 
-        var targetUserId = request.TargetUserId ?? report?.TargetUserId;
+        var targetUserId = request.TargetUserId ?? (report == null ? null : GetReportTargetUserId(report));
         var action = new ModerationAction
         {
             AdminUserId = adminUserId,
@@ -226,7 +215,7 @@ public class AdminController : ControllerBase
                 var action = new ModerationAction
                 {
                     AdminUserId = adminUserId,
-                    TargetUserId = report.TargetUserId,
+                    TargetUserId = GetReportTargetUserId(report),
                     ReportId = report.Id,
                     ActionType = actionType,
                     Reason = report.Reason,
@@ -235,23 +224,7 @@ public class AdminController : ControllerBase
                 _moderationService.CreateAction(action);
             }
         }
-        else if (request.Status == ReportStatus.Rejected)
-        {
-            _moderationService.DeleteReport(report.Id);
-        }
-
-        return Ok(new ReportDto
-        {
-            Id = report.Id,
-            ReporterUserId = report.ReporterUserId,
-            TargetUserId = report.TargetUserId,
-            PostId = report.PostId,
-            CommentId = report.CommentId,
-            Reason = report.Reason,
-            Details = report.Details,
-            Status = report.Status,
-            CreatedAt = report.CreatedAt
-        });
+        return Ok(BuildReportDto(report));
     }
 
     [HttpPost("resolveAppeal")]
@@ -318,18 +291,7 @@ public class AdminController : ControllerBase
         report.Status = ReportStatus.Approved;
         _moderationService.UpdateReport(report);
 
-        return Ok(new ReportDto
-        {
-            Id = report.Id,
-            ReporterUserId = report.ReporterUserId,
-            TargetUserId = report.TargetUserId,
-            PostId = report.PostId,
-            CommentId = report.CommentId,
-            Reason = report.Reason,
-            Details = report.Details,
-            Status = report.Status,
-            CreatedAt = report.CreatedAt
-        });
+        return Ok(BuildReportDto(report));
     }
 
     [HttpDelete("deleteReportedComment/{reportId}")]
@@ -367,18 +329,7 @@ public class AdminController : ControllerBase
         report.Status = ReportStatus.Approved;
         _moderationService.UpdateReport(report);
 
-        return Ok(new ReportDto
-        {
-            Id = report.Id,
-            ReporterUserId = report.ReporterUserId,
-            TargetUserId = report.TargetUserId,
-            PostId = report.PostId,
-            CommentId = report.CommentId,
-            Reason = report.Reason,
-            Details = report.Details,
-            Status = report.Status,
-            CreatedAt = report.CreatedAt
-        });
+        return Ok(BuildReportDto(report));
     }
 
     [HttpPost("forceBan")]
@@ -463,5 +414,26 @@ public class AdminController : ControllerBase
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out userId);
+    }
+
+    private static int? GetReportTargetUserId(Report report)
+    {
+        return report.TargetUserId ?? report.Post?.UserId ?? report.Comment?.UserId;
+    }
+
+    private static ReportDto BuildReportDto(Report report)
+    {
+        return new ReportDto
+        {
+            Id = report.Id,
+            ReporterUserId = report.ReporterUserId,
+            TargetUserId = GetReportTargetUserId(report),
+            PostId = report.PostId,
+            CommentId = report.CommentId,
+            Reason = report.Reason,
+            Details = report.Details,
+            Status = report.Status,
+            CreatedAt = report.CreatedAt
+        };
     }
 }
