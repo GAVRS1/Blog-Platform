@@ -4,13 +4,13 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE = "https://localhost:7141"
+  VITE_API_BASE = "https://occasion-applying-louisiana-ruth.trycloudflare.com"
 
 [context.deploy-preview.environment]
-  VITE_API_BASE = "https://localhost:7141"
+  VITE_API_BASE = "https://occasion-applying-louisiana-ruth.trycloudflare.com"
 
 [context.branch-deploy.environment]
-  VITE_API_BASE = "https://localhost:7141"
+  VITE_API_BASE = "https://occasion-applying-louisiana-ruth.trycloudflare.com"
 
 [[redirects]]
   from = "/*"
