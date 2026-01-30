@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -25,19 +25,57 @@ export default function StepEmail() {
   const [error, setError] = useState('');
   const [emailOk, setEmailOk] = useState(null);
   const [captchaToken, setCaptchaToken] = useState('');
+  const turnstileRef = useRef(null);
+  const turnstileWidgetIdRef = useRef(null);
 
   useEffect(() => {
-    window.onTurnstileSuccess = (token) => {
+    const onTurnstileSuccess = (token) => {
       setCaptchaToken(token);
       setError('');
     };
-    window.onTurnstileExpired = () => setCaptchaToken('');
-    window.onTurnstileError = () => setCaptchaToken('');
+    const onTurnstileExpired = () => setCaptchaToken('');
+    const onTurnstileError = () => setCaptchaToken('');
+
+    const renderTurnstile = () => {
+      if (!turnstileRef.current || !window.turnstile) return;
+      if (turnstileWidgetIdRef.current !== null) return;
+      turnstileWidgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: '0x4AAAAAACVwAp_ecsh7kmeY',
+        callback: onTurnstileSuccess,
+        'expired-callback': onTurnstileExpired,
+        'error-callback': onTurnstileError,
+      });
+    };
+
+    let intervalId = null;
+
+    if (window.turnstile) {
+      renderTurnstile();
+    } else if (!document.querySelector('script[data-turnstile]')) {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.dataset.turnstile = 'true';
+      script.onload = renderTurnstile;
+      document.body.appendChild(script);
+    } else {
+      intervalId = window.setInterval(() => {
+        if (window.turnstile) {
+          renderTurnstile();
+          window.clearInterval(intervalId);
+          intervalId = null;
+        }
+      }, 200);
+    }
 
     return () => {
-      delete window.onTurnstileSuccess;
-      delete window.onTurnstileExpired;
-      delete window.onTurnstileError;
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+      if (window.turnstile && turnstileWidgetIdRef.current !== null) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+      }
     };
   }, []);
 
@@ -138,13 +176,7 @@ export default function StepEmail() {
         <div className="form-control">
           <label className="label"><span className="label-text">Проверка</span></label>
           <div className="flex">
-            <div
-              className="cf-turnstile"
-              data-sitekey="0x4AAAAAACVwAp_ecsh7kmeY"
-              data-callback="onTurnstileSuccess"
-              data-expired-callback="onTurnstileExpired"
-              data-error-callback="onTurnstileError"
-            ></div>
+            <div ref={turnstileRef}></div>
           </div>
           <label className="label">
             <span className="label-text-alt text-base-content/60">
