@@ -8,4 +8,5 @@ public interface IReportRepository
     Report? GetReportById(int id);
     void CreateReport(Report report);
     void UpdateReport(Report report);
+    void DeleteReport(int id);
 }

@@ -8,4 +8,5 @@ public interface IAppealRepository
     Appeal? GetAppealById(int id);
     void CreateAppeal(Appeal appeal);
     void UpdateAppeal(Appeal appeal);
+    void DeleteAppeal(int id);
 }

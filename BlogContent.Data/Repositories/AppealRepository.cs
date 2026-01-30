@@ -35,4 +35,16 @@ public class AppealRepository(BlogContext context) : IAppealRepository
         _context.Appeals.Update(appeal);
         _context.SaveChanges();
     }
+
+    public void DeleteAppeal(int id)
+    {
+        var appeal = _context.Appeals.Find(id);
+        if (appeal == null)
+        {
+            return;
+        }
+
+        _context.Appeals.Remove(appeal);
+        _context.SaveChanges();
+    }
 }
