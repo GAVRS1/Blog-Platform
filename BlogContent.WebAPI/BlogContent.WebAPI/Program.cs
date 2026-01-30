@@ -75,6 +75,28 @@ public class Program
         builder.Services.AddScoped<INotificationService, DatabaseNotificationService>();
         builder.Services.AddSignalR();
 
+        var redisConnectionString = builder.Configuration.GetSection("Redis").GetValue<string>("ConnectionString");
+        if (string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            redisConnectionString = "localhost:6379";
+            Console.WriteLine(
+                "WARNING: 'Redis:ConnectionString' configuration is missing. " +
+                "Using default localhost:6379 connection.");
+        }
+
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "BlogContent:";
+        });
+
+        builder.Services.AddSession(options =>
+        {
+            options.IdleTimeout = TimeSpan.FromMinutes(30);
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+        });
+
         // JWT
         var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
         var jwtOptions = jwtSection.Get<JwtOptions>() ?? throw new InvalidOperationException("JWT configuration is missing.");
@@ -204,6 +226,7 @@ public class Program
         app.UseRouting();
         app.UseCors("FrontendPolicy");
 
+        app.UseSession();
         app.UseAuthentication();
         app.UseMiddleware<BlockedUserMiddleware>();
         app.UseAuthorization();
