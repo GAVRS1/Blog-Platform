@@ -3,6 +3,7 @@ using BlogContent.Core.Models;
 using BlogContent.Core.Security;
 using BlogContent.WebAPI.DTOs;
 using BlogContent.WebAPI.Options;
+using BlogContent.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -20,17 +21,35 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
     private readonly JwtOptions _jwtOptions;
+    private readonly ITurnstileService _turnstileService;
 
-    public AuthController(IAuthService authService, IUserService userService, IOptions<JwtOptions> jwtOptions)
+    public AuthController(
+        IAuthService authService,
+        IUserService userService,
+        IOptions<JwtOptions> jwtOptions,
+        ITurnstileService turnstileService)
     {
         _authService = authService;
         _userService = userService;
         _jwtOptions = jwtOptions.Value;
+        _turnstileService = turnstileService;
     }
 
     [HttpPost("register/start")]
     public async Task<IActionResult> RegisterStart([FromBody] RegisterStartRequest request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.TurnstileToken))
+        {
+            return BadRequest("Подтвердите капчу");
+        }
+
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var captchaOk = await _turnstileService.VerifyAsync(request.TurnstileToken, remoteIp, cancellationToken);
+        if (!captchaOk)
+        {
+            return BadRequest("Проверка капчи не пройдена");
+        }
+
         if (_authService.UserExists(request.Email))
         {
             return Conflict("Пользователь с таким email уже существует");
