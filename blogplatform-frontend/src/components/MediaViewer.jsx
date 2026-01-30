@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-import { API_BASE } from '@/api/config';
+import { resolveMediaUrl } from '@/utils/media';
 
 function normalizeType(rawType = '') {
   const normalized = rawType.toString().toLowerCase();
@@ -9,22 +9,6 @@ function normalizeType(rawType = '') {
   if (normalized.includes('audio')) return 'audio';
   if (normalized.includes('other') || normalized.includes('file')) return 'file';
   return 'file';
-}
-
-function getMediaUrl(mediaUrl) {
-  if (!mediaUrl) return null;
-  if (mediaUrl.startsWith('http')) return mediaUrl;
-
-  const cleaned = mediaUrl.replace(/\\/g, '/');
-  const base = API_BASE || '';
-  if (cleaned.startsWith('/uploads')) {
-    return `${base}${cleaned}`;
-  }
-  if (cleaned.startsWith('uploads/')) {
-    return `${base}/${cleaned}`;
-  }
-  const normalized = cleaned.replace(/^\/+/, '');
-  return `${base}/uploads/${normalized}`;
 }
 
 function getBaseFileName(value = '') {
@@ -50,7 +34,7 @@ export default function MediaViewer({ open, items = [], startIndex = 0, onClose 
       const type = normalizeType(item?.type || item?.mediaType);
       return {
         ...item,
-        src: getMediaUrl(rawUrl),
+        src: resolveMediaUrl(rawUrl),
         type
       };
     })
