@@ -42,6 +42,11 @@ public class ModerationService : IModerationService
         _reportRepository.UpdateReport(report);
     }
 
+    public void DeleteReport(int reportId)
+    {
+        _reportRepository.DeleteReport(reportId);
+    }
+
     public ModerationAction CreateAction(ModerationAction action)
     {
         _actionRepository.CreateAction(action);
@@ -64,5 +69,10 @@ public class ModerationService : IModerationService
         appeal.ResolvedAt = DateTime.UtcNow;
         _appealRepository.UpdateAppeal(appeal);
         return appeal;
+    }
+
+    public void DeleteAppeal(int appealId)
+    {
+        _appealRepository.DeleteAppeal(appealId);
     }
 }

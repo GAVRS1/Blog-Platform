@@ -46,4 +46,16 @@ public class ReportRepository(BlogContext context) : IReportRepository
         existing.Status = report.Status;
         _context.SaveChanges();
     }
+
+    public void DeleteReport(int id)
+    {
+        var report = _context.Reports.Find(id);
+        if (report == null)
+        {
+            return;
+        }
+
+        _context.Reports.Remove(report);
+        _context.SaveChanges();
+    }
 }

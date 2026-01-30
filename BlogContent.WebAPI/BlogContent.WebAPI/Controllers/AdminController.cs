@@ -188,6 +188,11 @@ public class AdminController : ControllerBase
     [HttpPost("resolveReport")]
     public IActionResult ResolveReport([FromBody] ResolveReportRequest request)
     {
+        if (!TryGetUserId(out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
         var report = _moderationService.GetReportById(request.ReportId);
         if (report == null)
         {
@@ -196,6 +201,44 @@ public class AdminController : ControllerBase
 
         report.Status = request.Status;
         _moderationService.UpdateReport(report);
+
+        if (request.Status == ReportStatus.Approved)
+        {
+            var actionType = ModerationActionType.Other;
+            if (report.PostId.HasValue)
+            {
+                _postService.DeletePost(report.PostId.Value);
+                actionType = ModerationActionType.ContentRemoval;
+            }
+            else if (report.CommentId.HasValue)
+            {
+                _commentService.DeleteComment(report.CommentId.Value);
+                actionType = ModerationActionType.ContentRemoval;
+            }
+            else if (report.TargetUserId.HasValue)
+            {
+                _userService.BanUser(report.TargetUserId.Value);
+                actionType = ModerationActionType.Ban;
+            }
+
+            if (actionType != ModerationActionType.Other)
+            {
+                var action = new ModerationAction
+                {
+                    AdminUserId = adminUserId,
+                    TargetUserId = report.TargetUserId,
+                    ReportId = report.Id,
+                    ActionType = actionType,
+                    Reason = report.Reason,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _moderationService.CreateAction(action);
+            }
+        }
+        else if (request.Status == ReportStatus.Rejected)
+        {
+            _moderationService.DeleteReport(report.Id);
+        }
 
         return Ok(new ReportDto
         {
@@ -221,6 +264,7 @@ public class AdminController : ControllerBase
             {
                 _userService.UnbanUser(appeal.UserId);
             }
+            _moderationService.DeleteAppeal(appeal.Id);
             return Ok(new AppealDto
             {
                 Id = appeal.Id,
