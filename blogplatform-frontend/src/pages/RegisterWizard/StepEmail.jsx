@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -24,12 +24,29 @@ export default function StepEmail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailOk, setEmailOk] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState('');
+
+  useEffect(() => {
+    window.onTurnstileSuccess = (token) => {
+      setCaptchaToken(token);
+      setError('');
+    };
+    window.onTurnstileExpired = () => setCaptchaToken('');
+    window.onTurnstileError = () => setCaptchaToken('');
+
+    return () => {
+      delete window.onTurnstileSuccess;
+      delete window.onTurnstileExpired;
+      delete window.onTurnstileError;
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!email?.trim()) return setError('Введите email');
     if (!password) return setError('Укажите пароль, чтобы завершить регистрацию');
+    if (!captchaToken) return setError('Подтвердите, что вы не робот');
 
     const trimmedEmail = email.trim();
     setLoading(true);
@@ -44,7 +61,7 @@ export default function StepEmail() {
       }
 
       setEmailOk(true);
-      const { temporaryKey } = await authService.startRegister(trimmedEmail);
+      const { temporaryKey } = await authService.startRegister(trimmedEmail, captchaToken);
       setTemporaryKey(temporaryKey);
       setIsVerified(false);
       markSentNow();
@@ -114,6 +131,24 @@ export default function StepEmail() {
           <label className="label">
             <span className="label-text-alt text-base-content/60">
               Пароль сохранится до завершения регистрации
+            </span>
+          </label>
+        </div>
+
+        <div className="form-control">
+          <label className="label"><span className="label-text">Проверка</span></label>
+          <div className="flex">
+            <div
+              className="cf-turnstile"
+              data-sitekey="0x4AAAAAACVwAp_ecsh7kmeY"
+              data-callback="onTurnstileSuccess"
+              data-expired-callback="onTurnstileExpired"
+              data-error-callback="onTurnstileError"
+            ></div>
+          </div>
+          <label className="label">
+            <span className="label-text-alt text-base-content/60">
+              Подтвердите, что вы не робот, чтобы продолжить регистрацию
             </span>
           </label>
         </div>

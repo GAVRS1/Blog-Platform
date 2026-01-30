@@ -107,6 +107,7 @@ public class Program
         builder.Services.Configure<EmailTemplateOptions>(builder.Configuration.GetSection("EmailTemplates"));
         builder.Services.Configure<EmailVerificationOptions>(builder.Configuration.GetSection("EmailVerification"));
         builder.Services.Configure<MediaStorageOptions>(builder.Configuration.GetSection("MediaStorage"));
+        builder.Services.Configure<TurnstileOptions>(builder.Configuration.GetSection("Turnstile"));
         builder.Services.PostConfigure<MediaStorageOptions>(options => options.EnsureDefaults());
 
         var mediaStorageOptions = new MediaStorageOptions();
@@ -187,6 +188,8 @@ public class Program
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+
+        builder.Services.AddHttpClient<ITurnstileService, TurnstileService>();
 
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {

@@ -25,8 +25,8 @@ export const authService = {
   /**
    * Старт регистрации: отправляет код на email и возвращает временный ключ
    */
-  async startRegister(email) {
-    const { data } = await api.post('/Auth/register/start', { email });
+  async startRegister(email, turnstileToken) {
+    const { data } = await api.post('/Auth/register/start', { email, turnstileToken });
     return data;
   },
 
