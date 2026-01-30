@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using BlogContent.Data;
 using BlogContent.WebAPI.DTOs;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlogContent.WebAPI.Services;
@@ -10,14 +12,35 @@ namespace BlogContent.WebAPI.Services;
 public class DatabaseNotificationService : INotificationService
 {
     private readonly BlogContext _context;
+    private readonly IDistributedCache _cache;
+    private static readonly DistributedCacheEntryOptions LatestCacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+    };
+    private static readonly DistributedCacheEntryOptions UnreadCacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1)
+    };
 
-    public DatabaseNotificationService(BlogContext context)
+    public DatabaseNotificationService(BlogContext context, IDistributedCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public IEnumerable<NotificationDto> GetLatest(int userId, int page, int pageSize)
     {
+        var cacheKey = LatestCacheKey(userId, page, pageSize);
+        var cached = _cache.GetString(cacheKey);
+        if (!string.IsNullOrWhiteSpace(cached))
+        {
+            var cachedNotifications = JsonSerializer.Deserialize<List<NotificationDto>>(cached);
+            if (cachedNotifications != null)
+            {
+                return cachedNotifications;
+            }
+        }
+
         var notifications = _context.Notifications
             .AsNoTracking()
             .Where(n => n.RecipientUserId == userId)
@@ -26,14 +49,25 @@ public class DatabaseNotificationService : INotificationService
             .Take(pageSize)
             .ToList();
 
-        return notifications
+        var result = notifications
             .Select(ToDto)
             .ToList();
+
+        CacheLatest(userId, cacheKey, result);
+        return result;
     }
 
     public int GetUnreadCount(int userId)
     {
-        return _context.Notifications.Count(n => n.RecipientUserId == userId && !n.IsRead);
+        var cached = _cache.GetString(UnreadCountCacheKey(userId));
+        if (!string.IsNullOrWhiteSpace(cached) && int.TryParse(cached, out var cachedCount))
+        {
+            return cachedCount;
+        }
+
+        var count = _context.Notifications.Count(n => n.RecipientUserId == userId && !n.IsRead);
+        _cache.SetString(UnreadCountCacheKey(userId), count.ToString(), UnreadCacheOptions);
+        return count;
     }
 
     public int MarkAllRead(int userId)
@@ -53,6 +87,7 @@ public class DatabaseNotificationService : INotificationService
         }
 
         _context.SaveChanges();
+        InvalidateCache(userId);
         return notifications.Count;
     }
 
@@ -68,6 +103,7 @@ public class DatabaseNotificationService : INotificationService
 
         notification.IsRead = true;
         _context.SaveChanges();
+        InvalidateCache(userId);
         return 1;
     }
 
@@ -84,6 +120,7 @@ public class DatabaseNotificationService : INotificationService
 
         _context.Notifications.RemoveRange(notifications);
         _context.SaveChanges();
+        InvalidateCache(userId);
         return notifications.Count;
     }
 
@@ -99,6 +136,7 @@ public class DatabaseNotificationService : INotificationService
 
         _context.Notifications.Remove(notification);
         _context.SaveChanges();
+        InvalidateCache(userId);
         return 1;
     }
 
@@ -123,6 +161,7 @@ public class DatabaseNotificationService : INotificationService
             existing.IsRead = false;
             existing.Text = text;
             _context.SaveChanges();
+            InvalidateCache(recipientUserId);
             return ToDto(existing);
         }
 
@@ -142,7 +181,59 @@ public class DatabaseNotificationService : INotificationService
         _context.Notifications.Add(notification);
         _context.SaveChanges();
 
+        InvalidateCache(recipientUserId);
         return ToDto(notification);
+    }
+
+    private static string LatestCacheKey(int userId, int page, int pageSize)
+    {
+        return $"notifications:latest:{userId}:{page}:{pageSize}";
+    }
+
+    private static string LatestCacheIndexKey(int userId)
+    {
+        return $"notifications:latest:index:{userId}";
+    }
+
+    private static string UnreadCountCacheKey(int userId)
+    {
+        return $"notifications:unread:{userId}";
+    }
+
+    private void CacheLatest(int userId, string cacheKey, List<NotificationDto> notifications)
+    {
+        var serialized = JsonSerializer.Serialize(notifications);
+        _cache.SetString(cacheKey, serialized, LatestCacheOptions);
+
+        var indexKey = LatestCacheIndexKey(userId);
+        var indexSerialized = _cache.GetString(indexKey);
+        var keys = string.IsNullOrWhiteSpace(indexSerialized)
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : JsonSerializer.Deserialize<HashSet<string>>(indexSerialized) ?? new HashSet<string>(StringComparer.Ordinal);
+        if (keys.Add(cacheKey))
+        {
+            _cache.SetString(indexKey, JsonSerializer.Serialize(keys), LatestCacheOptions);
+        }
+    }
+
+    private void InvalidateCache(int userId)
+    {
+        _cache.Remove(UnreadCountCacheKey(userId));
+
+        var indexKey = LatestCacheIndexKey(userId);
+        var indexSerialized = _cache.GetString(indexKey);
+        if (string.IsNullOrWhiteSpace(indexSerialized))
+        {
+            return;
+        }
+
+        var keys = JsonSerializer.Deserialize<HashSet<string>>(indexSerialized) ?? new HashSet<string>(StringComparer.Ordinal);
+        foreach (var key in keys)
+        {
+            _cache.Remove(key);
+        }
+
+        _cache.Remove(indexKey);
     }
 
     private NotificationDto ToDto(Core.Models.Notification notification)
