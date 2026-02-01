@@ -155,7 +155,17 @@ public class AuthController : ControllerBase
         }
 
         var user = _userService.GetUserById(userId);
-        return user == null ? NotFound() : Ok(user.ToDto());
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (user.Status == Core.Enums.UserStatus.Banned)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "AccountBlocked" });
+        }
+
+        return Ok(user.ToDto());
     }
 
     private bool TryGetUserId(out int userId)
