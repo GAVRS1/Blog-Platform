@@ -103,7 +103,12 @@ public class UserRepository(BlogContext context) : IUserRepository
     // Забанить пользователя
     public void BanUser(int userId)
     {
-        var user = GetUserById(userId);
+        var user = _context.Users.Find(userId);
+        if (user == null)
+        {
+            return;
+        }
+
         user.Status = UserStatus.Banned;
         _context.SaveChanges();
     }
@@ -111,7 +116,12 @@ public class UserRepository(BlogContext context) : IUserRepository
     // Разбанить пользователя
     public void UnbanUser(int userId)
     {
-        var user = GetUserById(userId);
+        var user = _context.Users.Find(userId);
+        if (user == null)
+        {
+            return;
+        }
+
         user.Status = UserStatus.Active;
         _context.SaveChanges();
     }
@@ -119,7 +129,12 @@ public class UserRepository(BlogContext context) : IUserRepository
     // Назначить администратором
     public void MakeAdmin(int userId)
     {
-        var user = GetUserById(userId);
+        var user = _context.Users.Find(userId);
+        if (user == null)
+        {
+            return;
+        }
+
         user.Status = UserStatus.Admin;
         _context.SaveChanges();
     }
