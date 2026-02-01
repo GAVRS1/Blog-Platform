@@ -214,14 +214,18 @@ function ReportsTable({ data, onConfirm, onResolve }) {
             <tr key={r.id}>
               <td>
                 {r.reporterUserId ? (
-                  <Link className="link" to={`/users/${r.reporterUserId}`}>Юзер</Link>
+                  <Link className="link" to={`/users/${r.reporterUserId}`}>
+                    {r.reporterUsername || `ID ${r.reporterUserId}`}
+                  </Link>
                 ) : (
                   '-'
                 )}
               </td>
               <td>
                 {r.targetUserId ? (
-                  <Link className="link" to={`/users/${r.targetUserId}`}>Юзер</Link>
+                  <Link className="link" to={`/users/${r.targetUserId}`}>
+                    {r.targetUsername || `ID ${r.targetUserId}`}
+                  </Link>
                 ) : (
                   '-'
                 )}
@@ -415,7 +419,9 @@ function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnb
               <tr key={a.id}>
                 <td>
                   {a.adminUserId ? (
-                    <Link className="link" to={`/users/${a.adminUserId}`}>Юзер</Link>
+                    <Link className="link" to={`/users/${a.adminUserId}`}>
+                      {a.adminUsername || `ID ${a.adminUserId}`}
+                    </Link>
                   ) : (
                     '-'
                   )}
@@ -423,7 +429,9 @@ function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnb
                 <td>{a.actionType}</td>
                 <td>
                   {a.targetUserId ? (
-                    <Link className="link" to={`/users/${a.targetUserId}`}>Юзер</Link>
+                    <Link className="link" to={`/users/${a.targetUserId}`}>
+                      {a.targetUsername || `ID ${a.targetUserId}`}
+                    </Link>
                   ) : (
                     '-'
                   )}
@@ -465,7 +473,9 @@ function AppealsTable({ data, onResolve }) {
             <tr key={a.id}>
               <td>
                 {a.userId ? (
-                  <Link className="link" to={`/users/${a.userId}`}>Юзер</Link>
+                  <Link className="link" to={`/users/${a.userId}`}>
+                    {a.username || `ID ${a.userId}`}
+                  </Link>
                 ) : (
                   '-'
                 )}
