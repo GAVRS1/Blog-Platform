@@ -286,7 +286,7 @@ public class AdminController : ControllerBase
         var action = new ModerationAction
         {
             AdminUserId = adminUserId,
-            TargetUserId = report.TargetUserId,
+            TargetUserId = GetReportTargetUserId(report),
             ReportId = report.Id,
             ActionType = ModerationActionType.ContentRemoval,
             Reason = report.Reason,
@@ -324,7 +324,7 @@ public class AdminController : ControllerBase
         var action = new ModerationAction
         {
             AdminUserId = adminUserId,
-            TargetUserId = report.TargetUserId,
+            TargetUserId = GetReportTargetUserId(report),
             ReportId = report.Id,
             ActionType = ModerationActionType.ContentRemoval,
             Reason = report.Reason,
