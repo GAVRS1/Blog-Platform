@@ -106,6 +106,7 @@ export default function AdminDashboard() {
 
   async function handleConfirmReport(row, action) {
     try {
+      let shouldResolveReport = true;
       if (action === 'ban') {
         const payload = {
           actionType: 'Ban',
@@ -116,11 +117,15 @@ export default function AdminDashboard() {
         await adminService.createAction(payload);
       } else if (action === 'deletePost') {
         await adminService.deleteReportedPost(row.id);
+        shouldResolveReport = false;
       } else if (action === 'deleteComment') {
         await adminService.deleteReportedComment(row.id);
+        shouldResolveReport = false;
       }
 
-      await adminService.resolveReport(row.id, 'Approved');
+      if (shouldResolveReport) {
+        await adminService.resolveReport(row.id, 'Approved');
+      }
       toast.success('Жалоба подтверждена');
       await load(data.page);
     } catch (e) {
