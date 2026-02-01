@@ -1,6 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import { useEffect, useState } from 'react';
 import { adminService } from '@/services/admin';
+import { usersService } from '@/services/users';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -264,17 +265,126 @@ function ReportsTable({ data, onConfirm, onResolve }) {
 }
 
 function ActionsTable({ data, forceAction, onForceChange, onForceBan, onForceUnban }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedUserName, setSelectedUserName] = useState('');
+
+  useEffect(() => {
+    if (!forceAction.userId) {
+      setSearchQuery('');
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      setSelectedUserName('');
+    }
+  }, [forceAction.userId]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await usersService.search(query, 1, 10);
+        const items = Array.isArray(res) ? res : res?.items ?? [];
+        setSearchResults(items);
+        setIsSearchOpen(true);
+      } catch (e) {
+        setSearchResults([]);
+        setIsSearchOpen(false);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setSelectedUserName('');
+    if (forceAction.userId) {
+      onForceChange({ ...forceAction, userId: '' });
+    }
+    if (!value.trim()) {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+    }
+  };
+
+  const handleSelectUser = (user) => {
+    const userId = user?.id ?? user?.userId ?? '';
+    const username = user?.username ?? user?.userName ?? `ID ${userId}`;
+    onForceChange({ ...forceAction, userId });
+    setSearchQuery(username);
+    setSelectedUserName(username);
+    setSearchResults([]);
+    setIsSearchOpen(false);
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-base-200 rounded-2xl p-4">
         <h3 className="font-semibold mb-3">Принудительные действия</h3>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[180px,1fr,auto,auto] md:items-center">
-          <input
-            className="input input-bordered input-sm"
-            placeholder="Пользователь"
-            value={forceAction.userId}
-            onChange={e => onForceChange({ ...forceAction, userId: e.target.value })}
-          />
+          <div className="relative">
+            <input
+              className="input input-bordered input-sm w-full"
+              placeholder="Пользователь"
+              value={searchQuery}
+              onChange={e => handleSearchChange(e.target.value)}
+              onFocus={() => {
+                if (searchResults.length) setIsSearchOpen(true);
+              }}
+              onBlur={() => {
+                setTimeout(() => setIsSearchOpen(false), 150);
+              }}
+            />
+            {selectedUserName && forceAction.userId && (
+              <div className="text-xs opacity-70 mt-1">
+                Выбран: {selectedUserName} (ID {forceAction.userId})
+              </div>
+            )}
+            {isSearchOpen && (
+              <div className="absolute z-10 mt-1 w-full rounded-lg border border-base-300 bg-base-100 shadow-lg">
+                {isSearching && (
+                  <div className="px-3 py-2 text-xs opacity-70">Поиск...</div>
+                )}
+                {!isSearching && !searchResults.length && (
+                  <div className="px-3 py-2 text-xs opacity-70">Совпадений не найдено</div>
+                )}
+                {!isSearching && searchResults.length > 0 && (
+                  <ul className="max-h-56 overflow-auto">
+                    {searchResults.map(user => {
+                      const userId = user?.id ?? user?.userId;
+                      const username = user?.username ?? user?.userName ?? 'Без имени';
+                      return (
+                        <li key={userId}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-base-200"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              handleSelectUser(user);
+                            }}
+                          >
+                            {username} (ID {userId})
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
           <input
             className="input input-bordered input-sm flex-1 min-w-[200px]"
             placeholder="Причина (необязательно)"
