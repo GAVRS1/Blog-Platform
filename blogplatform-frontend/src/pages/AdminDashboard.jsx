@@ -8,13 +8,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 
 const tabs = ['reports', 'actions', 'appeals'];
+const getDefaultStatusFilter = (tabKey) => (
+  tabKey === 'reports' || tabKey === 'appeals' ? 'Pending' : ''
+);
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [tab, setTab] = useState('reports');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ items: [], total: 0, page: 1, pageSize: 20 });
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(getDefaultStatusFilter('reports'));
   const [forceAction, setForceAction] = useState({ userId: '', reason: '' });
 
   const isAdmin = user && user.status === 'Admin';
@@ -64,7 +67,15 @@ export default function AdminDashboard() {
 
       <div role="tablist" className="tabs tabs-bordered mb-4">
         {tabs.map(t => (
-          <a key={t} role="tab" className={`tab ${tab === t ? 'tab-active' : ''}`} onClick={() => setTab(t)}>
+          <a
+            key={t}
+            role="tab"
+            className={`tab ${tab === t ? 'tab-active' : ''}`}
+            onClick={() => {
+              setTab(t);
+              setStatusFilter(getDefaultStatusFilter(t));
+            }}
+          >
             {t === 'reports' ? 'Репорты' : t === 'actions' ? 'Действия' : 'Апелляции'}
           </a>
         ))}
